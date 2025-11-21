@@ -106,7 +106,7 @@ class Utilisateur(AbstractUser):
     role = models.CharField(
         max_length=10, 
         choices=ROLE_CHOICES, 
-        default='USER',
+        default='citoyen',
         db_index=True
     )
     
