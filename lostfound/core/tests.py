@@ -160,9 +160,9 @@ class ObjetModelTest(TestCase):
         self.assertTrue(objet.change_etat("EN_VALIDATION", self.agent))
         self.assertEqual(objet.etat, "EN_VALIDATION")
         
-        # Test transition invalide
+        # Test transition invalide (EN_VALIDATION ne peut pas aller à RECLAME directement)
         with self.assertRaises(ValidationError):
-            objet.change_etat("RESTITUE")
+            objet.change_etat("RECLAME")
     
     def test_objet_peut_etre_reclame(self):
         """Test si un objet peut être réclamé."""

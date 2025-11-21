@@ -480,17 +480,17 @@ class Reclamation(models.Model):
         Returns:
             bool: True si la réclamation peut être validée
         """
+        # justificatif est optionnel, description_justificative est requise par le modèle
         return (
             self.statut == 'EN_VERIFICATION' and
-            self.objet.peut_etre_reclame() and
-            bool(self.description_justificative)
-            # justificatif est optionnel mais la description est requise
+            self.objet.peut_etre_reclame()
         )
     
     def clean(self):
         """Validation personnalisée."""
         super().clean()
-        if not self.objet.peut_etre_reclame():
+        # Vérifier si l'objet existe avant de valider (évite l'erreur lors de la création)
+        if self.objet_id and not self.objet.peut_etre_reclame():
             raise ValidationError(
                 "Cet objet ne peut pas être réclamé dans son état actuel."
             )
