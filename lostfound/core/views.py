@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 
 from .models import Signalement, Objet, Utilisateur
 from .forms import SignalementForm, SearchForm
@@ -221,7 +222,11 @@ def index(request):
         if nom:
             objets_resultats = objets_resultats.filter(nom__icontains=nom)
         if lieu:
-            objets_resultats = objets_resultats.filter(lieu_trouve__icontains=lieu)
+            objets_resultats = objets_resultats.filter(
+                Q(lieuPerte__quartier__icontains=lieu) |
+                Q(lieuPerte__prefecture__icontains=lieu) |
+                Q(lieuPerte__region__icontains=lieu)
+            )
         if date_perte:
             objets_resultats = objets_resultats.filter(dateDeclaration__date=date_perte)
 
@@ -539,8 +544,9 @@ def reclamer_objet(request, objet_id):
             # Changer l'état de l'objet
             try:
                 objet.change_etat('RECLAME')
-            except:
-                pass
+            except ValidationError as e:
+                # Log l'erreur mais continue le processus
+                messages.warning(request, f"Note: L'état de l'objet n'a pas pu être changé: {str(e)}")
             
             # Créer une notification
             Notification.objects.create(
