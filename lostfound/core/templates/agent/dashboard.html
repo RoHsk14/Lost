@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Tableau de bord Agent - TogoRetrouve{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- En-tête -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                <i class="fas fa-tachometer-alt text-blue-600"></i> Tableau de Bord Agent
+            </h1>
+            <p class="text-gray-600">Bienvenue, {{ user.get_full_name|default:user.username }}</p>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold">Déclarations en attente</p>
+                        <p class="text-3xl font-bold text-blue-600">{{ declarations_en_attente }}</p>
+                    </div>
+                    <div class="bg-blue-100 rounded-full p-4">
+                        <i class="fas fa-file-alt text-blue-600 text-2xl"></i>
+                    </div>
+                </div>
+                <a href="{% url 'agent_declarations' %}" class="text-blue-600 text-sm mt-4 inline-block hover:underline">
+                    Voir tout <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold">Réclamations à vérifier</p>
+                        <p class="text-3xl font-bold text-green-600">{{ reclamations_en_verification }}</p>
+                    </div>
+                    <div class="bg-green-100 rounded-full p-4">
+                        <i class="fas fa-hand-paper text-green-600 text-2xl"></i>
+                    </div>
+                </div>
+                <a href="{% url 'agent_reclamations' %}" class="text-green-600 text-sm mt-4 inline-block hover:underline">
+                    Voir tout <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold">Objets en validation</p>
+                        <p class="text-3xl font-bold text-orange-600">{{ objets_en_validation }}</p>
+                    </div>
+                    <div class="bg-orange-100 rounded-full p-4">
+                        <i class="fas fa-box-open text-orange-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Déclarations récentes -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">
+                <i class="fas fa-file-alt text-blue-600"></i> Déclarations Récentes
+            </h2>
+            {% if declarations_recentes %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Objet</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Utilisateur</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Type</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Date</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for declaration in declarations_recentes %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3">{{ declaration.objet.nom }}</td>
+                            <td class="px-4 py-3">{{ declaration.utilisateur.username }}</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 text-xs rounded-full {% if declaration.type_declaration == 'PERDU' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                    {{ declaration.get_type_declaration_display }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm">{{ declaration.date_soumission|date:"d/m/Y H:i" }}</td>
+                            <td class="px-4 py-3">
+                                <a href="{% url 'agent_valider_declaration' declaration.pk %}" class="text-blue-600 hover:underline text-sm">
+                                    Traiter <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">Aucune déclaration récente</p>
+            {% endif %}
+        </div>
+
+        <!-- Réclamations récentes -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">
+                <i class="fas fa-hand-paper text-green-600"></i> Réclamations Récentes
+            </h2>
+            {% if reclamations_recentes %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Objet</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Réclamant</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Date</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for reclamation in reclamations_recentes %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3">{{ reclamation.objet.nom }}</td>
+                            <td class="px-4 py-3">{{ reclamation.utilisateur.username }}</td>
+                            <td class="px-4 py-3 text-sm">{{ reclamation.date_reclamation|date:"d/m/Y H:i" }}</td>
+                            <td class="px-4 py-3">
+                                <a href="{% url 'agent_valider_reclamation' reclamation.pk %}" class="text-green-600 hover:underline text-sm">
+                                    Vérifier <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">Aucune réclamation récente</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

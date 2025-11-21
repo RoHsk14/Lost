@@ -1,0 +1,207 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    body.login {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login #container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 0;
+        max-width: 420px;
+        margin: 20px;
+    }
+
+    .login #header {
+        background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+        border-radius: 12px 12px 0 0;
+        padding: 30px 20px;
+        text-align: center;
+    }
+
+    .login .togoretrouve-admin-branding h1 {
+        margin: 0;
+        padding: 0;
+    }
+
+    .login .togoretrouve-admin-branding h1 a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-decoration: none;
+    }
+
+    .login .togoretrouve-admin-branding svg {
+        margin-bottom: 15px;
+    }
+
+    .login #content {
+        padding: 40px 30px;
+        max-width: none;
+        margin: 0;
+    }
+
+    .login #content-main {
+        width: 100%;
+        float: none;
+    }
+
+    .login form {
+        margin: 0;
+    }
+
+    .login .form-row {
+        padding: 0 0 20px 0;
+        border-bottom: none;
+    }
+
+    .login .form-row label {
+        display: block;
+        color: #374151;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .login input[type=text],
+    .login input[type=password] {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #E5E7EB;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s;
+        box-sizing: border-box;
+    }
+
+    .login input[type=text]:focus,
+    .login input[type=password]:focus {
+        border-color: #4F46E5;
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+
+    .login .submit-row {
+        padding: 20px 0 0;
+        text-align: center;
+    }
+
+    .login input[type=submit] {
+        width: 100%;
+        background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+        color: white;
+        border: none;
+        padding: 14px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .login input[type=submit]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+    }
+
+    .login .errornote {
+        background: #FEE2E2;
+        color: #991B1B;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border-left: 4px solid #EF4444;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .login .password-reset-link {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .login .password-reset-link a {
+        color: #4F46E5;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .login .password-reset-link a:hover {
+        text-decoration: underline;
+    }
+
+    /* Breadcrumbs hidden on login */
+    .login .breadcrumbs {
+        display: none;
+    }
+
+    /* Footer styling */
+    .login #footer {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} login{% endblock %}
+
+{% block usertools %}{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+{% if form.errors and not form.non_field_errors %}
+<p class="errornote">
+{% if form.errors.items|length == 1 %}
+  {% trans "Please correct the error below." %}
+{% else %}
+  {% trans "Please correct the errors below." %}
+{% endif %}
+</p>
+{% endif %}
+
+{% if form.non_field_errors %}
+{% for error in form.non_field_errors %}
+<p class="errornote">
+    {{ error }}
+</p>
+{% endfor %}
+{% endif %}
+
+<div id="content-main">
+<form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
+  <div class="form-row">
+    {{ form.username.errors }}
+    {{ form.username.label_tag }} {{ form.username }}
+  </div>
+  <div class="form-row">
+    {{ form.password.errors }}
+    {{ form.password.label_tag }} {{ form.password }}
+    <input type="hidden" name="next" value="{{ next }}">
+  </div>
+  {% url 'admin_password_reset' as password_reset_url %}
+  {% if password_reset_url %}
+  <div class="password-reset-link">
+    <a href="{{ password_reset_url }}">{% trans 'Forgotten your password or username?' %}</a>
+  </div>
+  {% endif %}
+  <div class="submit-row">
+    <input type="submit" value="{% trans 'Log in' %}">
+  </div>
+</form>
+
+</div>
+{% endblock %}

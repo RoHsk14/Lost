@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Déclarer un objet - TogoRetrouve{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">
+                <i class="fas fa-plus-circle text-blue-600"></i> Déclarer un Objet
+            </h1>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="space-y-6">
+                    <!-- Type d'objet -->
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Type d'objet *</label>
+                        {{ form.typeObjet }}
+                        {% if form.typeObjet.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.typeObjet.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Nom -->
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Nom de l'objet *</label>
+                        {{ form.nom }}
+                        {% if form.nom.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.nom.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Description *</label>
+                        {{ form.description }}
+                        <p class="text-gray-500 text-sm mt-1">Décrivez l'objet en détail pour faciliter l'identification</p>
+                        {% if form.description.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.description.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Couleur -->
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Couleur *</label>
+                        {{ form.couleur }}
+                        {% if form.couleur.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.couleur.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Photo -->
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Photo</label>
+                        {{ form.photo }}
+                        <p class="text-gray-500 text-sm mt-1">Une photo aide à l'identification de l'objet</p>
+                        {% if form.photo.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.photo.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Type de déclaration -->
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Type de déclaration *</label>
+                        {{ form.est_perdu }}
+                        {% if form.est_perdu.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.est_perdu.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Boutons -->
+                <div class="flex space-x-4 mt-8">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
+                        <i class="fas fa-check"></i> Déclarer l'objet
+                    </button>
+                    <a href="{% url 'home' %}" class="flex-1 bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition font-semibold text-center">
+                        <i class="fas fa-times"></i> Annuler
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
