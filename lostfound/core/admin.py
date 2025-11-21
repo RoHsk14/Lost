@@ -8,6 +8,13 @@ from .models import (
     Signalement, ObjetPerdu
 )
 
+# ============================================================================
+# Personnalisation du site d'administration
+# ============================================================================
+admin.site.site_header = "TogoRetrouve Administration"
+admin.site.site_title = "TogoRetrouve Admin"
+admin.site.index_title = "Tableau de bord - Gestion de la plateforme"
+
 
 # ============================================================================
 # Admin pour Utilisateur (Custom User)
