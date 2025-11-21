@@ -1,0 +1,89 @@
+[
+{
+    "model": "core.region",
+    "pk": 1,
+    "fields": {
+        "nom": "Maritime"
+    }
+},
+{
+    "model": "core.region",
+    "pk": 2,
+    "fields": {
+        "nom": "Plateaux"
+    }
+},
+{
+    "model": "core.region",
+    "pk": 3,
+    "fields": {
+        "nom": "Centrale"
+    }
+},
+{
+    "model": "core.prefecture",
+    "pk": 1,
+    "fields": {
+        "region": 1,
+        "nom": "Golfe"
+    }
+},
+{
+    "model": "core.prefecture",
+    "pk": 2,
+    "fields": {
+        "region": 1,
+        "nom": "Lacs"
+    }
+},
+{
+    "model": "core.prefecture",
+    "pk": 3,
+    "fields": {
+        "region": 2,
+        "nom": "Ogou"
+    }
+},
+{
+    "model": "core.structurelocale",
+    "pk": 1,
+    "fields": {
+        "nom": "Commissariat de Bè",
+        "type_structure": "commissariat",
+        "prefecture": 1
+    }
+},
+{
+    "model": "core.structurelocale",
+    "pk": 2,
+    "fields": {
+        "nom": "Mairie de Lomé",
+        "type_structure": "mairie",
+        "prefecture": 1
+    }
+},
+{
+    "model": "core.localisation",
+    "pk": 1,
+    "fields": {
+        "region": "Maritime",
+        "prefecture": "Golfe",
+        "quartier": "Bè",
+        "commissariat": "Commissariat de Bè",
+        "latitude": 6.1375,
+        "longitude": 1.2123
+    }
+},
+{
+    "model": "core.localisation",
+    "pk": 2,
+    "fields": {
+        "region": "Maritime",
+        "prefecture": "Golfe",
+        "quartier": "Tokoin",
+        "commissariat": "",
+        "latitude": 6.1667,
+        "longitude": 1.2833
+    }
+}
+]
