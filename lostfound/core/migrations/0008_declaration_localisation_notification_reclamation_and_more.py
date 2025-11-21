@@ -199,7 +199,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='utilisateur',
             name='role',
-            field=models.CharField(choices=[('citoyen', 'Citoyen'), ('agent', 'Agent de gestion'), ('admin', 'Administrateur')], db_index=True, default='USER', max_length=10),
+            field=models.CharField(choices=[('citoyen', 'Citoyen'), ('agent', 'Agent de gestion'), ('admin', 'Administrateur')], db_index=True, default='citoyen', max_length=10),
         ),
         migrations.AlterField(
             model_name='utilisateur',

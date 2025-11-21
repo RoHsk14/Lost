@@ -238,7 +238,7 @@ class Objet(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name='objets_geres',
-        limit_choices_to={'role': 'agent'}
+        limit_choices_to={'role__in': ['agent', 'admin']}
     )
     
     # État et type
@@ -430,6 +430,8 @@ class Reclamation(models.Model):
     # Justification
     justificatif = models.FileField(
         upload_to='justificatifs/',
+        blank=True,
+        null=True,
         help_text="Document justificatif (photo, facture, etc.)"
     )
     description_justificative = models.TextField(
