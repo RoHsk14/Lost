@@ -53,9 +53,9 @@
                     <h1 class="text-2xl font-bold">TogoRetrouve</h1>
                 </div>
                 <nav class="hidden md:flex space-x-8">
-                    <a href="#" class="hover:text-blue-200 font-medium">Accueil</a>
-                    <a href="{% url 'objets_list' %}" class="hover:text-blue-200 font-medium">Objets trouvés</a>
-                    <a href="{% url 'signalement_add' %}" class="hover:text-blue-200 font-medium">Faire un signalement</a>
+                    <a href="{% url 'home' %}" class="hover:text-blue-200 font-medium">Accueil</a>
+                    <a href="{% url 'objets_publies_list' %}" class="hover:text-blue-200 font-medium">Objets trouvés</a>
+                    <a href="{% url 'objet_declarer' %}" class="hover:text-blue-200 font-medium">Déclarer un objet</a>
                     <a href="#" class="hover:text-blue-200 font-medium">Conseils</a>
                 </nav>
                 
@@ -218,7 +218,7 @@
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center mb-8">
                 <h2 class="text-3xl font-bold">Objets récemment trouvés</h2>
-                <a href="{% url 'objets_list' %}" class="text-blue-600 font-medium hover:underline">Voir tout</a>
+                <a href="{% url 'objets_publies_list' %}" class="text-blue-600 font-medium hover:underline">Voir tout</a>
             </div>
     
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

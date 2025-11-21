@@ -223,9 +223,9 @@ def index(request):
         if lieu:
             objets_resultats = objets_resultats.filter(lieu_trouve__icontains=lieu)
         if date_perte:
-            objets_resultats = objets_resultats.filter(date_creation__date=date_perte)
+            objets_resultats = objets_resultats.filter(dateDeclaration__date=date_perte)
 
-    objets_recents = Objet.objects.order_by('-date_creation')[:3]
+    objets_recents = Objet.objects.order_by('-dateDeclaration')[:3]
     signalements = Signalement.objects.order_by('-date_signalement')[:3]
 
     return render(request, 'index.html', {
