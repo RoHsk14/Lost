@@ -1,0 +1,43 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Gestion des Admins{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Gestion des admins locaux</h1>
+
+<!-- Bouton pour créer un nouvel admin -->
+<div class="mb-4">
+    <a href="{% url 'superadmin_create_admins' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        ➕ Ajouter un admin
+    </a>
+</div>
+
+<!-- Tableau des admins -->
+<table class="min-w-full bg-white shadow-md rounded">
+    <thead>
+        <tr class="bg-gray-100">
+            <th class="py-2 px-4">Nom</th>
+            <th class="py-2 px-4">Email</th>
+            <th class="py-2 px-4">Zone</th>
+            <th class="py-2 px-4">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for admin in admins %}
+        <tr class="border-t">
+            <td class="py-2 px-4">{{ admin.username }}</td>
+            <td class="py-2 px-4">{{ admin.email }}</td>
+            <td class="py-2 px-4">{{ admin.zone }}</td>
+            <td class="py-2 px-4 space-x-2">
+                <a href="{% url 'superadmin_edit_admin' admin.id %}" class="text-yellow-600 font-semibold">✏️ Modifier</a>
+                <a href="{% url 'superadmin_delete_admin' admin.id %}" class="text-red-600 font-semibold">🗑️ Supprimer</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4" class="py-2 px-4 text-gray-500 text-center">Aucun admin trouvé</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

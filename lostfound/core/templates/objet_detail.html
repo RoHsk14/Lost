@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ objet.nom }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12">
+
+  <!-- Section Image principale -->
+  <div class="relative w-full h-72 md:h-96 mb-12">
+    {% if objet.photo %}
+      <img src="{{ objet.photo.url }}" alt="{{ objet.nom }}" 
+           class="w-full h-full object-cover brightness-90">
+    {% else %}
+      <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+        <i class="fas fa-box-open text-6xl text-gray-400"></i>
+      </div>
+    {% endif %}
+    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+    <div class="absolute bottom-6 left-8 text-white">
+      <h1 class="text-4xl md:text-5xl font-extrabold drop-shadow-lg">{{ objet.nom }}</h1>
+      {% if objet.categorie %}
+      <p class="mt-2 text-sm bg-blue-600/80 px-3 py-1 inline-block rounded-full shadow-md">
+        {{ objet.categorie }}
+      </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Détails de l'objet -->
+  <div class="container mx-auto px-6 max-w-3xl">
+    <div class="bg-white rounded-3xl shadow-xl p-8 md:p-10 relative -mt-16 z-10">
+      <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">🧾 Informations sur l’objet</h2>
+        <span class="text-sm text-gray-500">
+          Publié le {{ objet.date_creation|date:"d/m/Y" }}
+        </span>
+      </div>
+
+      <div class="space-y-5 text-gray-700 leading-relaxed">
+        <p>{{ objet.description|default:"Aucune description disponible." }}</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+          {% if objet.lieu_trouve %}
+          <div class="flex items-center space-x-2">
+            <i class="fas fa-map-marker-alt text-red-500"></i>
+            <span><strong>Lieu trouvé :</strong> {{ objet.lieu_trouve }}</span>
+          </div>
+          {% endif %}
+
+          {% if objet.date_trouve %}
+          <div class="flex items-center space-x-2">
+            <i class="far fa-calendar-alt text-blue-500"></i>
+            <span><strong>Date trouvée :</strong> {{ objet.date_trouve|date:"d/m/Y" }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Séparateur -->
+      <div class="border-t border-gray-200 my-8"></div>
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <a href="{% url 'objets_list' %}" 
+           class="flex items-center text-blue-600 hover:underline text-sm font-medium">
+          ← Retour à la liste
+        </a>
+
+        <a href="{% url 'signalement_add' %}?objet_id={{ objet.id }}" 
+           class="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition flex items-center gap-2 font-semibold shadow-md">
+          <i class="fas fa-exclamation-circle"></i> Signaler une perte similaire
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

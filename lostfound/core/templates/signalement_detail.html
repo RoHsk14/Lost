@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Détails du signalement{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Détail du signalement</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    {% if messages %}
+    <div class="fixed top-4 right-4 space-y-2 z-50">
+        {% for message in messages %}
+        <div
+            class="px-4 py-3 rounded shadow-md text-white 
+            {% if message.tags == 'success' %} bg-green-500 
+            {% elif message.tags == 'error' %} bg-red-500 
+            {% elif message.tags == 'warning' %} bg-yellow-500 
+            {% else %} bg-blue-500 {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+ 
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h1 class="text-2xl font-bold mb-4">{{ signalement.objet.nom }}</h1>
+            {% if signalement.objet.photo %}
+            <img class="w-full h-64 object-cover mb-4 rounded-lg" src="{{ signalement.objet.photo.url }}" alt="{{ signalement.objet.nom }}">
+            {% endif %}
+            <p class="text-gray-700 mb-2"><strong>Statut :</strong> {{ signalement.statut|capfirst }}</p>
+            <p class="text-gray-700 mb-2"><strong>Par :</strong> {{ signalement.utilisateur.username }}</p>
+            <p class="text-gray-700 mb-2"><strong>Lieu :</strong> {{ signalement.lieu }}</p>
+            <p class="text-gray-700 mb-2"><strong>Commentaire :</strong> {{ signalement.commentaire }}</p>
+            <p class="text-gray-500 mt-4 text-sm">Date du signalement : {{ signalement.date_signalement }}</p>
+            <a href="{% url 'signalements_list' %}" class="inline-block mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Retour à la liste</a>
+        </div>
+        <div class="mt-6 flex space-x-3">
+            <a href="{% url 'signalement_edit' signalement.pk %}" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Modifier</a>
+            <a href="{% url 'signalement_delete' signalement.pk %}" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Supprimer</a>
+        </div>
+        
+    </div>
+    <script>
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.fixed.top-4.right-4 div');
+            alerts.forEach(a => a.remove());
+        }, 3000);
+    </script>
+    
+</body>
+</html>
+{% endblock %}

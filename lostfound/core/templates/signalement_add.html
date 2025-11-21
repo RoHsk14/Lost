@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Ajouter un signalement{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6 mt-6">
+    <h2 class="text-2xl font-semibold mb-4 text-gray-800">📝 Ajouter un signalement</h2>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <label for="region">Région :</label>
+        <select id="region" name="region" class="border rounded p-2 w-full">
+            <option value="">-- Sélectionner une région --</option>
+            {% for region in regions %}
+            <option value="{{ region.id }}">{{ region.nom }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="prefecture" class="mt-2 block">Préfecture :</label>
+        <select id="prefecture" name="prefecture" class="border rounded p-2 w-full" disabled>
+            <option value="">-- Choisir une région d’abord --</option>
+        </select>
+
+        <label for="structure" class="mt-2 block">Structure locale :</label>
+        <select id="structure" name="structure" class="border rounded p-2 w-full" disabled>
+            <option value="">-- Choisir une préfecture d’abord --</option>
+        </select>
+
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mt-4">
+            Enregistrer le signalement
+        </button>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const regionSelect = document.getElementById('region');
+    const prefectureSelect = document.getElementById('prefecture');
+    const structureSelect = document.getElementById('structure');
+
+    regionSelect.addEventListener('change', () => {
+        const regionId = regionSelect.value;
+        prefectureSelect.innerHTML = '<option>Chargement...</option>';
+        prefectureSelect.disabled = true;
+
+        fetch(`/api/prefectures/?region=${regionId}`)
+            .then(res => res.json())
+            .then(data => {
+                prefectureSelect.innerHTML = '<option value="">-- Choisir une préfecture --</option>';
+                data.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.nom;
+                    prefectureSelect.appendChild(opt);
+                });
+                prefectureSelect.disabled = false;
+                structureSelect.innerHTML = '<option value="">-- Choisir une préfecture d’abord --</option>';
+                structureSelect.disabled = true;
+            });
+    });
+
+    prefectureSelect.addEventListener('change', () => {
+        const prefId = prefectureSelect.value;
+        structureSelect.innerHTML = '<option>Chargement...</option>';
+        structureSelect.disabled = true;
+
+        fetch(`/api/structures/?prefecture=${prefId}`)
+            .then(res => res.json())
+            .then(data => {
+                structureSelect.innerHTML = '<option value="">-- Choisir une structure --</option>';
+                data.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.nom;
+                    structureSelect.appendChild(opt);
+                });
+                structureSelect.disabled = false;
+            });
+    });
+});
+</script>
+{% endblock %}

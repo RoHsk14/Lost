@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Signalements récents{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12">
+
+  <div class="container mx-auto px-6">
+    <h2 class="text-3xl md:text-4xl font-extrabold mb-10 text-center text-gray-800">
+      🕵️‍♂️ Signalements récents
+    </h2>
+
+    {% if signalements %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      {% for s in signalements %}
+      <div class="bg-white rounded-3xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden relative group">
+        
+        <!-- Image -->
+        <div class="relative h-52 overflow-hidden">
+          {% if s.objet.photo %}
+            <img src="{{ s.objet.photo.url }}" alt="{{ s.objet.nom }}" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500">
+          {% else %}
+            <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+              <i class="fas fa-box-open text-5xl text-gray-400"></i>
+            </div>
+          {% endif %}
+
+          <!-- Badge statut -->
+          <div class="absolute top-4 right-4">
+            {% if s.statut == 'trouvé' %}
+              <span class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md animate-pulse shadow-green-300/50">
+                🌿 Trouvé
+              </span>
+            {% elif s.statut == 'non réclamé' %}
+              <span class="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md animate-pulse shadow-yellow-300/50">
+                ⚠️ Non réclamé
+              </span>
+            {% elif s.statut == 'rendu' %}
+              <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md animate-pulse shadow-blue-300/50">
+                💫 Rendu
+              </span>
+            {% else %}
+              <span class="bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md shadow-gray-300/50">
+                {{ s.statut|capfirst }}
+              </span>
+            {% endif %}
+          </div>
+
+          <!-- Badge "Nouveau" si le signalement est récent -->
+          {% if s.date_signalement|timesince < "3 days" %}
+          <div class="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md animate-bounce">
+            🆕 Nouveau
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Contenu -->
+        <div class="p-6 flex flex-col justify-between h-64">
+          <div>
+            <h3 class="text-xl font-bold text-gray-800 mb-1 truncate">{{ s.objet.nom }}</h3>
+            <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+              {{ s.commentaire|default:"Aucun commentaire ajouté." }}
+            </p>
+          </div>
+
+          <div class="text-xs text-gray-500 space-y-1 mb-4">
+            <p><i class="fas fa-user mr-1 text-blue-500"></i> {{ s.utilisateur.username }}</p>
+            <p><i class="fas fa-map-marker-alt mr-1 text-red-500"></i> {{ s.lieu }}</p>
+            <p><i class="far fa-calendar-alt mr-1 text-gray-400"></i> {{ s.date_signalement|date:"d/m/Y" }}</p>
+          </div>
+
+          <!-- Boutons -->
+          <div class="flex justify-between items-center border-t border-gray-100 pt-3">
+            <a href="{% url 'signalement_detail' s.id %}"
+               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-xs font-semibold transition">
+              Voir détails
+            </a>
+            <a href="{% url 'objet_detail' s.objet.id %}"
+               class="text-blue-600 hover:text-blue-700 font-medium text-xs">
+              Détails de l'objet →
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-gray-500 text-center text-lg mt-12">
+      Aucun signalement pour le moment.
+    </p>
+    {% endif %}
+  </div>
+
+</div>
+
+{% endblock %}

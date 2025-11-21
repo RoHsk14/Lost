@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Superadmin{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 flex">
+
+    <!-- Barre latérale -->
+    <aside class="w-64 bg-white shadow-md min-h-screen">
+        <div class="p-6 font-bold text-xl border-b">Superadmin</div>
+        <nav class="p-4">
+            <a href="{% url 'superadmin_dashboard' %}" class="block py-2 px-4 rounded hover:bg-gray-200">Dashboard</a>
+            <a href="{% url 'superadmin_gestion_admins' %}" class="block py-2 px-4 rounded hover:bg-gray-200">Gestion Admins</a>
+            <a href="#" class="block py-2 px-4 rounded hover:bg-gray-200">Paramètres</a>
+            <a href="{% url 'logout' %}" class="block py-2 px-4 rounded hover:bg-gray-200 text-red-500">Déconnexion</a>
+        </nav>
+    </aside>
+
+    <!-- Contenu principal -->
+    <main class="flex-1 p-6">
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>

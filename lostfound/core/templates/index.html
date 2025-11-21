@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TogoRetrouve - Retrouvez vos objets perdus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #6B73FF 0%, #000DFF 50%, #0085FF 100%);
+        }
+        .search-shadow {
+            box-shadow: 0 10px 30px rgba(0, 13, 255, 0.2);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body class="font-sans antialiased text-gray-800">
+    {% if messages %}
+    <div class="fixed top-4 right-4 space-y-2 z-50">
+        {% for message in messages %}
+        <div
+            class="px-4 py-3 rounded shadow-md text-white 
+            {% if message.tags == 'success' %} bg-green-500 
+            {% elif message.tags == 'error' %} bg-red-500 
+            {% elif message.tags == 'warning' %} bg-yellow-500 
+            {% else %} bg-blue-500 {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+
+    <!-- Header -->
+    <header class="gradient-bg text-white">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-search-location text-3xl"></i>
+                    <h1 class="text-2xl font-bold">TogoRetrouve</h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#" class="hover:text-blue-200 font-medium">Accueil</a>
+                    <a href="{% url 'objets_list' %}" class="hover:text-blue-200 font-medium">Objets trouvés</a>
+                    <a href="{% url 'signalement_add' %}" class="hover:text-blue-200 font-medium">Faire un signalement</a>
+                    <a href="#" class="hover:text-blue-200 font-medium">Conseils</a>
+                </nav>
+                
+                <div class="relative flex items-center gap-4">
+                    {% if user.is_authenticated %}
+                      <div class="relative group">
+                        <button class="flex items-center gap-2 bg-blue-800 text-white px-4 py-2 rounded-full hover:bg-blue-900 transition">
+                          <div class="w-8 h-8 bg-white text-blue-800 font-bold flex items-center justify-center rounded-full">
+                            {{ user.username|first|upper }}
+                          </div>
+                          <span class="hidden sm:inline font-medium">{{ user.username }}</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                  
+                        <!-- Menu déroulant -->
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transform scale-95 group-hover:scale-100 transition-all duration-200 origin-top-right z-50">
+                          <div class="py-2">
+                            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">Profil</a>
+                            <a href="{% url 'signalements_list' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">Mes signalements</a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-red-600 hover:bg-gray-100 transition">Déconnexion</a>
+                          </div>
+                        </div>
+                      </div>
+                    {% else %}
+                      <a href="{% url 'login' %}" class="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
+                        Connexion
+                      </a>
+                      <a href="{% url 'register' %}" class="px-5 py-2 rounded-full font-medium bg-blue-800 text-white hover:bg-blue-900 transition">
+                        Inscription
+                      </a>
+                    {% endif %}
+                  </div>
+                  
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="gradient-bg text-white py-16 md:py-24">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 mb-10 md:mb-0">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">Retrouvez vos objets perdus facilement</h2>
+                <p class="text-xl mb-8 text-blue-100">Notre plateforme connecte les personnes qui ont perdu des objets avec celles qui les ont trouvés.</p>
+                <div class="flex flex-col sm:flex-row gap-4" >
+                    <button class="bg-white text-blue-600 px-6 py-3 rounded-full font-bold hover:bg-blue-50 transition flex items-center justify-center">
+                        <a href="#search" class="fas fa-search mr-2"></a> Rechercher un objet
+                    </button>
+                    <button class="border-2 border-white text-white px-6 py-3 rounded-full font-bold hover:bg-white hover:text-blue-600 transition flex items-center justify-center">
+                        <a href="{% url 'signalement_add' %}" class="fas fa-plus mr-2"></a> Signaler une perte
+                    </button>
+                </div>
+            </div>
+            <div class="md:w-1/2 flex justify-center">
+                <img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" alt="Objet perdu" class="w-64 md:w-80 animate-float">
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Section -->
+    <section class="container mx-auto px-4 -mt-10 mb-20" id="search">
+        <div class="bg-white rounded-xl p-6 shadow-xl search-shadow">
+          <h3 class="text-2xl font-bold mb-6 text-center">Rechercher un objet perdu</h3>
+      
+          <form class="grid grid-cols-1 md:grid-cols-4 gap-4" method="get" action="{% url 'index' %}">
+            <div class="md:col-span-2">
+              <label class="block text-gray-700 mb-2">Qu'avez-vous perdu ?</label>
+              <input type="text" name="nom" value="{{ request.GET.nom }}" placeholder="Ex: Portefeuille, téléphone, clés..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-gray-700 mb-2">Lieu</label>
+              <input type="text" name="lieu" value="{{ request.GET.lieu }}" placeholder="Ville ou quartier" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-gray-700 mb-2">Date</label>
+              <input type="date" name="date_perte" value="{{ request.GET.date_perte }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div class="md:col-span-4 flex justify-center">
+              <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition flex items-center">
+                <i class="fas fa-search mr-2"></i> Rechercher
+              </button>
+            </div>
+          </form>
+      
+          <div class="mt-10">
+            {% if recherche_effectuee %}
+              {% if objets_resultats %}
+                <h4 class="text-lg font-semibold mb-4">Résultats de votre recherche :</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {% for objet in objets_resultats %}
+                    <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 border border-gray-100">
+                      {% if objet.photo %}
+                        <img src="{{ objet.photo.url }}" alt="{{ objet.nom }}" class="w-full h-40 object-cover rounded-lg mb-4">
+                      {% endif %}
+                      <h3 class="text-lg font-bold text-gray-800 mb-2">{{ objet.nom }}</h3>
+                      <p class="text-gray-600 text-sm mb-1"><i class="fas fa-map-marker-alt mr-1 text-blue-500"></i> {{ objet.lieu_trouve|default:"Lieu non précisé" }}</p>
+                      <p class="text-gray-600 text-sm mb-3"><i class="far fa-calendar-alt mr-1 text-blue-500"></i> {{ objet.date_creation|date:"d/m/Y" }}</p>
+                      <div class="flex justify-between">
+                        <a href="{% url 'objet_detail' objet.id %}" class="text-blue-600 hover:underline text-sm">Voir détails</a>
+                        <a href="{% url 'signalement_add' %}?objet_id={{ objet.id }}" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-full hover:bg-blue-700">Réclamer</a>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p class="text-center text-gray-500 mt-6 text-lg">Aucun objet trouvé pour votre recherche.</p>
+              {% endif %}
+            {% else %}
+              <h4 class="text-lg font-semibold mb-4 text-gray-700">Objets récemment trouvés :</h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for objet in objets_recents %}
+                  <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 border border-gray-100">
+                    {% if objet.photo %}
+                      <img src="{{ objet.photo.url }}" alt="{{ objet.nom }}" class="w-full h-40 object-cover rounded-lg mb-4">
+                    {% endif %}
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">{{ objet.nom }}</h3>
+                    <p class="text-gray-600 text-sm mb-1"><i class="fas fa-map-marker-alt mr-1 text-blue-500"></i> {{ objet.lieu_trouve|default:"Lieu non précisé" }}</p>
+                    <p class="text-gray-600 text-sm mb-3"><i class="far fa-calendar-alt mr-1 text-blue-500"></i> {{ objet.date_creation|date:"d/m/Y" }}</p>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+      
+    <!-- How it Works -->
+    <section class="bg-gray-50 py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Comment ça marche ?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md text-center card-hover">
+                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-search text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">1. Recherchez</h3>
+                    <p class="text-gray-600">Utilisez notre moteur de recherche pour trouver votre objet perdu parmi les annonces.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md text-center card-hover">
+                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-bell text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">2. Créez une alerte</h3>
+                    <p class="text-gray-600">Si vous ne trouvez pas immédiatement, créez une alerte pour être notifié si votre objet apparaît.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md text-center card-hover">
+                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-handshake text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">3. Récupérez</h3>
+                    <p class="text-gray-600">Contactez la personne qui a trouvé votre objet et organisez la restitution.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Items -->
+    <section class="py-16">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold">Objets récemment trouvés</h2>
+                <a href="{% url 'objets_list' %}" class="text-blue-600 font-medium hover:underline">Voir tout</a>
+            </div>
+    
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for objet in objets %}
+                <div class="bg-white rounded-xl overflow-hidden shadow-md card-hover">
+                    {% if objet.photo %}
+                        <img src="{{ objet.photo.url }}" alt="{{ objet.nom }}" class="h-48 w-full object-cover">
+                    {% else %}
+                        <div class="h-48 bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-box-open text-5xl text-gray-400"></i>
+                        </div>
+                    {% endif %}
+    
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-lg">{{ objet.nom }}</h3>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                Trouvé
+                            </span>
+                        </div>
+                        <p class="text-gray-600 mb-4">{{ objet.description|truncatechars:100 }}</p>
+    
+                        <div class="flex justify-between text-sm text-gray-500">
+                            {% if objet.categorie %}
+                            <span><i class="fas fa-tag mr-1"></i> {{ objet.categorie }}</span>
+                            {% endif %}
+                            <span>
+                                <i class="far fa-calendar-alt mr-1"></i>
+                                {{ objet.date_creation|date:"d/m/Y" }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500">Aucun objet trouvé récemment.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    
+<!-- Recents Signal -->
+<!-- Signalements récents -->
+<section class="py-16 bg-gray-50">
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-bold">Signalements récents</h2>
+            <a href="#" class="text-blue-600 font-medium hover:underline">Voir tout</a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for signalement in signalements %}
+                <div class="bg-white rounded-xl overflow-hidden shadow-md card-hover">
+                    <!-- Image -->
+                    <div class="h-48 bg-gray-200 flex items-center justify-center overflow-hidden">
+                        {% if signalement.objet.photo %}
+                            <img src="{{ signalement.objet.photo.url }}" alt="{{ signalement.objet.nom }}" class="object-cover w-full h-full">
+                        {% else %}
+                            <i class="fas fa-box-open text-5xl text-gray-400"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Contenu -->
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-lg">{{ signalement.objet.nom }}</h3>
+                            <span class="
+                                {% if signalement.statut == 'trouvé' %}
+                                    bg-green-100 text-green-800
+                                {% elif signalement.statut == 'perdu' %}
+                                    bg-red-100 text-red-800
+                                {% else %}
+                                    bg-yellow-100 text-yellow-800
+                                {% endif %}
+                                text-xs px-2 py-1 rounded-full">
+                                {{ signalement.statut|capfirst }}
+                            </span>
+                        </div>
+                        
+                        <p class="text-gray-600 mb-3">{{ signalement.commentaire|truncatewords:15 }}</p>
+                        
+                        <div class="text-sm text-gray-500 mb-2">
+                            <i class="fas fa-map-marker-alt mr-1"></i> {{ signalement.lieu }}
+                        </div>
+                        
+                        <div class="flex justify-between text-sm text-gray-500">
+                            <span><i class="far fa-user mr-1"></i> {{ signalement.utilisateur.username }}</span>
+                            <span><i class="far fa-calendar-alt mr-1"></i> {{ signalement.date_signalement|date:"d/m/Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-span-full text-center text-gray-500">
+                    Aucun signalement pour le moment.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+    <!-- Stats -->
+    <section class="bg-blue-600 text-white py-16">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div>
+                    <div class="text-4xl font-bold mb-2">15K+</div>
+                    <div class="text-blue-100">Objets retrouvés</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold mb-2">82%</div>
+                    <div class="text-blue-100">Taux de restitution</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold mb-2">120+</div>
+                    <div class="text-blue-100">Villes couvertes</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold mb-2">4.8</div>
+                    <div class="text-blue-100">Note moyenne</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Témoignages</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-gray-300 mr-4 overflow-hidden">
+                            <img src="https://randomuser.me/api/portraits/women/43.jpg" alt="Person" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Sophie Martin</h4>
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">"J'ai retrouvé mon portefeuille en moins de 24h grâce à TogoRetrouve. La personne qui l'avait trouvé m'a contactée directement. Un service incroyable !"</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-gray-300 mr-4 overflow-hidden">
+                            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Person" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Thomas Leroy</h4>
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">"Après avoir perdu mes clés de voiture, j'ai créé une alerte sur le site. Une semaine plus tard, quelqu'un les avait déposées à la mairie. Merci !"</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-gray-300 mr-4 overflow-hidden">
+                            <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Person" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Élodie Dupont</h4>
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">"J'ai trouvé un sac à main dans le métro. Grâce à TogoRetrouve, j'ai pu contacter la propriétaire le jour même. Elle était tellement heureuse !"</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-16 gradient-bg text-white">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold mb-6">Vous avez perdu ou trouvé un objet ?</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">Rejoignez notre communauté et augmentez vos chances de retrouver vos objets perdus ou de rendre service à quelqu'un.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button class="bg-white text-blue-600 px-8 py-3 rounded-full font-bold hover:bg-blue-50 transition">
+                    <i class="fas fa-search mr-2"></i> Rechercher un objet
+                </button>
+                <button class="border-2 border-white text-white px-8 py-3 rounded-full font-bold hover:bg-white hover:text-blue-600 transition">
+                    <i class="fas fa-plus mr-2"></i> Signaler un objet trouvé
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fas fa-search-location text-2xl"></i>
+                        <h3 class="text-xl font-bold">TogoRetrouve</h3>
+                    </div>
+                    <p class="text-gray-400">La plateforme qui vous aide à retrouver vos objets perdus et à rendre service à la communauté.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-4">Navigation</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Accueil</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Objets trouvés</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Signaler une perte</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Conseils</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-4">Légal</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Conditions d'utilisation</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Politique de confidentialité</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Mentions légales</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">FAQ</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-4">Contact</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-2 text-gray-400"></i>
+                            <span class="text-gray-400">contact@lostandfound.com</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone mr-2 text-gray-400"></i>
+                            <span class="text-gray-400">01 23 45 67 89</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>
+                            <span class="text-gray-400">Lomé, Togo</span>
+                        </li>
+                    </ul>
+                    <div class="flex space-x-4 mt-4">
+                        <a href="#" class="text-gray-400 hover:text-white text-xl"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white text-xl"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white text-xl"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>© 2023 TogoRetrouve. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Simple script for mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.querySelector('.md\\:hidden');
+            // In a real implementation, you would add a click handler to show/hide mobile menu
+            console.log('Mobile menu button:', mobileMenuButton);
+            
+            // You could add more interactive features here
+        });
+    </script>
+    <script>
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.fixed.top-4.right-4 div');
+            alerts.forEach(a => a.remove());
+        }, 3000);
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,53 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Dashboard Admin{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Bienvenue {{ request.user.username }} 👋</h1>
+
+<!-- Section Signalements -->
+<section class="mb-8">
+    <h2 class="text-xl font-semibold mb-2">Signalements de votre zone</h2>
+    <table class="min-w-full bg-white shadow-md rounded mb-4">
+        <thead>
+            <tr class="bg-gray-100">
+                <th class="py-2 px-4">Objet</th>
+                <th class="py-2 px-4">Utilisateur</th>
+                <th class="py-2 px-4">Statut</th>
+                <th class="py-2 px-4">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for signalement in signalements %}
+            <tr class="border-t">
+                <td class="py-2 px-4">{{ signalement.objet.nom }}</td>
+                <td class="py-2 px-4">{{ signalement.utilisateur.username }}</td>
+                <td class="py-2 px-4">{{ signalement.statut }}</td>
+                <td class="py-2 px-4">
+                    {% if signalement.statut != 'Clôturé' %}
+                    <a href="#" class="text-green-600 font-semibold">✅ Clôturer</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="py-2 px-4 text-gray-500 text-center">Aucun signalement dans votre zone</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<!-- Section Objets retrouvés -->
+<section class="mb-8">
+    <h2 class="text-xl font-semibold mb-2">Objets retrouvés</h2>
+    <a href="#" class="text-blue-600 font-semibold mb-2 inline-block">📦 Ajouter un objet retrouvé</a>
+</section>
+
+<!-- Section Messagerie -->
+<section>
+    <h2 class="text-xl font-semibold mb-2">Messagerie</h2>
+    <a href="#" class="text-blue-600 font-semibold mb-2 inline-block">💬 Envoyer un message à un utilisateur</a>
+</section>
+
+{% endblock %}

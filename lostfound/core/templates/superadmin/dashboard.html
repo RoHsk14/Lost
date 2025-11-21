@@ -1,0 +1,70 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Dashboard Superadmin{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Bienvenue {{ request.user.username }} 👋</h1>
+
+<!-- Section Utilisateurs/Admins -->
+<section class="mb-8">
+    <h2 class="text-xl font-semibold mb-2">Admins locaux</h2>
+    <a href="{% url 'superadmin_gestion_admins' %}" class="text-blue-600 font-semibold mb-2 inline-block">🛠️ Gérer les admins</a>
+    <table class="min-w-full bg-white shadow-md rounded mb-4">
+        <thead>
+            <tr class="bg-gray-100">
+                <th class="py-2 px-4">Nom</th>
+                <th class="py-2 px-4">Email</th>
+                <th class="py-2 px-4">Zone</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for admin in utilisateurs %}
+            <tr class="border-t">
+                <td class="py-2 px-4">{{ admin.username }}</td>
+                <td class="py-2 px-4">{{ admin.email }}</td>
+                <td class="py-2 px-4">{{ admin.zone }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="py-2 px-4 text-gray-500 text-center">Aucun admin trouvé</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<!-- Section Signalements -->
+<section>
+    <h2 class="text-xl font-semibold mb-2">Signalements récents</h2>
+    <table class="min-w-full bg-white shadow-md rounded">
+        <thead>
+            <tr class="bg-gray-100">
+                <th class="py-2 px-4">Objet</th>
+                <th class="py-2 px-4">Zone</th>
+                <th class="py-2 px-4">Utilisateur</th>
+                <th class="py-2 px-4">Statut</th>
+                <th class="py-2 px-4">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for signalement in signalements %}
+            <tr class="border-t">
+                <td class="py-2 px-4">{{ signalement.objet.nom }}</td>
+                <td class="py-2 px-4">{{ signalement.zone }}</td>
+                <td class="py-2 px-4">{{ signalement.utilisateur.username }}</td>
+                <td class="py-2 px-4">{{ signalement.statut }}</td>
+                <td class="py-2 px-4">
+                    {% if signalement.statut == 'En attente' %}
+                    <a href="#" class="text-green-600 font-semibold">✅ Valider</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="py-2 px-4 text-gray-500 text-center">Aucun signalement</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

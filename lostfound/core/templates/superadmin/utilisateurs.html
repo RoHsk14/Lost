@@ -1,0 +1,32 @@
+{% extends 'admin_base.html' %}
+{% block title %}Gestion des utilisateurs{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Gestion des administrateurs et agents</h1>
+
+<table class="min-w-full bg-white rounded-xl shadow">
+    <thead class="bg-blue-600 text-white">
+        <tr>
+            <th class="px-6 py-3 text-left">Nom d'utilisateur</th>
+            <th class="px-6 py-3 text-left">Rôle</th>
+            <th class="px-6 py-3 text-left">Téléphone</th>
+            <th class="px-6 py-3 text-left">Actions</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y">
+        {% for user in utilisateurs %}
+        <tr class="hover:bg-gray-50">
+            <td class="px-6 py-3">{{ user.username }}</td>
+            <td class="px-6 py-3">{{ user.get_role_display }}</td>
+            <td class="px-6 py-3">{{ user.telephone }}</td>
+            <td class="px-6 py-3">
+                <a href="#" class="text-green-600 hover:underline">Modifier</a> |
+                <a href="#" class="text-red-600 hover:underline">Supprimer</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center py-4 text-gray-500">Aucun utilisateur trouvé</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
