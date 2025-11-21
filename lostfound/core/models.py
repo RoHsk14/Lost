@@ -283,7 +283,7 @@ class Objet(models.Model):
         Returns:
             bool: True si le changement a réussi
         """
-        etats_valides = dict(self.ETAT_CHOICES).keys()
+        etats_valides = {choice[0] for choice in self.ETAT_CHOICES}
         if nouvel_etat not in etats_valides:
             raise ValidationError(f"État invalide: {nouvel_etat}")
         
@@ -321,9 +321,8 @@ class Objet(models.Model):
         super().clean()
         if self.datePerte and self.datePerte > timezone.now():
             raise ValidationError("La date de perte ne peut pas être dans le futur.")
-        if not self.lieuPerte and not hasattr(self, '_skip_lieu_validation'):
-            # Permet la validation pour les anciens objets sans lieuPerte
-            pass
+        # Note: lieuPerte est optionnel (null=True, blank=True) pour compatibilité
+        # avec les anciens objets qui peuvent ne pas avoir de localisation définie
 
 
 # ============================================================================
@@ -484,8 +483,8 @@ class Reclamation(models.Model):
         return (
             self.statut == 'EN_VERIFICATION' and
             self.objet.peut_etre_reclame() and
-            self.justificatif and
-            self.description_justificative
+            bool(self.description_justificative)
+            # justificatif est optionnel mais la description est requise
         )
     
     def clean(self):
