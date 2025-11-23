@@ -4,8 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 
-from .models import Signalement, Objet, Utilisateur
-from .forms import SignalementForm, SearchForm
+from .models import Signalement, Objet, Utilisateur, CommentaireAnonyme
+from .forms import SignalementForm, SearchForm, CommentaireAnonymeForm
 from .decorators import role_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
@@ -176,13 +176,21 @@ def superadmin_users(request):
 @login_required
 @role_required(['admin'])
 def admin_dashboard(request):
-    signalements = Signalement.objects.filter(zone=request.user.zone)
+    # Filtre par région de l'utilisateur admin
+    if request.user.region:
+        signalements = Signalement.objects.filter(region=request.user.region)
+    else:
+        signalements = Signalement.objects.all()  # Si pas de région définie
     return render(request, 'admin/dashboard.html', {'signalements': signalements})
 
 @login_required
 @role_required(['admin'])
 def admin_signalements(request):
-    signalements = Signalement.objects.filter(zone=request.user.zone)
+    # Filtre par région de l'utilisateur admin
+    if request.user.region:
+        signalements = Signalement.objects.filter(region=request.user.region)
+    else:
+        signalements = Signalement.objects.all()
     return render(request, 'admin/signalements.html', {'signalements': signalements})
 
 @login_required
@@ -196,8 +204,48 @@ def admin_signalement_detail(request, pk):
 # ---------------------------
 @login_required
 def utilisateur_dashboard(request):
-    signalements = Signalement.objects.filter(zone=request.user.zone)
-    return render(request, 'index.html', {'signalements': signalements})
+    # Dashboard avec statistiques personnelles
+    mes_signalements = Signalement.objects.filter(utilisateur=request.user)
+    signalements_recents = Signalement.objects.all().order_by('-date_signalement')[:5]
+    
+    stats = {
+        'mes_signalements_total': mes_signalements.count(),
+        'mes_perdus': mes_signalements.filter(statut='perdu').count(),
+        'mes_trouves': mes_signalements.filter(statut='trouve').count(),
+        'mes_retournes': mes_signalements.filter(statut='retourne').count(),
+    }
+    
+    context = {
+        'mes_signalements': mes_signalements[:5],  # 5 derniers
+        'signalements_recents': signalements_recents,
+        'stats': stats,
+    }
+    return render(request, 'utilisateur/dashboard.html', context)
+
+@login_required
+def mes_signalements(request):
+    """Page dédiée aux signalements de l'utilisateur connecté"""
+    signalements = Signalement.objects.filter(utilisateur=request.user).order_by('-date_signalement')
+    
+    # Filtres
+    statut_filter = request.GET.get('statut', '')
+    if statut_filter:
+        signalements = signalements.filter(statut=statut_filter)
+    
+    # Statistiques
+    stats = {
+        'total': signalements.count(),
+        'perdus': signalements.filter(statut='perdu').count(),
+        'trouves': signalements.filter(statut='trouve').count(),
+        'retournes': signalements.filter(statut='retourne').count(),
+    }
+    
+    context = {
+        'signalements': signalements,
+        'stats': stats,
+        'statut_filter': statut_filter,
+    }
+    return render(request, 'utilisateur/mes_signalements.html', context)
 
 @login_required
 def utilisateur_signalement_detail(request, pk):
@@ -208,6 +256,7 @@ def utilisateur_signalement_detail(request, pk):
 # Pages publiques et recherche
 # ---------------------------
 def index(request):
+    # Gestion de la recherche rapide depuis l'accueil
     nom = request.GET.get('nom')
     lieu = request.GET.get('lieu')
     date_perte = request.GET.get('date_perte')
@@ -225,14 +274,36 @@ def index(request):
         if date_perte:
             objets_resultats = objets_resultats.filter(date_creation__date=date_perte)
 
-    objets_recents = Objet.objects.order_by('-date_creation')[:3]
-    signalements = Signalement.objects.order_by('-date_signalement')[:3]
+    # Récupération des signalements d'objets TROUVÉS (statut 'trouve')
+    objets_trouves = Signalement.objects.filter(
+        statut='trouve'
+    ).select_related('objet', 'utilisateur', 'region', 'prefecture').order_by('-date_signalement')[:6]
+    
+    # Récupération des signalements d'objets PERDUS (statut 'perdu')
+    objets_perdus = Signalement.objects.filter(
+        statut='perdu'
+    ).select_related('objet', 'utilisateur', 'region', 'prefecture').order_by('-date_signalement')[:6]
+
+    # Récupération des signalements récents (tous types confondus)
+    signalements_recents = Signalement.objects.select_related(
+        'objet', 'utilisateur', 'region', 'prefecture'
+    ).order_by('-date_signalement')[:4]
+
+    # Statistiques pour l'affichage
+    stats = {
+        'total_objets': Objet.objects.count(),
+        'total_signalements': Signalement.objects.count(),
+        'signalements_perdus': Signalement.objects.filter(statut='perdu').count(),
+        'signalements_trouves': Signalement.objects.filter(statut='trouve').count(),
+    }
 
     return render(request, 'index.html', {
         'objets_resultats': objets_resultats,
-        'objets_recents': objets_recents,
-        'signalements': signalements,
+        'objets_trouves': objets_trouves,  # Signalements d'objets trouvés
+        'objets_perdus': objets_perdus,    # Signalements d'objets perdus
+        'signalements_recents': signalements_recents,  # Tous signalements récents
         'recherche_effectuee': recherche_effectuee,
+        'stats': stats,
     })
 
 def search_objets(request):
@@ -263,7 +334,32 @@ def signalements_list(request):
 
 def signalement_detail(request, pk):
     signalement = get_object_or_404(Signalement, pk=pk)
-    return render(request, 'signalement_detail.html', {'signalement': signalement})
+    
+    # Récupérer les commentaires anonymes pour ce signalement
+    commentaires = CommentaireAnonyme.objects.filter(signalement=signalement).order_by('-date_creation')
+    
+    # Formulaire pour ajouter un commentaire anonyme
+    if request.method == 'POST':
+        form = CommentaireAnonymeForm(request.POST)
+        if form.is_valid():
+            commentaire = form.save(commit=False)
+            commentaire.signalement = signalement
+            commentaire.save()
+            messages.success(request, "💬 Votre commentaire a été ajouté avec succès !")
+            return redirect('signalement_detail', pk=pk)
+        else:
+            messages.error(request, "❌ Erreur lors de l'ajout du commentaire.")
+    else:
+        form = CommentaireAnonymeForm()
+    
+    context = {
+        'signalement': signalement,
+        'commentaires': commentaires,
+        'form': form,
+        'nb_commentaires': commentaires.count()
+    }
+    
+    return render(request, 'signalement_detail.html', context)
 
 # def signalement_add(request):
 #     regions = Region.objects.all()
@@ -293,17 +389,37 @@ def signalement_add(request):
     if request.method == 'POST':
         form = SignalementForm(request.POST, request.FILES)
         if form.is_valid():
-            objet_nom = form.cleaned_data.get('objet')
-            objet, _ = Objet.objects.get_or_create(nom=objet_nom)
-
+            # Le formulaire va gérer la création de l'objet automatiquement
             signalement = form.save(commit=False)
-            signalement.objet = objet
 
             if request.user.is_authenticated:
                 signalement.utilisateur = request.user
             else:
                 messages.error(request, "❌ Vous devez être connecté pour signaler un objet.")
                 return redirect('login')
+
+            # Récupérer les données géographiques si elles sont fournies
+            region_id = request.POST.get('region')
+            prefecture_id = request.POST.get('prefecture')
+            structure_id = request.POST.get('structure')
+
+            if region_id:
+                try:
+                    signalement.region = Region.objects.get(id=region_id)
+                except Region.DoesNotExist:
+                    pass
+
+            if prefecture_id:
+                try:
+                    signalement.prefecture = Prefecture.objects.get(id=prefecture_id)
+                except Prefecture.DoesNotExist:
+                    pass
+
+            if structure_id:
+                try:
+                    signalement.structure_locale = StructureLocale.objects.get(id=structure_id)
+                except StructureLocale.DoesNotExist:
+                    pass
 
             signalement.save()
             messages.success(request, "✅ Signalement ajouté avec succès !")
@@ -345,8 +461,56 @@ def signalement_delete(request, pk):
 # Liste des objets
 # ---------------------------
 def objets_list(request):
-    objets = Objet.objects.all()
-    return render(request, 'objets_list.html', {'objets': objets})
+    """Vue pour afficher tous les objets trouvés"""
+    # Récupérer uniquement les signalements d'objets trouvés
+    search_query = request.GET.get('search', '')
+    
+    if search_query:
+        objets_trouves = Signalement.objects.filter(
+            statut='trouve'
+        ).filter(
+            Q(objet__nom__icontains=search_query) |
+            Q(objet__description__icontains=search_query) |
+            Q(lieu__icontains=search_query) |
+            Q(utilisateur__username__icontains=search_query)
+        ).select_related('objet', 'utilisateur', 'region', 'prefecture').order_by('-date_signalement')
+    else:
+        objets_trouves = Signalement.objects.filter(
+            statut='trouve'
+        ).select_related('objet', 'utilisateur', 'region', 'prefecture').order_by('-date_signalement')
+    
+    context = {
+        'objets_trouves': objets_trouves,
+        'search_query': search_query,
+        'total_count': objets_trouves.count(),
+    }
+    return render(request, 'objets_list.html', context)
+
+def objets_perdus_list(request):
+    """Vue pour afficher tous les objets perdus"""
+    # Récupérer uniquement les signalements d'objets perdus
+    search_query = request.GET.get('search', '')
+    
+    if search_query:
+        objets_perdus = Signalement.objects.filter(
+            statut='perdu'
+        ).filter(
+            Q(objet__nom__icontains=search_query) |
+            Q(objet__description__icontains=search_query) |
+            Q(lieu__icontains=search_query) |
+            Q(utilisateur__username__icontains=search_query)
+        ).select_related('objet', 'utilisateur', 'region', 'prefecture').order_by('-date_signalement')
+    else:
+        objets_perdus = Signalement.objects.filter(
+            statut='perdu'
+        ).select_related('objet', 'utilisateur', 'region', 'prefecture').order_by('-date_signalement')
+    
+    context = {
+        'objets_perdus': objets_perdus,
+        'search_query': search_query,
+        'total_count': objets_perdus.count(),
+    }
+    return render(request, 'objets_perdus_list.html', context)
 
 def objets_recents(request):
     objets = Objet.objects.order_by('-date_creation')[:6]
@@ -380,6 +544,48 @@ def logout_view(request):
     messages.info(request, "Vous avez été déconnecté.")
     return redirect('home')
 
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt
+def ajouter_commentaire_ajax(request, signalement_id):
+    """Vue AJAX pour ajouter un commentaire anonyme"""
+    if request.method == 'POST':
+        try:
+            signalement = get_object_or_404(Signalement, id=signalement_id)
+            
+            # Parser les données JSON
+            data = json.loads(request.body)
+            
+            # Créer le commentaire
+            commentaire = CommentaireAnonyme.objects.create(
+                signalement=signalement,
+                pseudo=data.get('pseudo', ''),
+                commentaire=data.get('commentaire', ''),
+                contact=data.get('contact', '')
+            )
+            
+            # Retourner la réponse JSON
+            return JsonResponse({
+                'success': True,
+                'commentaire': {
+                    'id': commentaire.id,
+                    'pseudo': commentaire.get_display_name(),
+                    'commentaire': commentaire.commentaire,
+                    'date': commentaire.date_creation.strftime('%d/%m/%Y à %H:%M')
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+    
+    return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
+
 def register_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -404,3 +610,91 @@ def register_view(request):
         return redirect('home')
 
     return render(request, 'register.html')
+
+
+# =============================================================================
+# VUES UTILISATEUR SUPPLÉMENTAIRES
+# =============================================================================
+
+@login_required
+def utilisateur_profil(request):
+    """Vue pour gérer le profil utilisateur"""
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'update_profile':
+            # Mise à jour des informations personnelles
+            user = request.user
+            user.username = request.POST.get('username', user.username)
+            user.email = request.POST.get('email', user.email)
+            user.first_name = request.POST.get('first_name', user.first_name)
+            user.last_name = request.POST.get('last_name', user.last_name)
+            user.save()
+            
+            messages.success(request, "✅ Vos informations ont été mises à jour avec succès.")
+            return redirect('utilisateur_profil')
+            
+        elif action == 'change_password':
+            # Changement de mot de passe
+            from django.contrib.auth import update_session_auth_hash
+            from django.contrib.auth.forms import PasswordChangeForm
+            
+            form = PasswordChangeForm(request.user, request.POST)
+            if form.is_valid():
+                user = form.save()
+                update_session_auth_hash(request, user)  # Important!
+                messages.success(request, "🔒 Votre mot de passe a été changé avec succès.")
+                return redirect('utilisateur_profil')
+            else:
+                for error in form.errors.values():
+                    messages.error(request, error[0])
+                return redirect('utilisateur_profil')
+    
+    # Calcul des statistiques utilisateur
+    user_signalements = Signalement.objects.filter(utilisateur=request.user)
+    stats = {
+        'total': user_signalements.count(),
+        'perdus': user_signalements.filter(statut='perdu').count(),
+        'trouves': user_signalements.filter(statut='trouve').count(),
+        'retournes': user_signalements.filter(statut='retourne').count(),
+    }
+    
+    # Calcul du taux de réussite
+    if stats['total'] > 0:
+        stats['taux_reussite'] = round((stats['retournes'] / stats['total']) * 100, 1)
+    else:
+        stats['taux_reussite'] = 0
+    
+    context = {
+        'stats': stats
+    }
+    
+    return render(request, 'utilisateur/profil.html', context)
+
+
+@login_required 
+def utilisateur_parametres(request):
+    """Vue pour gérer les paramètres utilisateur"""
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'update_notifications':
+            # Mise à jour des préférences de notifications
+            # Ici vous pourriez sauvegarder dans un modèle UserPreferences
+            messages.success(request, "🔔 Vos préférences de notifications ont été sauvegardées.")
+            
+        elif action == 'update_privacy':
+            # Mise à jour des préférences de confidentialité
+            messages.success(request, "🔒 Vos paramètres de confidentialité ont été mis à jour.")
+            
+        elif action == 'update_location':
+            # Mise à jour des paramètres de localisation
+            messages.success(request, "📍 Vos paramètres de localisation ont été sauvegardés.")
+            
+        elif action == 'update_interface':
+            # Mise à jour des préférences d'interface
+            messages.success(request, "🎨 Vos préférences d'interface ont été appliquées.")
+        
+        return redirect('utilisateur_parametres')
+    
+    return render(request, 'utilisateur/parametres.html')

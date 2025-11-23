@@ -109,10 +109,19 @@ path('api/regions/', api_views.api_regions, name='api_regions'),
 
     # Utilisateur
     path('utilisateur/dashboard/', views.utilisateur_dashboard, name='utilisateur_dashboard'),
+    path('utilisateur/profil/', views.utilisateur_profil, name='utilisateur_profil'),
+    path('utilisateur/parametres/', views.utilisateur_parametres, name='utilisateur_parametres'),
+    path('utilisateur/mes-signalements/', views.mes_signalements, name='mes_signalements'),
     path('utilisateur/signalement/<int:pk>/', views.utilisateur_signalement_detail, name='utilisateur_signalement_detail'),
-   path('', views.index, name='index'),
-#     path('', views.objets_recents, name='home'),
 
+    # ---------------------------
+    # Pages principales
+    # ---------------------------
+    path('', views.index, name='index'),
+    
+    # ---------------------------
+    # Signalements CRUD
+    # ---------------------------
     path('signalements/', views.signalements_list, name='signalements_list'),
     path('signalement/<int:pk>/', views.signalement_detail, name='signalement_detail'),
     path('signalement/add/', views.signalement_add, name='signalement_add'),
@@ -138,11 +147,15 @@ path('api/regions/', api_views.api_regions, name='api_regions'),
     path('signalement/add/', views.signalement_add, name='signalement_add'),
     path('signalement/<int:pk>/modifier/', views.signalement_edit, name='signalement_edit'),
     path('signalement/<int:pk>/supprimer/', views.signalement_delete, name='signalement_delete'),
+    
+    # API pour commentaires anonymes
+    path('api/signalement/<int:signalement_id>/commentaire/', views.ajouter_commentaire_ajax, name='ajouter_commentaire_ajax'),
 
     # ---------------------------
     # Objets
     # ---------------------------
     path('objets/', views.objets_list, name='objets_list'),
+    path('objets-perdus/', views.objets_perdus_list, name='objets_perdus_list'),
     path('objets/<int:pk>/', views.objet_detail, name='objet_detail'),
 
     # ---------------------------

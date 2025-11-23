@@ -20,7 +20,7 @@ def run():
             email='admin1@test.com',
             password='admin123',
             role='admin',
-            zone='Zone A'
+            # zone='Zone A'  # Commenté car le modèle utilise maintenant region/prefecture
         )
 
     if not User.objects.filter(username='admin2').exists():

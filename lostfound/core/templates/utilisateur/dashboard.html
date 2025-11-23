@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mon Tableau de Bord{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                👋 Bonjour, {{ user.username }}
+            </h1>
+            <p class="text-gray-600 text-lg">
+                Voici un aperçu de vos activités récentes
+            </p>
+        </div>
+
+        <!-- Statistiques Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 transform hover:scale-105 transition-transform">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        📋
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.mes_signalements_total }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500 transform hover:scale-105 transition-transform">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 text-red-600">
+                        😞
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Perdus</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.mes_perdus }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 transform hover:scale-105 transition-transform">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        🎉
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Trouvés</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.mes_trouves }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 transform hover:scale-105 transition-transform">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        ✅
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Retournés</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.mes_retournes }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">🚀 Actions rapides</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="{% url 'signalement_add' %}" 
+                   class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg text-center hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105">
+                    <div class="text-2xl mb-2">➕</div>
+                    <div class="font-semibold">Nouveau signalement</div>
+                </a>
+                
+                <a href="{% url 'mes_signalements' %}" 
+                   class="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg text-center hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105">
+                    <div class="text-2xl mb-2">📋</div>
+                    <div class="font-semibold">Mes signalements</div>
+                </a>
+                
+                <a href="{% url 'utilisateur_profil' %}" 
+                   class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg text-center hover:from-purple-600 hover:to-purple-700 transition-all transform hover:scale-105">
+                    <div class="text-2xl mb-2">👤</div>
+                    <div class="font-semibold">Mon profil</div>
+                </a>
+                
+                <a href="{% url 'search_objets' %}" 
+                   class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-lg text-center hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105">
+                    <div class="text-2xl mb-2">🔍</div>
+                    <div class="font-semibold">Rechercher</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Section d'accès rapide aux paramètres -->
+        <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-6 mb-8 border border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">⚙️ Gérer mon compte</h3>
+                    <p class="text-gray-600">Accédez à vos informations personnelles et préférences</p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{% url 'utilisateur_profil' %}" 
+                       class="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition border border-blue-200">
+                        👤 Profil
+                    </a>
+                    <a href="{% url 'utilisateur_parametres' %}" 
+                       class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                        ⚙️ Paramètres
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mes derniers signalements -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">📋 Mes derniers signalements</h2>
+                    <a href="{% url 'mes_signalements' %}" 
+                       class="text-blue-600 hover:text-blue-800 font-medium">
+                        Voir tout →
+                    </a>
+                </div>
+                
+                {% if mes_signalements %}
+                    <div class="space-y-4">
+                        {% for signalement in mes_signalements %}
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-gray-800">{{ signalement.objet.nom }}</h3>
+                                    <p class="text-gray-600 text-sm mt-1">{{ signalement.lieu }}</p>
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        {{ signalement.date_signalement|date:"d/m/Y H:i" }}
+                                    </p>
+                                </div>
+                                <div class="ml-4">
+                                    {% if signalement.statut == 'perdu' %}
+                                        <span class="px-3 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                                            😞 Perdu
+                                        </span>
+                                    {% elif signalement.statut == 'trouve' %}
+                                        <span class="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                            🎉 Trouvé
+                                        </span>
+                                    {% else %}
+                                        <span class="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                                            ✅ Retourné
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <div class="text-6xl mb-4">📭</div>
+                        <p class="text-gray-600">Aucun signalement pour le moment</p>
+                        <a href="{% url 'signalement_add' %}" 
+                           class="inline-block mt-4 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                            Créer mon premier signalement
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Signalements récents de la communauté -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">🌟 Activité récente</h2>
+                
+                {% if signalements_recents %}
+                    <div class="space-y-4">
+                        {% for signalement in signalements_recents %}
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-gray-800">{{ signalement.objet.nom }}</h3>
+                                    <p class="text-gray-600 text-sm mt-1">{{ signalement.lieu }}</p>
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        Par {{ signalement.utilisateur.username|default:"Anonyme" }} • 
+                                        {{ signalement.date_signalement|date:"d/m/Y" }}
+                                    </p>
+                                </div>
+                                <div class="ml-4">
+                                    {% if signalement.statut == 'perdu' %}
+                                        <span class="px-3 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                                            😞 Perdu
+                                        </span>
+                                    {% elif signalement.statut == 'trouve' %}
+                                        <span class="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                            🎉 Trouvé
+                                        </span>
+                                    {% else %}
+                                        <span class="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                                            ✅ Retourné
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <div class="text-6xl mb-4">🌙</div>
+                        <p class="text-gray-600">Aucune activité récente</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

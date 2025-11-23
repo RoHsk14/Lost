@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mes Signalements{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                        📋 Mes Signalements
+                    </h1>
+                    <p class="text-gray-600">
+                        Gérez tous vos signalements d'objets perdus et trouvés
+                    </p>
+                </div>
+                <a href="{% url 'signalement_add' %}" 
+                   class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg">
+                    ➕ Nouveau signalement
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600 text-2xl">
+                        📊
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ stats.total }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 text-red-600 text-2xl">
+                        😞
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Perdus</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ stats.perdus }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600 text-2xl">
+                        🎉
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Trouvés</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ stats.trouves }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600 text-2xl">
+                        ✅
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Retournés</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ stats.retournes }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">🔍 Filtres</h2>
+            <form method="GET" class="flex flex-wrap items-center gap-4">
+                <div class="flex items-center space-x-2">
+                    <label class="text-gray-700 font-medium">Statut:</label>
+                    <select name="statut" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Tous</option>
+                        <option value="perdu" {% if statut_filter == 'perdu' %}selected{% endif %}>😞 Perdus</option>
+                        <option value="trouve" {% if statut_filter == 'trouve' %}selected{% endif %}>🎉 Trouvés</option>
+                        <option value="retourne" {% if statut_filter == 'retourne' %}selected{% endif %}>✅ Retournés</option>
+                    </select>
+                </div>
+                <button type="submit" 
+                        class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                    Filtrer
+                </button>
+                <a href="{% url 'mes_signalements' %}" 
+                   class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                    Réinitialiser
+                </a>
+            </form>
+        </div>
+
+        <!-- Liste des signalements -->
+        <div class="bg-white rounded-xl shadow-lg">
+            {% if signalements %}
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        📋 {{ signalements.count }} signalement{{ signalements.count|pluralize }}
+                    </h2>
+                </div>
+                
+                <div class="divide-y divide-gray-200">
+                    {% for signalement in signalements %}
+                    <div class="p-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-4 mb-4">
+                                    {% if signalement.photo %}
+                                        <img src="{{ signalement.photo.url }}" alt="{{ signalement.objet.nom }}" 
+                                             class="w-16 h-16 object-cover rounded-lg border border-gray-200 shadow-sm">
+                                    {% elif signalement.objet.photo %}
+                                        <img src="{{ signalement.objet.photo.url }}" alt="{{ signalement.objet.nom }}" 
+                                             class="w-16 h-16 object-cover rounded-lg border border-gray-200 shadow-sm">
+                                    {% else %}
+                                        <div class="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-2xl">
+                                            {% if signalement.objet.categorie == 'electronique' %}📱
+                                            {% elif signalement.objet.categorie == 'accessoire' %}👜
+                                            {% elif signalement.objet.categorie == 'cles' %}🔑
+                                            {% elif signalement.objet.categorie == 'vetement' %}👕
+                                            {% elif signalement.objet.categorie == 'document' %}📄
+                                            {% elif signalement.objet.categorie == 'sport' %}⚽
+                                            {% else %}📦{% endif %}
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="flex-1">
+                                        <h3 class="text-xl font-bold text-gray-800 mb-1">
+                                            {{ signalement.objet.nom }}
+                                        </h3>
+                                        <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                            <span class="flex items-center">
+                                                📍 {{ signalement.lieu|default:"Lieu non spécifié" }}
+                                            </span>
+                                            <span class="flex items-center">
+                                                🗓️ {{ signalement.date_signalement|date:"d/m/Y à H:i" }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% if signalement.commentaire %}
+                                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                    <p class="text-gray-700">{{ signalement.commentaire }}</p>
+                                </div>
+                                {% endif %}
+
+                                <div class="flex items-center space-x-4">
+                                    {% if signalement.region %}
+                                        <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                                            🗺️ {{ signalement.region.nom }}
+                                        </span>
+                                    {% endif %}
+                                    {% if signalement.prefecture %}
+                                        <span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-sm rounded-full">
+                                            🏢 {{ signalement.prefecture.nom }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="ml-6 flex flex-col items-end space-y-3">
+                                <!-- Statut -->
+                                {% if signalement.statut == 'perdu' %}
+                                    <span class="px-4 py-2 bg-red-100 text-red-800 font-semibold rounded-full">
+                                        😞 Perdu
+                                    </span>
+                                {% elif signalement.statut == 'trouve' %}
+                                    <span class="px-4 py-2 bg-green-100 text-green-800 font-semibold rounded-full">
+                                        🎉 Trouvé
+                                    </span>
+                                {% else %}
+                                    <span class="px-4 py-2 bg-purple-100 text-purple-800 font-semibold rounded-full">
+                                        ✅ Retourné
+                                    </span>
+                                {% endif %}
+                                
+                                <!-- Actions -->
+                                <div class="flex space-x-2">
+                                    <a href="{% url 'signalement_detail' signalement.pk %}" 
+                                       class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                                        👁️ Voir
+                                    </a>
+                                    <a href="{% url 'signalement_edit' signalement.pk %}" 
+                                       class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors text-sm">
+                                        ✏️ Modifier
+                                    </a>
+                                    <a href="{% url 'signalement_delete' signalement.pk %}" 
+                                       class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm"
+                                       onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce signalement ?')">
+                                        🗑️ Supprimer
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="p-12 text-center">
+                    <div class="text-8xl mb-6">📭</div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Aucun signalement trouvé</h2>
+                    {% if statut_filter %}
+                        <p class="text-gray-600 mb-6">Aucun signalement avec le statut "{{ statut_filter }}"</p>
+                        <a href="{% url 'mes_signalements' %}" 
+                           class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors mr-4">
+                            Voir tous mes signalements
+                        </a>
+                    {% else %}
+                        <p class="text-gray-600 mb-6">Vous n'avez encore aucun signalement</p>
+                    {% endif %}
+                    <a href="{% url 'signalement_add' %}" 
+                       class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+                        ➕ Créer mon premier signalement
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

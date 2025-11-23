@@ -53,10 +53,11 @@
                     <h1 class="text-2xl font-bold">TogoRetrouve</h1>
                 </div>
                 <nav class="hidden md:flex space-x-8">
-                    <a href="#" class="hover:text-blue-200 font-medium">Accueil</a>
+                    <a href="{% url 'index' %}" class="hover:text-blue-200 font-medium">Accueil</a>
                     <a href="{% url 'objets_list' %}" class="hover:text-blue-200 font-medium">Objets trouvés</a>
-                    <a href="{% url 'signalement_add' %}" class="hover:text-blue-200 font-medium">Faire un signalement</a>
-                    <a href="#" class="hover:text-blue-200 font-medium">Conseils</a>
+                    <a href="{% url 'objets_perdus_list' %}" class="hover:text-blue-200 font-medium">Objets perdus</a>
+                    <a href="{% url 'signalements_list' %}" class="hover:text-blue-200 font-medium">Signalements</a>
+                    <a href="{% url 'signalement_add' %}" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full font-medium transition">Signaler</a>
                 </nav>
                 
                 <div class="relative flex items-center gap-4">
@@ -73,11 +74,34 @@
                         </button>
                   
                         <!-- Menu déroulant -->
-                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transform scale-95 group-hover:scale-100 transition-all duration-200 origin-top-right z-50">
+                        <div class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transform scale-95 group-hover:scale-100 transition-all duration-200 origin-top-right z-50">
                           <div class="py-2">
-                            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">Profil</a>
-                            <a href="{% url 'signalements_list' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">Mes signalements</a>
-                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-red-600 hover:bg-gray-100 transition">Déconnexion</a>
+                            <div class="px-4 py-2 border-b border-gray-100">
+                              <p class="text-sm font-medium text-gray-700">{{ user.get_full_name|default:user.username }}</p>
+                              <p class="text-xs text-gray-500">{{ user.email }}</p>
+                            </div>
+                            <a href="{% url 'utilisateur_dashboard' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                              <i class="fas fa-tachometer-alt mr-3 text-blue-500"></i>
+                              Tableau de bord
+                            </a>
+                            <a href="{% url 'utilisateur_profil' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                              <i class="fas fa-user mr-3 text-green-500"></i>
+                              Mon profil
+                            </a>
+                            <a href="{% url 'mes_signalements' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                              <i class="fas fa-list-alt mr-3 text-purple-500"></i>
+                              Mes signalements
+                            </a>
+                            <a href="{% url 'utilisateur_parametres' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                              <i class="fas fa-cog mr-3 text-gray-500"></i>
+                              Paramètres
+                            </a>
+                            <div class="border-t border-gray-100 mt-1">
+                              <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100 transition text-sm">
+                                <i class="fas fa-sign-out-alt mr-3"></i>
+                                Déconnexion
+                              </a>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -89,29 +113,53 @@
                         Inscription
                       </a>
                     {% endif %}
+                    
+                    <!-- Menu mobile hamburger -->
+                    <button class="md:hidden p-2 rounded-lg hover:bg-blue-800 transition" onclick="toggleMobileMenu()">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
                   </div>
-                  
+            </div>
+            
+            <!-- Menu mobile -->
+            <div id="mobileMenu" class="hidden md:hidden mt-4 pb-4 border-t border-blue-600">
+                <div class="space-y-2 pt-4">
+                    <a href="{% url 'index' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Accueil</a>
+                    <a href="{% url 'objets_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Objets trouvés</a>
+                    <a href="{% url 'objets_perdus_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Objets perdus</a>
+                    <a href="{% url 'signalements_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Signalements</a>
+                    <a href="{% url 'signalement_add' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Faire un signalement</a>
+                    {% if user.is_authenticated %}
+                        <div class="border-t border-blue-600 pt-2 mt-2">
+                            <a href="{% url 'utilisateur_dashboard' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Dashboard</a>
+                            <a href="{% url 'mes_signalements' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Mes signalements</a>
+                            <a href="{% url 'utilisateur_profil' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Profil</a>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </header>
 
     <!-- Hero Section -->
     <section class="gradient-bg text-white py-16 md:py-24">
-        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
-            <div class="md:w-1/2 mb-10 md:mb-0">
-                <h2 class="text-4xl md:text-5xl font-bold mb-6">Retrouvez vos objets perdus facilement</h2>
-                <p class="text-xl mb-8 text-blue-100">Notre plateforme connecte les personnes qui ont perdu des objets avec celles qui les ont trouvés.</p>
-                <div class="flex flex-col sm:flex-row gap-4" >
-                    <button class="bg-white text-blue-600 px-6 py-3 rounded-full font-bold hover:bg-blue-50 transition flex items-center justify-center">
-                        <a href="#search" class="fas fa-search mr-2"></a> Rechercher un objet
-                    </button>
-                    <button class="border-2 border-white text-white px-6 py-3 rounded-full font-bold hover:bg-white hover:text-blue-600 transition flex items-center justify-center">
-                        <a href="{% url 'signalement_add' %}" class="fas fa-plus mr-2"></a> Signaler une perte
-                    </button>
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 mb-8 md:mb-0 text-center md:text-left">
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">Retrouvez vos objets perdus facilement</h2>
+                <p class="text-lg sm:text-xl mb-6 sm:mb-8 text-blue-100">Notre plateforme connecte les personnes qui ont perdu des objets avec celles qui les ont trouvés.</p>
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center md:justify-start">
+                    <a href="#search" class="bg-white text-blue-600 px-4 sm:px-6 py-2 sm:py-3 rounded-full font-bold hover:bg-blue-50 transition flex items-center justify-center text-sm sm:text-base">
+                        <i class="fas fa-search mr-2"></i> Rechercher un objet
+                    </a>
+                    <a href="{% url 'signalement_add' %}" class="border-2 border-white text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full font-bold hover:bg-white hover:text-blue-600 transition flex items-center justify-center text-sm sm:text-base">
+                        <i class="fas fa-plus mr-2"></i> Signaler une perte
+                    </a>
                 </div>
             </div>
             <div class="md:w-1/2 flex justify-center">
-                <img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" alt="Objet perdu" class="w-64 md:w-80 animate-float">
+                <img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" alt="Objet perdu" class="w-48 sm:w-64 md:w-80 animate-float">
             </div>
         </div>
     </section>
@@ -121,21 +169,21 @@
         <div class="bg-white rounded-xl p-6 shadow-xl search-shadow">
           <h3 class="text-2xl font-bold mb-6 text-center">Rechercher un objet perdu</h3>
       
-          <form class="grid grid-cols-1 md:grid-cols-4 gap-4" method="get" action="{% url 'index' %}">
-            <div class="md:col-span-2">
-              <label class="block text-gray-700 mb-2">Qu'avez-vous perdu ?</label>
-              <input type="text" name="nom" value="{{ request.GET.nom }}" placeholder="Ex: Portefeuille, téléphone, clés..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <form class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" method="get" action="{% url 'index' %}">
+            <div class="sm:col-span-2">
+              <label class="block text-gray-700 mb-2 text-sm sm:text-base">Qu'avez-vous perdu ?</label>
+              <input type="text" name="nom" value="{{ request.GET.nom }}" placeholder="Ex: Portefeuille, téléphone, clés..." class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
             </div>
             <div>
-              <label class="block text-gray-700 mb-2">Lieu</label>
-              <input type="text" name="lieu" value="{{ request.GET.lieu }}" placeholder="Ville ou quartier" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <label class="block text-gray-700 mb-2 text-sm sm:text-base">Lieu</label>
+              <input type="text" name="lieu" value="{{ request.GET.lieu }}" placeholder="Ville ou quartier" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
             </div>
             <div>
-              <label class="block text-gray-700 mb-2">Date</label>
-              <input type="date" name="date_perte" value="{{ request.GET.date_perte }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <label class="block text-gray-700 mb-2 text-sm sm:text-base">Date</label>
+              <input type="date" name="date_perte" value="{{ request.GET.date_perte }}" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
             </div>
-            <div class="md:col-span-4 flex justify-center">
-              <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition flex items-center">
+            <div class="sm:col-span-2 lg:col-span-4 flex justify-center">
+              <button type="submit" class="bg-blue-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-bold hover:bg-blue-700 transition flex items-center text-sm sm:text-base">
                 <i class="fas fa-search mr-2"></i> Rechercher
               </button>
             </div>
@@ -144,40 +192,164 @@
           <div class="mt-10">
             {% if recherche_effectuee %}
               {% if objets_resultats %}
-                <h4 class="text-lg font-semibold mb-4">Résultats de votre recherche :</h4>
+                <h4 class="text-lg font-semibold mb-4 flex items-center">
+                  <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                  Résultats de votre recherche ({{ objets_resultats.count }}) :
+                </h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {% for objet in objets_resultats %}
-                    <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 border border-gray-100">
+                    <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-6 border border-gray-100">
                       {% if objet.photo %}
                         <img src="{{ objet.photo.url }}" alt="{{ objet.nom }}" class="w-full h-40 object-cover rounded-lg mb-4">
+                      {% else %}
+                        <div class="w-full h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-4 flex items-center justify-center">
+                          {% if objet.categorie == 'electronique' %}
+                            <div class="text-4xl">📱</div>
+                          {% elif objet.categorie == 'accessoire' %}
+                            <div class="text-4xl">👜</div>
+                          {% elif objet.categorie == 'cles' %}
+                            <div class="text-4xl">🔑</div>
+                          {% elif objet.categorie == 'vetement' %}
+                            <div class="text-4xl">👕</div>
+                          {% elif objet.categorie == 'document' %}
+                            <div class="text-4xl">📄</div>
+                          {% elif objet.categorie == 'sport' %}
+                            <div class="text-4xl">⚽</div>
+                          {% else %}
+                            <div class="text-4xl">📦</div>
+                          {% endif %}
+                        </div>
                       {% endif %}
+                      
                       <h3 class="text-lg font-bold text-gray-800 mb-2">{{ objet.nom }}</h3>
-                      <p class="text-gray-600 text-sm mb-1"><i class="fas fa-map-marker-alt mr-1 text-blue-500"></i> {{ objet.lieu_trouve|default:"Lieu non précisé" }}</p>
-                      <p class="text-gray-600 text-sm mb-3"><i class="far fa-calendar-alt mr-1 text-blue-500"></i> {{ objet.date_creation|date:"d/m/Y" }}</p>
-                      <div class="flex justify-between">
-                        <a href="{% url 'objet_detail' objet.id %}" class="text-blue-600 hover:underline text-sm">Voir détails</a>
-                        <a href="{% url 'signalement_add' %}?objet_id={{ objet.id }}" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-full hover:bg-blue-700">Réclamer</a>
+                      
+                      {% if objet.description %}
+                      <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ objet.description }}</p>
+                      {% endif %}
+                      
+                      <div class="space-y-2 mb-4">
+                        {% if objet.lieu_trouve %}
+                        <p class="text-gray-600 text-sm flex items-center">
+                          <i class="fas fa-map-marker-alt mr-2 text-red-500"></i> 
+                          {{ objet.lieu_trouve }}
+                        </p>
+                        {% endif %}
+                        
+                        {% if objet.date_trouve %}
+                        <p class="text-gray-600 text-sm flex items-center">
+                          <i class="far fa-calendar-alt mr-2 text-blue-500"></i> 
+                          Trouvé le {{ objet.date_trouve|date:"d/m/Y" }}
+                        </p>
+                        {% else %}
+                        <p class="text-gray-600 text-sm flex items-center">
+                          <i class="far fa-calendar-alt mr-2 text-blue-500"></i> 
+                          Ajouté le {{ objet.date_creation|date:"d/m/Y" }}
+                        </p>
+                        {% endif %}
+                        
+                        {% if objet.categorie %}
+                        <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                          {% if objet.categorie == 'electronique' %}📱 Électronique
+                          {% elif objet.categorie == 'accessoire' %}👜 Accessoires
+                          {% elif objet.categorie == 'cles' %}🔑 Clés
+                          {% elif objet.categorie == 'vetement' %}👕 Vêtements
+                          {% elif objet.categorie == 'document' %}📄 Documents
+                          {% elif objet.categorie == 'sport' %}⚽ Sport
+                          {% else %}📦 {{ objet.categorie|capfirst }}
+                          {% endif %}
+                        </span>
+                        {% endif %}
+                      </div>
+                      
+                      <div class="flex justify-between items-center">
+                        <a href="{% url 'objet_detail' objet.id %}" class="text-blue-600 hover:underline text-sm font-medium">
+                          👁️ Voir détails
+                        </a>
+                        <a href="{% url 'signalement_add' %}" class="bg-green-500 text-white text-xs px-3 py-2 rounded-full hover:bg-green-600 transition-colors">
+                          🔔 C'est le mien !
+                        </a>
                       </div>
                     </div>
                   {% endfor %}
                 </div>
               {% else %}
-                <p class="text-center text-gray-500 mt-6 text-lg">Aucun objet trouvé pour votre recherche.</p>
+                <div class="text-center py-12 bg-gray-50 rounded-2xl">
+                  <div class="text-6xl mb-4">😔</div>
+                  <h4 class="text-xl font-semibold text-gray-800 mb-2">Aucun résultat trouvé</h4>
+                  <p class="text-gray-600 mb-6">Aucun objet ne correspond à vos critères de recherche.</p>
+                  <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="{% url 'index' %}" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+                      🔄 Nouvelle recherche
+                    </a>
+                    <a href="{% url 'signalement_add' %}" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+                      📝 Signaler mon objet perdu
+                    </a>
+                  </div>
+                </div>
               {% endif %}
             {% else %}
-              <h4 class="text-lg font-semibold mb-4 text-gray-700">Objets récemment trouvés :</h4>
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {% for objet in objets_recents %}
-                  <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-6 border border-gray-100">
+              <div class="text-center mb-6">
+                <h4 class="text-lg font-semibold mb-2 text-gray-700 flex items-center justify-center">
+                  <i class="fas fa-clock text-blue-500 mr-2"></i>
+                  Objets récemment déclarés
+                </h4>
+                <p class="text-gray-600">Voici les derniers objets ajoutés à notre base de données</p>
+              </div>
+              
+              {% if objets %}
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {% for objet in objets|slice:":4" %}
+                  <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 p-4 border border-gray-100">
                     {% if objet.photo %}
-                      <img src="{{ objet.photo.url }}" alt="{{ objet.nom }}" class="w-full h-40 object-cover rounded-lg mb-4">
+                      <img src="{{ objet.photo.url }}" alt="{{ objet.nom }}" class="w-full h-32 object-cover rounded-lg mb-3">
+                    {% else %}
+                      <div class="w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center">
+                        {% if objet.categorie == 'electronique' %}
+                          <div class="text-3xl">📱</div>
+                        {% elif objet.categorie == 'accessoire' %}
+                          <div class="text-3xl">👜</div>
+                        {% elif objet.categorie == 'cles' %}
+                          <div class="text-3xl">🔑</div>
+                        {% elif objet.categorie == 'vetement' %}
+                          <div class="text-3xl">👕</div>
+                        {% elif objet.categorie == 'document' %}
+                          <div class="text-3xl">📄</div>
+                        {% elif objet.categorie == 'sport' %}
+                          <div class="text-3xl">⚽</div>
+                        {% else %}
+                          <div class="text-3xl">📦</div>
+                        {% endif %}
+                      </div>
                     {% endif %}
-                    <h3 class="text-lg font-bold text-gray-800 mb-2">{{ objet.nom }}</h3>
-                    <p class="text-gray-600 text-sm mb-1"><i class="fas fa-map-marker-alt mr-1 text-blue-500"></i> {{ objet.lieu_trouve|default:"Lieu non précisé" }}</p>
-                    <p class="text-gray-600 text-sm mb-3"><i class="far fa-calendar-alt mr-1 text-blue-500"></i> {{ objet.date_creation|date:"d/m/Y" }}</p>
+                    
+                    <h5 class="font-bold text-sm text-gray-800 mb-2 line-clamp-1">{{ objet.nom }}</h5>
+                    
+                    <div class="space-y-1 mb-3">
+                      {% if objet.lieu_trouve %}
+                      <p class="text-gray-600 text-xs flex items-center">
+                        <i class="fas fa-map-marker-alt mr-1 text-red-500"></i> 
+                        {{ objet.lieu_trouve|truncatechars:20 }}
+                      </p>
+                      {% endif %}
+                      
+                      <p class="text-gray-600 text-xs flex items-center">
+                        <i class="far fa-calendar-alt mr-1 text-blue-500"></i> 
+                        {{ objet.date_creation|date:"d/m" }}
+                      </p>
+                    </div>
+                    
+                    <a href="{% url 'objet_detail' objet.id %}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                      Voir → 
+                    </a>
                   </div>
                 {% endfor %}
               </div>
+              {% else %}
+              <div class="text-center py-8 bg-gray-50 rounded-2xl">
+                <div class="text-4xl mb-3">📦</div>
+                <p class="text-gray-600">Aucun objet récent à afficher</p>
+              </div>
+              {% endif %}
             {% endif %}
           </div>
         </div>
@@ -213,129 +385,499 @@
         </div>
     </section>
 
-    <!-- Recent Items -->
-    <section class="py-16">
+    <!-- Objets trouvés récemment -->
+    <section class="py-16 bg-green-50">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-bold">Objets récemment trouvés</h2>
-                <a href="{% url 'objets_list' %}" class="text-blue-600 font-medium hover:underline">Voir tout</a>
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800">😊 Objets trouvés récemment</h2>
+                    <p class="text-gray-600 mt-1">Des objets qui attendent d'être réclamés par leurs propriétaires</p>
+                </div>
+                <a href="{% url 'objets_list' %}" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-all flex items-center">
+                    Tous les objets trouvés
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
             </div>
     
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {% for objet in objets %}
-                <div class="bg-white rounded-xl overflow-hidden shadow-md card-hover">
-                    {% if objet.photo %}
-                        <img src="{{ objet.photo.url }}" alt="{{ objet.nom }}" class="h-48 w-full object-cover">
-                    {% else %}
-                        <div class="h-48 bg-gray-200 flex items-center justify-center">
-                            <i class="fas fa-box-open text-5xl text-gray-400"></i>
-                        </div>
-                    {% endif %}
-    
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-bold text-lg">{{ objet.nom }}</h3>
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                                Trouvé
-                            </span>
-                        </div>
-                        <p class="text-gray-600 mb-4">{{ objet.description|truncatechars:100 }}</p>
-    
-                        <div class="flex justify-between text-sm text-gray-500">
-                            {% if objet.categorie %}
-                            <span><i class="fas fa-tag mr-1"></i> {{ objet.categorie }}</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {% for signalement in objets_trouves %}
+                <div class="group relative bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden border border-gray-100 hover:border-green-200">
+                    
+                    <!-- Badge trouvé moderne -->
+                    <div class="absolute top-3 left-3 z-10">
+                        <span class="bg-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center animate-pulse">
+                            <span class="w-2 h-2 bg-white rounded-full mr-2 animate-ping"></span>
+                            ✨ TROUVÉ
+                        </span>
+                    </div>
+                    
+                    <!-- Image de l'objet avec overlay -->
+                    <div class="h-48 overflow-hidden relative">
+                        {% if signalement.photo %}
+                            <img src="{{ signalement.photo.url }}" alt="{{ signalement.objet.nom }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        {% elif signalement.objet.photo %}
+                            <img src="{{ signalement.objet.photo.url }}" alt="{{ signalement.objet.nom }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        {% else %}
+                            <div class="w-full h-full bg-gradient-to-br from-emerald-100 via-green-50 to-emerald-200 flex items-center justify-center relative overflow-hidden">
+                                <!-- Pattern de fond décoratif -->
+                                <div class="absolute inset-0 opacity-10">
+                                    <div class="absolute top-0 left-0 w-full h-full" 
+                                         style="background-image: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(0,0,0,.1) 20px, rgba(0,0,0,.1) 40px);"></div>
+                                </div>
+                                
+                                <div class="text-center transform group-hover:scale-110 transition-transform duration-300">
+                                    {% if signalement.objet.categorie == 'electronique' %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">📱</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Électronique</p>
+                                        </div>
+                                    {% elif signalement.objet.categorie == 'accessoire' %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">👜</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Accessoire</p>
+                                        </div>
+                                    {% elif signalement.objet.categorie == 'cles' %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">🔑</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Clés</p>
+                                        </div>
+                                    {% elif signalement.objet.categorie == 'vetement' %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">👕</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Vêtement</p>
+                                        </div>
+                                    {% elif signalement.objet.categorie == 'document' %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">📄</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Document</p>
+                                        </div>
+                                    {% elif signalement.objet.categorie == 'sport' %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">⚽</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Sport</p>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">📦</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Objet</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Overlay dégradé -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </div>
+                    
+                    <!-- Contenu de la carte -->
+                    <div class="p-5 space-y-3">
+                        <h3 class="text-lg font-bold text-gray-800 line-clamp-1 group-hover:text-emerald-600 transition-colors">{{ signalement.objet.nom }}</h3>
+                        
+                        {% if signalement.objet.description %}
+                        <p class="text-gray-600 text-sm line-clamp-2">{{ signalement.objet.description }}</p>
+                        {% endif %}
+                        
+                        <!-- Informations compactes -->
+                        <div class="bg-gray-50 rounded-xl p-3 space-y-2 text-xs">
+                            <div class="flex items-center text-gray-600">
+                                <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                                    <span class="text-white text-xs font-bold">{{ signalement.utilisateur.username|first|upper }}</span>
+                                </div>
+                                <span class="truncate">{{ signalement.utilisateur.username|default:"Anonyme" }}</span>
+                            </div>
+                            
+                            {% if signalement.lieu %}
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-map-marker-alt text-green-500 w-6 text-center mr-2"></i>
+                                <span class="truncate">{{ signalement.lieu }}</span>
+                            </div>
                             {% endif %}
-                            <span>
-                                <i class="far fa-calendar-alt mr-1"></i>
-                                {{ objet.date_creation|date:"d/m/Y" }}
-                            </span>
+                            
+                            <div class="flex items-center text-gray-600">
+                                <i class="far fa-clock text-gray-400 w-6 text-center mr-2"></i>
+                                <span>{{ signalement.date_signalement|timesince }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Actions modernes -->
+                        <div class="flex items-center gap-2 pt-2">
+                            <a href="{% url 'signalement_detail' signalement.id %}" 
+                               class="flex-1 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold text-center transition-all transform hover:scale-105">
+                                👁️ Détails
+                            </a>
+                            <a href="{% url 'signalement_add' %}" 
+                               class="bg-white border-2 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 text-gray-700 hover:text-emerald-700 px-3 py-2 rounded-xl text-sm font-semibold transition-all">
+                                🔔 Mien !
+                            </a>
                         </div>
                     </div>
                 </div>
                 {% empty %}
-                <p class="text-gray-500">Aucun objet trouvé récemment.</p>
+                <div class="col-span-full text-center py-12">
+                    <div class="text-6xl mb-4">😔</div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Aucun objet trouvé récemment</h3>
+                    <p class="text-gray-600">Aidez la communauté en signalant les objets que vous trouvez !</p>
+                </div>
                 {% endfor %}
             </div>
         </div>
     </section>
+
+    <!-- Objets perdus récemment avec design similaire -->
+    <section class="py-16">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800">😞 Objets perdus récemment</h2>
+                    <p class="text-gray-600 mt-1">Des personnes recherchent activement ces objets</p>
+                </div>
+                <a href="{% url 'objets_perdus_list' %}" class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-all flex items-center">
+                    Tous les objets perdus
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
     
-<!-- Recents Signal -->
-<!-- Signalements récents -->
-<section class="py-16 bg-gray-50">
-    <div class="container mx-auto px-4">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-3xl font-bold">Signalements récents</h2>
-            <a href="#" class="text-blue-600 font-medium hover:underline">Voir tout</a>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for signalement in signalements %}
-                <div class="bg-white rounded-xl overflow-hidden shadow-md card-hover">
-                    <!-- Image -->
-                    <div class="h-48 bg-gray-200 flex items-center justify-center overflow-hidden">
-                        {% if signalement.objet.photo %}
-                            <img src="{{ signalement.objet.photo.url }}" alt="{{ signalement.objet.nom }}" class="object-cover w-full h-full">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {% for signalement in objets_perdus %}
+                <div class="group relative bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden border border-gray-100 hover:border-red-200">
+                    
+                    <!-- Badge perdu moderne -->
+                    <div class="absolute top-3 left-3 z-10">
+                        <span class="bg-red-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center animate-pulse">
+                            <span class="w-2 h-2 bg-white rounded-full mr-2 animate-ping"></span>
+                            🔍 PERDU
+                        </span>
+                    </div>
+                    
+                    <!-- Image de l'objet -->
+                    <div class="h-48 overflow-hidden relative">
+                        {% if signalement.photo %}
+                            <img src="{{ signalement.photo.url }}" alt="{{ signalement.objet.nom }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        {% elif signalement.objet.photo %}
+                            <img src="{{ signalement.objet.photo.url }}" alt="{{ signalement.objet.nom }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                         {% else %}
-                            <i class="fas fa-box-open text-5xl text-gray-400"></i>
+                            <div class="w-full h-full bg-gradient-to-br from-red-100 via-pink-50 to-red-200 flex items-center justify-center relative overflow-hidden">
+                                <!-- Pattern de fond -->
+                                <div class="absolute inset-0 opacity-10">
+                                    <div class="absolute top-0 left-0 w-full h-full" 
+                                         style="background-image: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(0,0,0,.1) 20px, rgba(0,0,0,.1) 40px);"></div>
+                                </div>
+                                
+                                <div class="text-center transform group-hover:scale-110 transition-transform duration-300">
+                                    {% if signalement.objet.categorie == 'electronique' %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">📱</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Électronique</p>
+                                        </div>
+                                    {% elif signalement.objet.categorie == 'accessoire' %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">👜</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Accessoire</p>
+                                        </div>
+                                    {% elif signalement.objet.categorie == 'cles' %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">🔑</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Clés</p>
+                                        </div>
+                                    {% elif signalement.objet.categorie == 'vetement' %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">👕</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Vêtement</p>
+                                        </div>
+                                    {% elif signalement.objet.categorie == 'document' %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">📄</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Document</p>
+                                        </div>
+                                    {% elif signalement.objet.categorie == 'sport' %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">⚽</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Sport</p>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-6xl mb-2 animate-bounce filter drop-shadow-lg">📦</div>
+                                        <div class="bg-white/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                            <p class="text-xs font-bold text-gray-700">Objet</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Overlay dégradé -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </div>
+                    
+                    <!-- Contenu de la carte -->
+                    <div class="p-5 space-y-3">
+                        <h3 class="text-lg font-bold text-gray-800 line-clamp-1 group-hover:text-red-600 transition-colors">{{ signalement.objet.nom }}</h3>
+                        
+                        {% if signalement.objet.description %}
+                        <p class="text-gray-600 text-sm line-clamp-2">{{ signalement.objet.description }}</p>
+                        {% endif %}
+                        
+                        <!-- Informations compactes -->
+                        <div class="bg-gray-50 rounded-xl p-3 space-y-2 text-xs">
+                            <div class="flex items-center text-gray-600">
+                                <div class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                                    <span class="text-white text-xs font-bold">{{ signalement.utilisateur.username|first|upper }}</span>
+                                </div>
+                                <span class="truncate">{{ signalement.utilisateur.username|default:"Anonyme" }}</span>
+                            </div>
+                            
+                            {% if signalement.lieu %}
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-map-marker-alt text-red-500 w-6 text-center mr-2"></i>
+                                <span class="truncate">{{ signalement.lieu }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="flex items-center text-gray-600">
+                                <i class="far fa-clock text-gray-400 w-6 text-center mr-2"></i>
+                                <span>{{ signalement.date_signalement|timesince }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Actions modernes -->
+                        <div class="flex items-center gap-2 pt-2">
+                            <a href="{% url 'signalement_detail' signalement.id %}" 
+                               class="flex-1 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-4 py-2 rounded-xl text-sm font-semibold text-center transition-all transform hover:scale-105">
+                                👁️ Détails
+                            </a>
+                            <a href="{% url 'signalement_add' %}" 
+                               class="bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 text-gray-700 hover:text-red-700 px-3 py-2 rounded-xl text-sm font-semibold transition-all">
+                                💡 Trouvé !
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full text-center py-12">
+                    <div class="text-6xl mb-4">🎉</div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Aucun objet perdu récemment</h3>
+                    <p class="text-gray-600">Excellente nouvelle ! Tous les objets ont été retrouvés !</p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Lien vers la recherche -->
+            <div class="text-center mt-8">
+                <p class="text-gray-600 mb-4">Vous ne trouvez pas ce que vous cherchez ?</p>
+                <a href="{% url 'search_objets' %}" 
+                   class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                    🔍 Recherche avancée
+                </a>
+            </div>
+        </div>
+    </section>
+            
+            <!-- Lien vers la recherche
+            <div class="text-center mt-8">
+                <p class="text-gray-600 mb-4">Vous ne trouvez pas ce que vous cherchez ?</p>
+                <a href="{% url 'search_objets' %}" 
+                   class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                    🔍 Recherche avancée
+                </a>
+            </div>
+        </div> -->
+    </section>
+
+    <!-- Derniers signalements -->
+            <!-- <a href="{% url 'signalements_list' %}" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-all flex items-center">
+
+                Tous les signalements
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a> -->
+        </div>
+        
+        <!-- Derniers signalements -->
+    <section class="py-16 bg-gradient-to-br from-blue-50 to-purple-50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800">📋 Derniers signalements</h2>
+                    <p class="text-gray-600 mt-1">L'activité récente de notre communauté</p>
+                </div>
+                <a href="{% url 'signalements_list' %}" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-all flex items-center">
+                    Tous les signalements
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+    
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for signalement in signalements_recents %}
+                <div class="group relative bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100">
+                    
+                    <!-- Badge statut -->
+                    <div class="absolute top-3 left-3 z-10">
+                        {% if signalement.statut == 'trouve' %}
+                        <span class="bg-emerald-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-md">
+                            ✨ TROUVÉ
+                        </span>
+                        {% elif signalement.statut == 'perdu' %}
+                        <span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-md">
+                            😔 PERDU
+                        </span>
+                        {% else %}
+                        <span class="bg-gray-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-md">
+                            📋 {{ signalement.statut|upper }}
+                        </span>
                         {% endif %}
                     </div>
                     
-                    <!-- Contenu -->
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-bold text-lg">{{ signalement.objet.nom }}</h3>
-                            <span class="
-                                {% if signalement.statut == 'trouvé' %}
-                                    bg-green-100 text-green-800
-                                {% elif signalement.statut == 'perdu' %}
-                                    bg-red-100 text-red-800
-                                {% else %}
-                                    bg-yellow-100 text-yellow-800
-                                {% endif %}
-                                text-xs px-2 py-1 rounded-full">
-                                {{ signalement.statut|capfirst }}
-                            </span>
+                    <!-- Image de l'objet -->
+                    <div class="h-32 overflow-hidden relative">
+                        {% if signalement.photo %}
+                            <img src="{{ signalement.photo.url }}" alt="{{ signalement.objet.nom }}" 
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        {% elif signalement.objet.photo %}
+                            <img src="{{ signalement.objet.photo.url }}" alt="{{ signalement.objet.nom }}" 
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        {% else %}
+                            <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                                <div class="text-center">
+                                    {% if signalement.objet.categorie == 'electronique' %}
+                                        <div class="text-3xl mb-1">📱</div>
+                                    {% elif signalement.objet.categorie == 'accessoire' %}
+                                        <div class="text-3xl mb-1">👜</div>
+                                    {% elif signalement.objet.categorie == 'cles' %}
+                                        <div class="text-3xl mb-1">🔑</div>
+                                    {% elif signalement.objet.categorie == 'vetement' %}
+                                        <div class="text-3xl mb-1">👕</div>
+                                    {% elif signalement.objet.categorie == 'document' %}
+                                        <div class="text-3xl mb-1">📄</div>
+                                    {% elif signalement.objet.categorie == 'sport' %}
+                                        <div class="text-3xl mb-1">⚽</div>
+                                    {% else %}
+                                        <div class="text-3xl mb-1">📦</div>
+                                    {% endif %}
+                                    <p class="text-xs font-semibold text-gray-600">{{ signalement.objet.categorie|capfirst }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Contenu de la carte -->
+                    <div class="p-3 space-y-2">
+                        <h3 class="text-sm font-bold text-gray-800 line-clamp-1">
+                            {{ signalement.objet.nom }}
+                        </h3>
+                        
+                        <!-- Informations compactes -->
+                        <div class="space-y-1 text-xs text-gray-500">
+                            <div class="flex items-center">
+                                <i class="fas fa-user w-3 text-center mr-2 {% if signalement.statut == 'trouve' %}text-emerald-500{% else %}text-red-500{% endif %}"></i>
+                                <span class="truncate">{{ signalement.utilisateur.username|default:"Anonyme" }}</span>
+                            </div>
+                            
+                            {% if signalement.lieu %}
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt w-3 text-center mr-2 text-gray-400"></i>
+                                <span class="truncate">{{ signalement.lieu|truncatechars:15 }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="flex items-center">
+                                <i class="far fa-clock w-3 text-center mr-2 text-gray-400"></i>
+                                <span>{{ signalement.date_signalement|timesince }}</span>
+                            </div>
                         </div>
                         
-                        <p class="text-gray-600 mb-3">{{ signalement.commentaire|truncatewords:15 }}</p>
-                        
-                        <div class="text-sm text-gray-500 mb-2">
-                            <i class="fas fa-map-marker-alt mr-1"></i> {{ signalement.lieu }}
-                        </div>
-                        
-                        <div class="flex justify-between text-sm text-gray-500">
-                            <span><i class="far fa-user mr-1"></i> {{ signalement.utilisateur.username }}</span>
-                            <span><i class="far fa-calendar-alt mr-1"></i> {{ signalement.date_signalement|date:"d/m/Y" }}</span>
+                        <!-- Actions -->
+                        <div class="pt-2">
+                            <a href="{% url 'signalement_detail' signalement.id %}" 
+                               class="w-full {% if signalement.statut == 'trouve' %}bg-emerald-500 hover:bg-emerald-600{% else %}bg-red-500 hover:bg-red-600{% endif %} text-white px-3 py-1.5 rounded-lg text-xs font-semibold text-center transition-colors block">
+                                👁️ Voir détails
+                            </a>
                         </div>
                     </div>
                 </div>
-            {% empty %}
-                <div class="col-span-full text-center text-gray-500">
-                    Aucun signalement pour le moment.
+                {% endfor %}
+            </div>
+            
+            {% if not signalements_recents %}
+            <div class="text-center py-12">
+                <div class="text-5xl mb-4">📭</div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Aucun signalement récent</h3>
+                <p class="text-gray-600 mb-4">Soyez le premier à partager un signalement avec notre communauté !</p>
+                <a href="{% url 'signalement_add' %}" 
+                   class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+                    📝 Créer un signalement
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+        <!-- Section d'encouragement -->
+        <div class="text-center mt-12">
+            <div class="bg-blue-50 rounded-xl p-8 max-w-2xl mx-auto">
+                <h3 class="text-xl font-semibold text-gray-800 mb-3">🤝 Rejoignez notre communauté solidaire</h3>
+                <p class="text-gray-600 mb-4">
+                    Chaque signalement compte ! En partageant vos trouvailles ou en cherchant vos objets perdus, 
+                    vous contribuez à créer une communauté d'entraide.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="{% url 'signalement_add' %}" 
+                       class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+                        📝 Faire un signalement
+                    </a>
+                    <a href="{% url 'signalements_list' %}" 
+                       class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+                        🌍 Explorer tous les signalements
+                    </a>
                 </div>
-            {% endfor %}
+            </div>
         </div>
     </div>
 </section>
 
-    <!-- Stats -->
-    <section class="bg-blue-600 text-white py-16">
+  
+
+    <!-- Stats avec données réelles -->
+    <section class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white py-16">
         <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-4">📊 Statistiques en temps réel</h2>
+                <p class="text-blue-200">Notre impact dans la communauté</p>
+            </div>
+            
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                <div>
-                    <div class="text-4xl font-bold mb-2">15K+</div>
-                    <div class="text-blue-100">Objets retrouvés</div>
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/20 transition-all">
+                    <div class="text-4xl font-bold mb-2">{{ stats.total_objets|default:0 }}</div>
+                    <div class="text-blue-100">📦 Objets déclarés</div>
                 </div>
-                <div>
-                    <div class="text-4xl font-bold mb-2">82%</div>
-                    <div class="text-blue-100">Taux de restitution</div>
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/20 transition-all">
+                    <div class="text-4xl font-bold mb-2">{{ stats.total_signalements|default:0 }}</div>
+                    <div class="text-blue-100">📋 Signalements</div>
                 </div>
-                <div>
-                    <div class="text-4xl font-bold mb-2">120+</div>
-                    <div class="text-blue-100">Villes couvertes</div>
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/20 transition-all">
+                    <div class="text-4xl font-bold mb-2">{{ stats.signalements_perdus|default:0 }}</div>
+                    <div class="text-blue-100">😞 Objets perdus</div>
                 </div>
-                <div>
-                    <div class="text-4xl font-bold mb-2">4.8</div>
-                    <div class="text-blue-100">Note moyenne</div>
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/20 transition-all">
+                    <div class="text-4xl font-bold mb-2">{{ stats.signalements_trouves|default:0 }}</div>
+                    <div class="text-blue-100">😊 Objets trouvés</div>
+                </div>
+            </div>
+            
+            <!-- Statistiques supplémentaires -->
+            <div class="mt-12 text-center">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                        <div class="text-2xl font-bold text-yellow-300">
+                            {% widthratio stats.signalements_trouves stats.total_signalements 100 %}%
+                        </div>
+                        <div class="text-blue-100 text-sm">Taux de récupération</div>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                        <div class="text-2xl font-bold text-green-300">🇹🇬 Togo</div>
+                        <div class="text-blue-100 text-sm">Couverture nationale</div>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                        <div class="text-2xl font-bold text-pink-300">24h</div>
+                        <div class="text-blue-100 text-sm">Disponible 7j/7</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -479,21 +1021,72 @@
     </footer>
 
     <script>
-        // Simple script for mobile menu toggle
+        // Menu mobile toggle function
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            const mobileMenuButton = document.querySelector('.md\\:hidden');
-            // In a real implementation, you would add a click handler to show/hide mobile menu
-            console.log('Mobile menu button:', mobileMenuButton);
-            
-            // You could add more interactive features here
+            // Masquer automatiquement les messages après 3 secondes
+            setTimeout(() => {
+                const alerts = document.querySelectorAll('.fixed.top-4.right-4 div');
+                alerts.forEach(a => a.remove());
+            }, 3000);
         });
     </script>
-    <script>
-        setTimeout(() => {
-            const alerts = document.querySelectorAll('.fixed.top-4.right-4 div');
-            alerts.forEach(a => a.remove());
-        }, 3000);
-    </script>
+
+    <!-- CSS personnalisé pour les animations et effets -->
+    <style>
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      25% { transform: translateY(-10px) rotate(1deg); }
+      50% { transform: translateY(0px) rotate(0deg); }
+      75% { transform: translateY(-5px) rotate(-1deg); }
+    }
+
+    .animate-float {
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .line-clamp-1 {
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+    }
+
+    .line-clamp-2 {
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    /* Effet de brillance sur les cartes au survol */
+    .group:hover::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 1.5s ease-out;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200px 0; }
+      100% { background-position: calc(200px + 100%) 0; }
+    }
+
+    /* Transitions fluides */
+    * {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    </style>
     
 </body>
 </html>

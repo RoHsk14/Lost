@@ -162,3 +162,26 @@ class ObjetPerdu(models.Model):
 #         choices=TYPE_CHOICES, 
 #         default='Perdu'   # <-- valeur par défaut
 #     )
+
+
+class CommentaireAnonyme(models.Model):
+    """Commentaires anonymes sur les signalements"""
+    signalement = models.ForeignKey(Signalement, on_delete=models.CASCADE, related_name='commentaires_anonymes')
+    contenu = models.TextField(max_length=1000, help_text="Votre commentaire (max 1000 caractères)")
+    pseudo = models.CharField(max_length=50, blank=True, help_text="Pseudo optionnel (ou laissez vide pour 'Anonyme')")
+    email = models.EmailField(blank=True, help_text="Email optionnel (ne sera pas affiché publiquement)")
+    date_creation = models.DateTimeField(auto_now_add=True)
+    est_approuve = models.BooleanField(default=True, help_text="Commentaire approuvé pour affichage")
+    
+    class Meta:
+        ordering = ['-date_creation']
+        verbose_name = "Commentaire anonyme"
+        verbose_name_plural = "Commentaires anonymes"
+    
+    def __str__(self):
+        pseudo = self.pseudo or "Anonyme"
+        return f"Commentaire de {pseudo} sur {self.signalement.objet.nom}"
+    
+    def get_display_name(self):
+        """Retourne le nom d'affichage (pseudo ou 'Anonyme')"""
+        return self.pseudo or "Anonyme"

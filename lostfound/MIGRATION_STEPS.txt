@@ -1,0 +1,50 @@
+# ÉTAPES DE MIGRATION VERS MYSQL - À suivre après installation de MySQL
+
+# 1. Arrêter le serveur Django
+# Ctrl+C dans le terminal où runserver est actif
+
+# 2. Sauvegarder les données actuelles (optionnel)
+# python manage.py dumpdata > backup_sqlite.json
+
+# 3. Modifier settings.py - Décommenter la configuration MySQL et commenter SQLite :
+
+# Configuration SQLite (À COMMENTER)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+# Configuration MySQL (À DÉCOMMENTER et CONFIGURER)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'lostfound_db',
+        'USER': 'root',
+        'PASSWORD': 'votre_mot_de_passe_mysql',  # Remplacer par votre mot de passe
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'sql_mode': 'traditional',
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }
+}
+
+# 4. Créer la base de données MySQL
+# Dans mysql ou phpMyAdmin :
+# CREATE DATABASE lostfound_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+# 5. Migrer vers MySQL
+# python manage.py migrate
+
+# 6. Créer un superutilisateur
+# python manage.py createsuperuser
+
+# 7. Charger les données sauvegardées (optionnel)
+# python manage.py loaddata backup_sqlite.json
+
+# 8. Redémarrer le serveur
+# python manage.py runserver

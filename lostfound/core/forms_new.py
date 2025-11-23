@@ -1,5 +1,5 @@
 from django import forms
-from .models import Signalement, Utilisateur, Region, Prefecture, CommentaireAnonyme
+from .models import Signalement, Utilisateur, Region, Prefecture
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 
 
@@ -154,49 +154,3 @@ class SearchForm(forms.Form):
     nom = forms.CharField(required=False, label="Qu'avez-vous perdu ?")
     lieu = forms.CharField(required=False)
     date_perte = forms.DateField(required=False, widget=forms.DateInput(attrs={'type':'date'}))
-
-
-class CommentaireAnonymeForm(forms.ModelForm):
-    """Formulaire pour les commentaires anonymes sur les signalements"""
-    
-    pseudo = forms.CharField(
-        label="Votre pseudo (optionnel)",
-        max_length=50,
-        required=False,
-        help_text="Vous pouvez rester anonyme ou indiquer un pseudo",
-        widget=forms.TextInput(attrs={
-            'class': 'w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors',
-            'placeholder': 'Anonyme, Jean, Témoin123...'
-        })
-    )
-    
-    commentaire = forms.CharField(
-        label="Votre commentaire",
-        help_text="Partagez des informations utiles : lieu où vous l'avez vu, détails supplémentaires, conseils...",
-        widget=forms.Textarea(attrs={
-            'rows': 4,
-            'class': 'w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors',
-            'placeholder': 'Ex: "Je pense avoir vu cet objet près du marché ce matin..." ou "J\'ai des informations qui pourraient aider..."'
-        })
-    )
-    
-    contact = forms.CharField(
-        label="Contact (optionnel)",
-        max_length=100,
-        required=False,
-        help_text="Email ou téléphone pour être contacté si nécessaire (ne sera pas affiché publiquement)",
-        widget=forms.TextInput(attrs={
-            'class': 'w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors',
-            'placeholder': 'votre.email@exemple.com ou 22890123456'
-        })
-    )
-    
-    class Meta:
-        model = CommentaireAnonyme
-        fields = ['pseudo', 'commentaire', 'contact']
-        
-    def clean_commentaire(self):
-        commentaire = self.cleaned_data.get('commentaire')
-        if len(commentaire.strip()) < 10:
-            raise forms.ValidationError("Le commentaire doit contenir au moins 10 caractères.")
-        return commentaire

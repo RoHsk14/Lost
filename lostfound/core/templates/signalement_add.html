@@ -1,36 +1,248 @@
 {% extends 'base.html' %}
-{% block title %}Ajouter un signalement{% endblock %}
+{% load static %}
+
+{% block title %}Déclarer une perte{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6 mt-6">
-    <h2 class="text-2xl font-semibold mb-4 text-gray-800">📝 Ajouter un signalement</h2>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Header avec illustration -->
+        <div class="text-center mb-8">
+            <div class="text-6xl mb-4">🔍📱</div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                Déclarer une perte
+            </h1>
+            <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+                Remplissez ce formulaire pour signaler votre objet perdu. Plus vous donnez de détails, 
+                plus vous avez de chances de le retrouver !
+            </p>
+        </div>
 
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <!-- Progress bar -->
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-1">
+                    <div class="bg-blue-200 rounded-full h-2">
+                        <div class="bg-blue-600 h-2 rounded-full w-1/3"></div>
+                    </div>
+                </div>
 
-        <label for="region">Région :</label>
-        <select id="region" name="region" class="border rounded p-2 w-full">
-            <option value="">-- Sélectionner une région --</option>
-            {% for region in regions %}
-            <option value="{{ region.id }}">{{ region.nom }}</option>
-            {% endfor %}
-        </select>
+                <form method="post" enctype="multipart/form-data" class="p-8" id="signalement-form">
+                    {% csrf_token %}
+                    
+                    <!-- Section 1: Informations sur l'objet -->
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                            <span class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm">1</span>
+                            📦 Informations sur l'objet
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Nom de l'objet -->
+                            <div class="md:col-span-2">
+                                <label for="{{ form.objet.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.objet.label }}
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.objet }}
+                                {% if form.objet.help_text %}
+                                    <p class="text-gray-500 text-sm mt-1">{{ form.objet.help_text }}</p>
+                                {% endif %}
+                                {% if form.objet.errors %}
+                                    <div class="text-red-500 text-sm mt-1">{{ form.objet.errors.0 }}</div>
+                                {% endif %}
+                            </div>
 
-        <label for="prefecture" class="mt-2 block">Préfecture :</label>
-        <select id="prefecture" name="prefecture" class="border rounded p-2 w-full" disabled>
-            <option value="">-- Choisir une région d’abord --</option>
-        </select>
+                            <!-- Catégorie -->
+                            <div>
+                                <label for="{{ form.categorie_objet.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.categorie_objet.label }}
+                                </label>
+                                {{ form.categorie_objet }}
+                                {% if form.categorie_objet.errors %}
+                                    <div class="text-red-500 text-sm mt-1">{{ form.categorie_objet.errors.0 }}</div>
+                                {% endif %}
+                            </div>
 
-        <label for="structure" class="mt-2 block">Structure locale :</label>
-        <select id="structure" name="structure" class="border rounded p-2 w-full" disabled>
-            <option value="">-- Choisir une préfecture d’abord --</option>
-        </select>
+                            <!-- Date de perte -->
+                            <div>
+                                <label for="{{ form.date_perte.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.date_perte.label }}
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.date_perte }}
+                                {% if form.date_perte.help_text %}
+                                    <p class="text-gray-500 text-sm mt-1">{{ form.date_perte.help_text }}</p>
+                                {% endif %}
+                                {% if form.date_perte.errors %}
+                                    <div class="text-red-500 text-sm mt-1">{{ form.date_perte.errors.0 }}</div>
+                                {% endif %}
+                            </div>
 
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mt-4">
-            Enregistrer le signalement
-        </button>
-    </form>
+                            <!-- Description détaillée -->
+                            <div class="md:col-span-2">
+                                <label for="{{ form.description_objet.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.description_objet.label }}
+                                </label>
+                                {{ form.description_objet }}
+                                {% if form.description_objet.help_text %}
+                                    <p class="text-gray-500 text-sm mt-1">{{ form.description_objet.help_text }}</p>
+                                {% endif %}
+                                {% if form.description_objet.errors %}
+                                    <div class="text-red-500 text-sm mt-1">{{ form.description_objet.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Lieu et circonstances -->
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                            <span class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm">2</span>
+                            📍 Lieu et circonstances
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Lieu de la perte -->
+                            <div class="md:col-span-2">
+                                <label for="{{ form.lieu.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.lieu.label }}
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.lieu }}
+                                {% if form.lieu.help_text %}
+                                    <p class="text-gray-500 text-sm mt-1">{{ form.lieu.help_text }}</p>
+                                {% endif %}
+                                {% if form.lieu.errors %}
+                                    <div class="text-red-500 text-sm mt-1">{{ form.lieu.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Région -->
+                            <div>
+                                <label for="region" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    🗺️ Région
+                                </label>
+                                <select id="region" name="region" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                    <option value="">-- Sélectionner une région --</option>
+                                    {% for region in regions %}
+                                    <option value="{{ region.id }}">{{ region.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                                <p class="text-gray-500 text-sm mt-1">Optionnel : aide à localiser géographiquement</p>
+                            </div>
+
+                            <!-- Préfecture -->
+                            <div>
+                                <label for="prefecture" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    🏛️ Préfecture
+                                </label>
+                                <select id="prefecture" name="prefecture" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" disabled>
+                                    <option value="">-- Choisir une région d'abord --</option>
+                                </select>
+                            </div>
+
+                            <!-- Structure locale -->
+                            <div class="md:col-span-2">
+                                <label for="structure" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    🏢 Structure locale (Commissariat, Mairie...)
+                                </label>
+                                <select id="structure" name="structure" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" disabled>
+                                    <option value="">-- Choisir une préfecture d'abord --</option>
+                                </select>
+                                <p class="text-gray-500 text-sm mt-1">Optionnel : si vous souhaitez signaler à une structure particulière</p>
+                            </div>
+
+                            <!-- Commentaires -->
+                            <div class="md:col-span-2">
+                                <label for="{{ form.commentaire.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.commentaire.label }}
+                                </label>
+                                {{ form.commentaire }}
+                                {% if form.commentaire.help_text %}
+                                    <p class="text-gray-500 text-sm mt-1">{{ form.commentaire.help_text }}</p>
+                                {% endif %}
+                                {% if form.commentaire.errors %}
+                                    <div class="text-red-500 text-sm mt-1">{{ form.commentaire.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Photo et finalisation -->
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                            <span class="bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm">3</span>
+                            📸 Photo et finalisation
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Photo -->
+                            <div>
+                                <label for="{{ form.photo.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.photo.label }}
+                                </label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                                    {{ form.photo }}
+                                    <div class="mt-2 text-gray-500">
+                                        <div class="text-3xl mb-2">📷</div>
+                                        <p class="text-sm">Cliquez pour ajouter une photo</p>
+                                    </div>
+                                </div>
+                                {% if form.photo.help_text %}
+                                    <p class="text-gray-500 text-sm mt-1">{{ form.photo.help_text }}</p>
+                                {% endif %}
+                                {% if form.photo.errors %}
+                                    <div class="text-red-500 text-sm mt-1">{{ form.photo.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Type de signalement -->
+                            <div>
+                                <label for="{{ form.statut.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.statut.label }}
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.statut }}
+                                {% if form.statut.help_text %}
+                                    <p class="text-gray-500 text-sm mt-1">{{ form.statut.help_text }}</p>
+                                {% endif %}
+                                {% if form.statut.errors %}
+                                    <div class="text-red-500 text-sm mt-1">{{ form.statut.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conseils -->
+                    <div class="bg-blue-50 rounded-lg p-6 mb-8">
+                        <h3 class="font-semibold text-blue-800 mb-3 flex items-center">
+                            💡 Conseils pour maximiser vos chances
+                        </h3>
+                        <ul class="text-blue-700 text-sm space-y-2">
+                            <li>• Soyez le plus précis possible dans la description</li>
+                            <li>• Mentionnez des détails uniques (rayures, autocollants, etc.)</li>
+                            <li>• Une photo récente aide énormément à l'identification</li>
+                            <li>• Vérifiez régulièrement s'il y a des nouveaux objets trouvés</li>
+                        </ul>
+                    </div>
+
+                    <!-- Boutons d'action -->
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center pt-6 border-t border-gray-200">
+                        <button type="submit" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center justify-center">
+                            <span class="mr-2">📝</span>
+                            Enregistrer le signalement
+                        </button>
+                        
+                        <a href="{% url 'signalements_list' %}" class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition-colors text-center font-semibold flex items-center justify-center">
+                            <span class="mr-2">↩️</span>
+                            Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -38,26 +250,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const regionSelect = document.getElementById('region');
     const prefectureSelect = document.getElementById('prefecture');
     const structureSelect = document.getElementById('structure');
+    const photoInput = document.querySelector('input[type="file"]');
 
+    // Gestion des sélections géographiques
     regionSelect.addEventListener('change', () => {
         const regionId = regionSelect.value;
         prefectureSelect.innerHTML = '<option>Chargement...</option>';
         prefectureSelect.disabled = true;
+        structureSelect.innerHTML = '<option value="">-- Choisir une préfecture d\'abord --</option>';
+        structureSelect.disabled = true;
 
-        fetch(`/api/prefectures/?region=${regionId}`)
-            .then(res => res.json())
-            .then(data => {
-                prefectureSelect.innerHTML = '<option value="">-- Choisir une préfecture --</option>';
-                data.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.id;
-                    opt.textContent = p.nom;
-                    prefectureSelect.appendChild(opt);
+        if (regionId) {
+            fetch(`/api/prefectures/?region=${regionId}`)
+                .then(res => res.json())
+                .then(data => {
+                    prefectureSelect.innerHTML = '<option value="">-- Choisir une préfecture --</option>';
+                    data.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.textContent = p.nom;
+                        prefectureSelect.appendChild(opt);
+                    });
+                    prefectureSelect.disabled = false;
+                })
+                .catch(() => {
+                    prefectureSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+                    prefectureSelect.disabled = true;
                 });
-                prefectureSelect.disabled = false;
-                structureSelect.innerHTML = '<option value="">-- Choisir une préfecture d’abord --</option>';
-                structureSelect.disabled = true;
-            });
+        } else {
+            prefectureSelect.innerHTML = '<option value="">-- Choisir une région d\'abord --</option>';
+            prefectureSelect.disabled = true;
+        }
     });
 
     prefectureSelect.addEventListener('change', () => {
@@ -65,19 +288,64 @@ document.addEventListener('DOMContentLoaded', function() {
         structureSelect.innerHTML = '<option>Chargement...</option>';
         structureSelect.disabled = true;
 
-        fetch(`/api/structures/?prefecture=${prefId}`)
-            .then(res => res.json())
-            .then(data => {
-                structureSelect.innerHTML = '<option value="">-- Choisir une structure --</option>';
-                data.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s.id;
-                    opt.textContent = s.nom;
-                    structureSelect.appendChild(opt);
+        if (prefId) {
+            fetch(`/api/structures/?prefecture=${prefId}`)
+                .then(res => res.json())
+                .then(data => {
+                    structureSelect.innerHTML = '<option value="">-- Choisir une structure (optionnel) --</option>';
+                    data.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.nom;
+                        structureSelect.appendChild(opt);
+                    });
+                    structureSelect.disabled = false;
+                })
+                .catch(() => {
+                    structureSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+                    structureSelect.disabled = true;
                 });
-                structureSelect.disabled = false;
-            });
+        } else {
+            structureSelect.innerHTML = '<option value="">-- Choisir une préfecture d\'abord --</option>';
+            structureSelect.disabled = true;
+        }
+    });
+
+    // Prévisualisation des images
+    if (photoInput) {
+        photoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Créer un aperçu de l'image
+                    const preview = document.createElement('img');
+                    preview.src = e.target.result;
+                    preview.className = 'w-20 h-20 object-cover rounded-lg border border-gray-300 mt-2';
+                    
+                    // Supprimer l'ancien aperçu s'il existe
+                    const existingPreview = photoInput.parentNode.querySelector('.preview-image');
+                    if (existingPreview) {
+                        existingPreview.remove();
+                    }
+                    
+                    preview.className += ' preview-image';
+                    photoInput.parentNode.appendChild(preview);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Animation de la barre de progression au scroll
+    window.addEventListener('scroll', function() {
+        const scrollPercent = Math.min(window.scrollY / (document.body.scrollHeight - window.innerHeight), 1);
+        const progressBar = document.querySelector('.bg-blue-600');
+        if (progressBar) {
+            progressBar.style.width = Math.max(33, scrollPercent * 100) + '%';
+        }
     });
 });
 </script>
+
 {% endblock %}
