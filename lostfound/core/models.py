@@ -1,61 +1,585 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+import uuid
 
-
-
-# class Region(models.Model):
-#     nom = models.CharField(max_length=100, unique=True)
-
-#     def __str__(self):
-#         return self.nom
-
-
-# class Prefecture(models.Model):
-#     region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name='prefectures')
-#     nom = models.CharField(max_length=100)
-
-#     def __str__(self):
-#         return f"{self.nom} ({self.region.nom})"
 
 class Region(models.Model):
     nom = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=10, unique=True, null=True, blank=True)
+    actif = models.BooleanField(default=True)
+    date_creation = models.DateTimeField(auto_now_add=True, null=True)
+
+    class Meta:
+        ordering = ['nom']
 
     def __str__(self):
         return self.nom
 
+
 class Prefecture(models.Model):
     region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name='prefectures')
     nom = models.CharField(max_length=100)
+    code = models.CharField(max_length=10, unique=True, null=True, blank=True)
+    actif = models.BooleanField(default=True)
+    date_creation = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         unique_together = ('region', 'nom')
+        ordering = ['nom']
 
     def __str__(self):
         return f"{self.nom} ({self.region.nom})"
+
 
 class StructureLocale(models.Model):
     TYPE_CHOICES = [
         ('commissariat', 'Commissariat'),
         ('mairie', 'Mairie'),
+        ('gendarmerie', 'Gendarmerie'),
+        ('poste', 'Bureau de poste'),
         ('autre', 'Autre structure locale'),
     ]
     nom = models.CharField(max_length=150)
     type_structure = models.CharField(max_length=20, choices=TYPE_CHOICES)
     prefecture = models.ForeignKey(Prefecture, on_delete=models.CASCADE, related_name='structures_locales')
+    adresse = models.TextField(blank=True)
+    telephone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    actif = models.BooleanField(default=True)
+    date_creation = models.DateTimeField(auto_now_add=True, null=True)
+
+    class Meta:
+        ordering = ['nom']
 
     def __str__(self):
         return f"{self.nom} - {self.prefecture.nom}"
 
 
+class Utilisateur(AbstractUser):
+    """Utilisateur avec rôles et permissions étendues"""
+    telephone = models.CharField(max_length=20, blank=True, null=True)
+    
+    ROLE_CHOICES = [
+        ('citoyen', 'Citoyen'),
+        ('agent', 'Agent de gestion'),
+        ('admin', 'Administrateur'),
+        ('superadmin', 'Super Administrateur'),
+    ]
+    role = models.CharField(max_length=12, choices=ROLE_CHOICES, default='citoyen')
+    
+    # Assignation géographique pour agents et admins
+    region = models.ForeignKey(Region, on_delete=models.SET_NULL, blank=True, null=True)
+    prefecture = models.ForeignKey(Prefecture, on_delete=models.SET_NULL, blank=True, null=True)
+    
+    # Métadonnées utilisateur
+    date_derniere_connexion = models.DateTimeField(null=True, blank=True)
+    actif = models.BooleanField(default=True)
+    verifie = models.BooleanField(default=False, help_text="Compte vérifié par un admin")
+    date_verification = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        permissions = [
+            ("can_manage_declarations", "Peut gérer les déclarations"),
+            ("can_validate_claims", "Peut valider les réclamations"),
+            ("can_manage_users", "Peut gérer les utilisateurs"),
+            ("can_view_analytics", "Peut voir les analytics"),
+            ("can_manage_regions", "Peut gérer les régions"),
+        ]
+
+    def __str__(self):
+        return f"{self.username} ({self.get_role_display()})"
+    
+    def is_agent_or_above(self):
+        return self.role in ['agent', 'admin', 'superadmin']
+    
+    def is_admin_or_above(self):
+        return self.role in ['admin', 'superadmin']
+
+
+class CategorieObjet(models.Model):
+    """Catégories d'objets pour classification"""
+    nom = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    icone = models.CharField(max_length=50, blank=True, help_text="Classe CSS FontAwesome")
+    couleur = models.CharField(max_length=7, default="#3B82F6", help_text="Code couleur hexadécimal")
+    actif = models.BooleanField(default=True)
+    ordre = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['ordre', 'nom']
+        verbose_name = "Catégorie d'objet"
+        verbose_name_plural = "Catégories d'objets"
+    
+    def __str__(self):
+        return self.nom
+
+
+class Declaration(models.Model):
+    """Déclaration d'objet perdu ou trouvé avec machine à états"""
+    
+    # États de la machine à états
+    STATUT_CHOICES = [
+        ('cree', 'Créé'),
+        ('en_validation', 'En validation'),
+        ('valide', 'Validé'),
+        ('publie', 'Publié'),
+        ('reclame', 'Réclamé'),
+        ('en_verification', 'En vérification'),
+        ('restitue', 'Restitué'),
+        ('rejete', 'Rejeté'),
+        ('archive', 'Archivé'),
+    ]
+    
+    TYPE_CHOICES = [
+        ('perdu', 'Objet perdu'),
+        ('trouve', 'Objet trouvé'),
+    ]
+    
+    # Identifiants
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    numero_declaration = models.CharField(max_length=20, unique=True, blank=True)
+    
+    # Informations de base
+    type_declaration = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='cree')
+    
+    # Objet déclaré
+    nom_objet = models.CharField(max_length=200)
+    description = models.TextField()
+    categorie = models.ForeignKey(CategorieObjet, on_delete=models.SET_NULL, null=True, blank=True)
+    photo_principale = models.ImageField(upload_to='declarations/', blank=True, null=True)
+    
+    # Localisation
+    region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, blank=True)
+    prefecture = models.ForeignKey(Prefecture, on_delete=models.SET_NULL, null=True, blank=True)
+    structure_locale = models.ForeignKey(StructureLocale, on_delete=models.SET_NULL, null=True, blank=True)
+    lieu_precis = models.CharField(max_length=300, help_text="Lieu précis de perte/découverte")
+    
+    # Dates
+    date_incident = models.DateField(help_text="Date de perte ou de découverte")
+    date_declaration = models.DateTimeField(auto_now_add=True)
+    date_publication = models.DateTimeField(null=True, blank=True)
+    date_restitution = models.DateTimeField(null=True, blank=True)
+    
+    # Relations utilisateurs
+    declarant = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='mes_declarations')
+    agent_validateur = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, blank=True, 
+                                       related_name='declarations_validees', 
+                                       limit_choices_to={'role__in': ['agent', 'admin', 'superadmin']})
+    
+    # Métadonnées
+    commentaire_declarant = models.TextField(blank=True)
+    commentaire_agent = models.TextField(blank=True, help_text="Commentaire interne de l'agent")
+    priorite = models.IntegerField(default=1, choices=[(1, 'Normale'), (2, 'Haute'), (3, 'Urgente')])
+    visible_publiquement = models.BooleanField(default=True)
+    
+    # Tracking
+    nombre_vues = models.PositiveIntegerField(default=0)
+    derniere_modification = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-date_declaration']
+        permissions = [
+            ("can_validate_declaration", "Peut valider une déclaration"),
+            ("can_publish_declaration", "Peut publier une déclaration"),
+            ("can_archive_declaration", "Peut archiver une déclaration"),
+        ]
+    
+    def save(self, *args, **kwargs):
+        # Générer le numéro de déclaration automatiquement
+        if not self.numero_declaration:
+            prefix = 'TGR' + str(timezone.now().year)[-2:]
+            last_num = Declaration.objects.filter(
+                numero_declaration__startswith=prefix
+            ).count() + 1
+            self.numero_declaration = f"{prefix}{last_num:06d}"
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.numero_declaration} - {self.nom_objet}"
+    
+    def peut_etre_valide(self):
+        """Vérifie si la déclaration peut être validée"""
+        return self.statut == 'cree'
+    
+    def peut_etre_publiee(self):
+        """Vérifie si la déclaration peut être publiée"""
+        return self.statut == 'valide'
+    
+    def peut_etre_reclamee(self):
+        """Vérifie si la déclaration peut être réclamée"""
+        return self.statut == 'publie'
+
+
+class PhotoDeclaration(models.Model):
+    """Photos supplémentaires pour une déclaration"""
+    declaration = models.ForeignKey(Declaration, on_delete=models.CASCADE, related_name='photos_supplementaires')
+    photo = models.ImageField(upload_to='declarations/photos/')
+    legende = models.CharField(max_length=200, blank=True)
+    ordre = models.PositiveIntegerField(default=0)
+    date_ajout = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['ordre', 'date_ajout']
+    
+    def __str__(self):
+        return f"Photo pour {self.declaration.numero_declaration}"
+
+
+class Reclamation(models.Model):
+    """Réclamations d'objets par des utilisateurs"""
+    
+    STATUT_CHOICES = [
+        ('soumise', 'Soumise'),
+        ('en_cours', 'En cours de vérification'),
+        ('approuvee', 'Approuvée'),
+        ('rejetee', 'Rejetée'),
+        ('retiree', 'Retirée par le réclamant'),
+    ]
+    
+    # Identifiants
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    numero_reclamation = models.CharField(max_length=20, unique=True, blank=True)
+    
+    # Relations
+    declaration = models.ForeignKey(Declaration, on_delete=models.CASCADE, related_name='reclamations')
+    reclamant = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='mes_reclamations')
+    agent_traitant = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='reclamations_traitees',
+                                     limit_choices_to={'role__in': ['agent', 'admin', 'superadmin']})
+    
+    # Informations de réclamation
+    statut = models.CharField(max_length=15, choices=STATUT_CHOICES, default='soumise')
+    justification = models.TextField(help_text="Pourquoi cet objet vous appartient-il ?")
+    
+    # Informations de contact
+    telephone_contact = models.CharField(max_length=20, blank=True)
+    email_contact = models.EmailField(blank=True)
+    
+    # Dates
+    date_reclamation = models.DateTimeField(auto_now_add=True)
+    date_traitement = models.DateTimeField(null=True, blank=True)
+    date_retrait_prevue = models.DateTimeField(null=True, blank=True)
+    
+    # Commentaires et notes
+    commentaire_reclamant = models.TextField(blank=True)
+    commentaire_agent = models.TextField(blank=True, help_text="Commentaire interne de l'agent")
+    motif_rejet = models.TextField(blank=True)
+    
+    # Métadonnées
+    priorite = models.IntegerField(default=1, choices=[(1, 'Normale'), (2, 'Haute'), (3, 'Urgente')])
+    derniere_modification = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-date_reclamation']
+        unique_together = ('declaration', 'reclamant')
+    
+    def save(self, *args, **kwargs):
+        if not self.numero_reclamation:
+            prefix = 'REC' + str(timezone.now().year)[-2:]
+            last_num = Reclamation.objects.filter(
+                numero_reclamation__startswith=prefix
+            ).count() + 1
+            self.numero_reclamation = f"{prefix}{last_num:06d}"
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.numero_reclamation} - {self.declaration.nom_objet}"
+
+
+class PieceJustificative(models.Model):
+    """Pièces justificatives pour les réclamations"""
+    
+    TYPE_CHOICES = [
+        ('photo', 'Photo de l\'objet'),
+        ('facture', 'Facture d\'achat'),
+        ('garantie', 'Certificat de garantie'),
+        ('identite', 'Pièce d\'identité'),
+        ('autre', 'Autre document'),
+    ]
+    
+    reclamation = models.ForeignKey(Reclamation, on_delete=models.CASCADE, related_name='pieces_justificatives')
+    type_piece = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    fichier = models.FileField(upload_to='justificatifs/')
+    nom_fichier = models.CharField(max_length=255)
+    description = models.CharField(max_length=300, blank=True)
+    taille_fichier = models.PositiveIntegerField(help_text="Taille en octets")
+    date_ajout = models.DateTimeField(auto_now_add=True)
+    verifie = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['type_piece', 'date_ajout']
+    
+    def __str__(self):
+        return f"{self.get_type_piece_display()} - {self.reclamation.numero_reclamation}"
+
+
+class Notification(models.Model):
+    """Système de notifications pour les utilisateurs"""
+    
+    TYPE_CHOICES = [
+        ('declaration_cree', 'Déclaration créée'),
+        ('declaration_validee', 'Déclaration validée'),
+        ('declaration_rejetee', 'Déclaration rejetée'),
+        ('declaration_publiee', 'Déclaration publiée'),
+        ('nouvelle_reclamation', 'Nouvelle réclamation'),
+        ('reclamation_approuvee', 'Réclamation approuvée'),
+        ('reclamation_rejetee', 'Réclamation rejetée'),
+        ('objet_restitue', 'Objet restitué'),
+        ('nouveau_message', 'Nouveau message'),
+        ('rappel', 'Rappel'),
+        ('systeme', 'Notification système'),
+    ]
+    
+    # Relations
+    destinataire = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='notifications')
+    declaration = models.ForeignKey(Declaration, on_delete=models.CASCADE, null=True, blank=True)
+    reclamation = models.ForeignKey(Reclamation, on_delete=models.CASCADE, null=True, blank=True)
+    
+    # Contenu
+    type_notification = models.CharField(max_length=25, choices=TYPE_CHOICES)
+    titre = models.CharField(max_length=200)
+    message = models.TextField()
+    lien_action = models.URLField(blank=True, help_text="Lien vers l'action à effectuer")
+    
+    # Statut
+    lue = models.BooleanField(default=False)
+    importante = models.BooleanField(default=False)
+    envoyee_par_email = models.BooleanField(default=False)
+    date_envoi_email = models.DateTimeField(null=True, blank=True)
+    
+    # Dates
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_lecture = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-date_creation']
+        indexes = [
+            models.Index(fields=['destinataire', '-date_creation']),
+            models.Index(fields=['lue', 'destinataire']),
+        ]
+    
+    def __str__(self):
+        return f"{self.titre} - {self.destinataire.username}"
+    
+    def marquer_comme_lue(self):
+        if not self.lue:
+            self.lue = True
+            self.date_lecture = timezone.now()
+            self.save(update_fields=['lue', 'date_lecture'])
+
+
+class Conversation(models.Model):
+    """Conversations entre agents et utilisateurs"""
+    
+    TYPE_CHOICES = [
+        ('declaration', 'À propos d\'une déclaration'),
+        ('reclamation', 'À propos d\'une réclamation'),
+        ('general', 'Question générale'),
+        ('support', 'Support technique'),
+    ]
+    
+    # Identifiants
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    
+    # Relations
+    declaration = models.ForeignKey(Declaration, on_delete=models.CASCADE, null=True, blank=True)
+    reclamation = models.ForeignKey(Reclamation, on_delete=models.CASCADE, null=True, blank=True)
+    
+    # Participants
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='conversations_utilisateur')
+    agent = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, blank=True, 
+                             related_name='conversations_agent',
+                             limit_choices_to={'role__in': ['agent', 'admin', 'superadmin']})
+    
+    # Informations
+    type_conversation = models.CharField(max_length=15, choices=TYPE_CHOICES, default='general')
+    sujet = models.CharField(max_length=200)
+    statut = models.CharField(max_length=15, choices=[
+        ('ouverte', 'Ouverte'),
+        ('en_cours', 'En cours'),
+        ('fermee', 'Fermée'),
+        ('archivee', 'Archivée')
+    ], default='ouverte')
+    
+    # Dates
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_dernier_message = models.DateTimeField(auto_now_add=True)
+    date_fermeture = models.DateTimeField(null=True, blank=True)
+    
+    # Métadonnées
+    priorite = models.IntegerField(default=1, choices=[(1, 'Normale'), (2, 'Haute'), (3, 'Urgente')])
+    
+    class Meta:
+        ordering = ['-date_dernier_message']
+    
+    def __str__(self):
+        return f"{self.sujet} - {self.utilisateur.username}"
+
+
+class Message(models.Model):
+    """Messages dans les conversations"""
+    
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
+    auteur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE)
+    contenu = models.TextField()
+    
+    # Pièces jointes
+    fichier_joint = models.FileField(upload_to='messages/', blank=True, null=True)
+    nom_fichier = models.CharField(max_length=255, blank=True)
+    
+    # Statut
+    lu = models.BooleanField(default=False)
+    date_lecture = models.DateTimeField(null=True, blank=True)
+    
+    # Dates
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+    
+    # Métadonnées
+    est_interne = models.BooleanField(default=False, help_text="Message interne visible uniquement par les agents")
+    
+    class Meta:
+        ordering = ['date_creation']
+    
+    def __str__(self):
+        return f"Message de {self.auteur.username} - {self.date_creation.strftime('%d/%m/%Y %H:%M')}"
+
+
+class ActionLog(models.Model):
+    """Log des actions pour audit et suivi"""
+    
+    ACTION_CHOICES = [
+        # Actions sur déclarations
+        ('declaration_creee', 'Déclaration créée'),
+        ('declaration_validee', 'Déclaration validée'),
+        ('declaration_rejetee', 'Déclaration rejetée'),
+        ('declaration_publiee', 'Déclaration publiée'),
+        ('declaration_archivee', 'Déclaration archivée'),
+        
+        # Actions sur réclamations
+        ('reclamation_soumise', 'Réclamation soumise'),
+        ('reclamation_approuvee', 'Réclamation approuvée'),
+        ('reclamation_rejetee', 'Réclamation rejetée'),
+        ('objet_restitue', 'Objet restitué'),
+        
+        # Actions administratives
+        ('utilisateur_cree', 'Utilisateur créé'),
+        ('utilisateur_modifie', 'Utilisateur modifié'),
+        ('role_modifie', 'Rôle utilisateur modifié'),
+        ('region_assignee', 'Région assignée'),
+        
+        # Actions système
+        ('connexion', 'Connexion'),
+        ('deconnexion', 'Déconnexion'),
+        ('erreur', 'Erreur système'),
+    ]
+    
+    # Relations
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, blank=True)
+    declaration = models.ForeignKey(Declaration, on_delete=models.CASCADE, null=True, blank=True)
+    reclamation = models.ForeignKey(Reclamation, on_delete=models.CASCADE, null=True, blank=True)
+    
+    # Informations de l'action
+    action = models.CharField(max_length=30, choices=ACTION_CHOICES)
+    description = models.TextField()
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    
+    # Métadonnées
+    donnees_supplementaires = models.JSONField(default=dict, blank=True)
+    date_action = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-date_action']
+        indexes = [
+            models.Index(fields=['utilisateur', '-date_action']),
+            models.Index(fields=['action', '-date_action']),
+            models.Index(fields=['declaration', '-date_action']),
+        ]
+    
+    def __str__(self):
+        user_info = f"par {self.utilisateur.username}" if self.utilisateur else "par système"
+        return f"{self.get_action_display()} {user_info} - {self.date_action.strftime('%d/%m/%Y %H:%M')}"
+
+
+class StatistiqueRegion(models.Model):
+    """Statistiques pré-calculées par région pour optimiser les dashboards"""
+    region = models.OneToOneField(Region, on_delete=models.CASCADE, related_name='statistiques')
+    
+    # Compteurs de déclarations
+    total_declarations = models.PositiveIntegerField(default=0)
+    declarations_en_attente = models.PositiveIntegerField(default=0)
+    declarations_publiees = models.PositiveIntegerField(default=0)
+    objets_restitues = models.PositiveIntegerField(default=0)
+    
+    # Compteurs de réclamations
+    total_reclamations = models.PositiveIntegerField(default=0)
+    reclamations_en_cours = models.PositiveIntegerField(default=0)
+    reclamations_approuvees = models.PositiveIntegerField(default=0)
+    reclamations_rejetees = models.PositiveIntegerField(default=0)
+    
+    # Métriques de performance
+    temps_moyen_traitement_heures = models.FloatField(default=0.0)
+    taux_restitution = models.FloatField(default=0.0)
+    
+    # Dates de mise à jour
+    derniere_mise_a_jour = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Statistique région"
+        verbose_name_plural = "Statistiques régions"
+    
+    def __str__(self):
+        return f"Stats {self.region.nom}"
+    
+    def calculer_taux_restitution(self):
+        """Calcule le taux de restitution en pourcentage"""
+        if self.declarations_publiees > 0:
+            return (self.objets_restitues / self.declarations_publiees) * 100
+        return 0.0
+
+
+# ============ MODÈLES DE COMPATIBILITÉ ============
+# Ces modèles restent pour la compatibilité avec les vues existantes
+
+class Objet(models.Model):
+    """Modèle de compatibilité - redirige vers Declaration"""
+    nom = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    categorie = models.CharField(max_length=100, blank=True)
+    photo = models.ImageField(upload_to='objets/', blank=True, null=True)
+    lieu_trouve = models.CharField(max_length=200, blank=True)
+    date_trouve = models.DateField(blank=True, null=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.nom
+
+
+class ObjetPerdu(models.Model):
+    """Modèle de compatibilité"""
+    nom = models.CharField(max_length=100)
+    lieu = models.CharField(max_length=100)
+    date_perte = models.DateField()
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.nom} - {self.lieu}"
+
+
 class Signalement(models.Model):
+    """Modèle de compatibilité - redirige vers Declaration"""
     TYPE_CHOICES = [
         ('perdu', 'Perdu'),
         ('trouve', 'Trouvé'),
         ('retourne', 'Retourné au propriétaire'),
     ]
 
-    objet = models.ForeignKey('Objet', on_delete=models.CASCADE, related_name='signalements')
-    utilisateur = models.ForeignKey('Utilisateur', on_delete=models.CASCADE, related_name='signalements', null=True, blank=True)
+    objet = models.ForeignKey(Objet, on_delete=models.CASCADE, related_name='signalements', null=True, blank=True)
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='signalements', null=True, blank=True)
     statut = models.CharField(max_length=20, choices=TYPE_CHOICES, default='perdu')
     region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, blank=True)
     prefecture = models.ForeignKey(Prefecture, on_delete=models.SET_NULL, null=True, blank=True)
@@ -66,112 +590,19 @@ class Signalement(models.Model):
     date_signalement = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.objet.nom} - {self.get_statut_display()} ({self.region})"
-
-
-
-# class Utilisateur(AbstractUser):
-#     telephone = models.CharField(max_length=20, blank=True, null=True)
-#     ROLE_CHOICES = [
-#         ('citoyen', 'Citoyen'),
-#         ('admin', 'Administrateur'),
-#         ('agent', 'Agent de gestion'),
-#     ]
-#     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='citoyen')
-#     zone = models.CharField(max_length=100, blank=True, null=True)  # <-- Ajouter ce champ
-
-#     def __str__(self):
-#         return f"{self.username} ({self.role})"
-
-class Utilisateur(AbstractUser):
-    telephone = models.CharField(max_length=20, blank=True, null=True)
-
-    ROLE_CHOICES = [
-        ('citoyen', 'Citoyen'),
-        ('admin', 'Administrateur'),
-        ('agent', 'Agent de gestion'),
-    ]
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='citoyen')
-
-    region = models.ForeignKey('Region', on_delete=models.SET_NULL, blank=True, null=True)
-    prefecture = models.ForeignKey('Prefecture', on_delete=models.SET_NULL, blank=True, null=True)
-
-    def __str__(self):
-        return f"{self.username} ({self.role})"
-
-class Objet(models.Model):
-    nom = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    categorie = models.CharField(max_length=100, blank=True)
-    photo = models.ImageField(upload_to='objets/', blank=True, null=True)
-    lieu_trouve = models.CharField(max_length=200, blank=True)  # correspond au champ "Lieu"
-    date_trouve = models.DateField(blank=True, null=True)        # correspond au champ "Date"
-    date_creation = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.nom
-
-
-
-
-class ObjetPerdu(models.Model):
-    nom = models.CharField(max_length=100)
-    lieu = models.CharField(max_length=100)
-    date_perte = models.DateField()
-    description = models.TextField(blank=True, null=True)
-
-    def __str__(self):
-        return f"{self.nom} - {self.lieu}"
-
-# class Signalement(models.Model):
-#     STATUT_CHOICES = [
-#         ('perdu', 'Perdu'),
-#         ('trouve', 'Trouvé'),
-#         ('retourne', 'Retourné à son propriétaire'),
-#     ]
-
-#     objet = models.ForeignKey(Objet, on_delete=models.CASCADE, related_name='signalements')
-#     utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='signalements')
-#     statut = models.CharField(max_length=12, choices=STATUT_CHOICES, default='perdu')
-#     lieu = models.CharField(max_length=200, blank=True)
-#     date_signalement = models.DateTimeField(auto_now_add=True)
-#     commentaire = models.TextField(blank=True)
-#     photo = models.ImageField(upload_to='signalements/', blank=True, null=True)  # ← ajouté
-
-#     def __str__(self):
-#         return f"{self.objet.nom} - {self.statut} par {self.utilisateur.username}"
-
-
-# class Signalement(models.Model):
-#     TYPE_CHOICES = [
-#         ('Perdu', 'Perdu'),
-#         ('Retrouvé', 'Retrouvé')
-#     ]
-#     objet = models.ForeignKey(Objet, on_delete=models.CASCADE)
-#     statut = models.CharField(max_length=50)
-#     # signalement_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-#     lieu = models.CharField(max_length=200)
-#     commentaire = models.TextField(blank=True)
-#     date_signalement = models.DateTimeField(auto_now_add=True)
-#     utilisateur = models.ForeignKey('Utilisateur', on_delete=models.CASCADE, null=True, blank=True)
-#     photo = models.ImageField(upload_to='signalements/', blank=True, null=True)
-#     # signalement_type = models.CharField(max_length=20, choices=[('Perdu','Perdu'),('Retrouvé','Retrouvé')])
-#     zone = models.CharField(max_length=100, blank=True, null=True)
-#     signalement_type = models.CharField(
-#         max_length=20, 
-#         choices=TYPE_CHOICES, 
-#         default='Perdu'   # <-- valeur par défaut
-#     )
+        return f"{self.objet.nom if self.objet else 'Objet inconnu'} - {self.get_statut_display()}"
 
 
 class CommentaireAnonyme(models.Model):
-    """Commentaires anonymes sur les signalements"""
-    signalement = models.ForeignKey(Signalement, on_delete=models.CASCADE, related_name='commentaires_anonymes')
+    """Commentaires anonymes sur les signalements et déclarations"""
+    signalement = models.ForeignKey(Signalement, on_delete=models.CASCADE, related_name='commentaires_anonymes', null=True, blank=True)
+    declaration = models.ForeignKey(Declaration, on_delete=models.CASCADE, related_name='commentaires_anonymes', null=True, blank=True)
     contenu = models.TextField(max_length=1000, help_text="Votre commentaire (max 1000 caractères)")
     pseudo = models.CharField(max_length=50, blank=True, help_text="Pseudo optionnel (ou laissez vide pour 'Anonyme')")
     email = models.EmailField(blank=True, help_text="Email optionnel (ne sera pas affiché publiquement)")
     date_creation = models.DateTimeField(auto_now_add=True)
     est_approuve = models.BooleanField(default=True, help_text="Commentaire approuvé pour affichage")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
     
     class Meta:
         ordering = ['-date_creation']
@@ -180,7 +611,12 @@ class CommentaireAnonyme(models.Model):
     
     def __str__(self):
         pseudo = self.pseudo or "Anonyme"
-        return f"Commentaire de {pseudo} sur {self.signalement.objet.nom}"
+        objet = "déclaration"
+        if self.signalement and self.signalement.objet:
+            objet = self.signalement.objet.nom
+        elif self.declaration:
+            objet = self.declaration.nom_objet
+        return f"Commentaire de {pseudo} sur {objet}"
     
     def get_display_name(self):
         """Retourne le nom d'affichage (pseudo ou 'Anonyme')"""

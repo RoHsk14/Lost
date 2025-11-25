@@ -1,28 +1,473 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Admin{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>{% block page_title %}Administration{% endblock %} - TogoRetrouvé</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --admin-primary: #3b82f6;
+            --admin-secondary: #64748b;
+            --admin-success: #10b981;
+            --admin-warning: #f59e0b;
+            --admin-danger: #ef4444;
+            --admin-light: #f8fafc;
+            --admin-dark: #1e293b;
+            --sidebar-width: 280px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--admin-light);
+            color: var(--admin-dark);
+            line-height: 1.6;
+        }
+
+        /* Cards modernes */
+        .card {
+            border: 0;
+            box-shadow: var(--shadow-sm);
+            border-radius: 0.75rem;
+            background-color: white;
+            transition: all 0.15s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            border-radius: 0.75rem 0.75rem 0 0 !important;
+            font-weight: 600;
+        }
+
+        /* Sidebar */
+        .admin-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .admin-sidebar .sidebar-header {
+            padding: 2rem 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .admin-sidebar .sidebar-header .logo {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            display: block;
+        }
+
+        .admin-sidebar .sidebar-header .role-badge {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        /* Navigation */
+        .admin-nav {
+            padding: 1rem 0;
+        }
+
+        .admin-nav .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+        }
+
+        .admin-nav .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .admin-nav .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.2);
+            border-right: 3px solid white;
+        }
+
+        .admin-nav .nav-link i {
+            width: 20px;
+            margin-right: 0.75rem;
+        }
+
+        .admin-nav .nav-section {
+            padding: 0.5rem 1.5rem;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 1rem;
+        }
+
+        /* Main content */
+        .admin-main {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+        }
+
+        .admin-header {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e9ecef;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .admin-content {
+            padding: 2rem;
+        }
+
+        /* Cards */
+        .stats-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.15s ease;
+        }
+
+        .stats-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--admin-dark);
+        }
+
+        .stats-label {
+            color: var(--admin-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Buttons modernes */
+        .btn {
+            font-weight: 500;
+            border-radius: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: var(--admin-primary);
+            border-color: var(--admin-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-light {
+            background: white;
+            border-color: #e2e8f0;
+            color: var(--admin-dark);
+        }
+
+        .btn-light:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-outline-secondary {
+            border-color: #cbd5e1;
+            color: var(--admin-secondary);
+        }
+
+        .btn-outline-secondary:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .btn-rejeter {
+            background: var(--admin-primary);
+            color: white;
+        }
+
+        .btn-rejeter:hover {
+            background: #b02a37;
+            color: white;
+        }
+
+        /* Status badges */
+        .badge-status {
+            padding: 0.4rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-actif { background: #d4edda; color: #155724; }
+        .badge-inactif { background: #f8d7da; color: #721c24; }
+        .badge-en_attente { background: #fff3cd; color: #856404; }
+        .badge-approuve { background: #d1ecf1; color: #0c5460; }
+        .badge-rejete { background: #f8d7da; color: #721c24; }
+
+        /* User profile dropdown */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: var(--admin-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .admin-sidebar.show {
+                transform: translateX(0);
+            }
+
+            .admin-main {
+                margin-left: 0;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex">
+<body>
+    <!-- Sidebar -->
+    <div class="admin-sidebar" id="adminSidebar">
+        <div class="sidebar-header">
+            <a href="{% url 'togo_admin:dashboard' %}" class="logo">
+                <i class="fas fa-shield-alt me-2"></i>TogoRetrouvé Admin
+            </a>
+            <div class="role-badge">
+                {% if user.is_superuser %}
+                    <i class="fas fa-crown me-1"></i>Super Admin
+                {% else %}
+                    <i class="fas fa-user-cog me-1"></i>Administrateur
+                {% endif %}
+            </div>
+        </div>
 
-    <!-- Barre latérale -->
-    <aside class="w-64 bg-white shadow-md min-h-screen">
-        <div class="p-6 font-bold text-xl border-b">Admin</div>
-        <nav class="p-4">
-            <a href="{% url 'admin_dashboard' %}" class="block py-2 px-4 rounded hover:bg-gray-200">Dashboard</a>
-            <a href="#" class="block py-2 px-4 rounded hover:bg-gray-200">Mes Signalements</a>
-            <a href="#" class="block py-2 px-4 rounded hover:bg-gray-200">Paramètres</a>
-            <a href="{% url 'logout' %}" class="block py-2 px-4 rounded hover:bg-gray-200 text-red-500">Déconnexion</a>
+        <nav class="admin-nav">
+            <!-- Dashboard -->
+            <a href="{% url 'togo_admin:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i>
+                Tableau de bord
+            </a>
+
+            <div class="nav-section">Gestion Essentielle</div>
+            
+            <!-- Validation des déclarations (PRIORITÉ) -->
+            <a href="{% url 'togo_admin:pending_declarations' %}" class="nav-link {% if 'pending' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-clipboard-check"></i>
+                Valider Déclarations <span class="badge bg-warning ms-2">{{ pending_count|default:0 }}</span>
+            </a>
+
+            <div class="nav-section">Statistiques</div>
+            
+            <!-- Rapports -->
+            <a href="{% url 'togo_admin:reports' %}" class="nav-link {% if 'reports' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                Rapports
+            </a>
+
+            {% if user.is_superuser %}
+            <div class="nav-section">Super Admin</div>
+            
+            <!-- Super Admin Dashboard -->
+            <a href="{% url 'superadmin_dashboard' %}" class="nav-link">
+                <i class="fas fa-crown"></i>
+                Super Admin
+            </a>
+            {% endif %}
         </nav>
-    </aside>
 
-    <!-- Contenu principal -->
-    <main class="flex-1 p-6">
-        {% block content %}{% endblock %}
-    </main>
+        <!-- Sidebar footer -->
+        <div class="mt-auto p-3" style="margin-top: auto;">
+            <div class="d-grid">
+                <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                </a>
+            </div>
+        </div>
+    </div>
 
+    <!-- Main content -->
+    <div class="admin-main">
+        <!-- Header -->
+        <div class="admin-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <button class="btn btn-outline-secondary d-md-none me-3" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div>
+                        <h4 class="mb-0">{% block page_heading %}Administration{% endblock %}</h4>
+                        <small class="text-muted">{% block page_description %}Panneau d'administration{% endblock %}</small>
+                    </div>
+                </div>
+                
+                <div class="user-profile">
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+                            <div class="user-avatar">
+                                {{ user.username|first|upper }}
+                            </div>
+                            <div class="ms-2 d-none d-md-block">
+                                <div class="fw-bold">{{ user.username }}</div>
+                                <small class="text-muted">{{ user.email }}</small>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Mon profil</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Paramètres</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="admin-content">
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                    {% if message.tags == 'error' %}
+                        <i class="fas fa-times-circle me-2"></i>
+                    {% elif message.tags == 'success' %}
+                        <i class="fas fa-check-circle me-2"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle me-2"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}
+            <!-- Page specific content goes here -->
+            {% endblock %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Common JS functions -->
+    <script>
+        // Sidebar toggle for mobile
+        function toggleSidebar() {
+            document.getElementById('adminSidebar').classList.toggle('show');
+        }
+
+        // CSRF token helper
+        function getCsrfToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                   document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        }
+
+        // Alert helper
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'error' ? 'times' : type === 'success' ? 'check' : 'info'}-circle me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const content = document.querySelector('.admin-content');
+            content.insertBefore(alertDiv, content.firstChild);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Generic AJAX helper
+        async function makeRequest(url, method = 'GET', data = null) {
+            const options = {
+                method: method,
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json',
+                },
+            };
+            
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            
+            try {
+                const response = await fetch(url, options);
+                return await response.json();
+            } catch (error) {
+                console.error('Request failed:', error);
+                throw error;
+            }
+        }
+    </script>
+
+    {% block extra_js %}
+    <!-- Page specific JavaScript -->
+    {% endblock %}
 </body>
 </html>

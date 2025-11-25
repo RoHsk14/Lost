@@ -1,0 +1,335 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Rapports{% endblock %}
+{% block admin_title %}Rapports et Analytics{% endblock %}
+
+{% block extra_head %}
+<style>
+.metric-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 20px;
+    transition: transform 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+}
+
+.report-card {
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+
+.report-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-color: #007bff;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">
+        <i class="fas fa-chart-bar me-2 text-primary"></i>
+        Rapports et Analytics
+    </h4>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary" onclick="refreshReports()">
+            <i class="fas fa-sync"></i> Actualiser
+        </button>
+        <button class="btn btn-primary" onclick="exportAllReports()">
+            <i class="fas fa-download"></i> Exporter Tout
+        </button>
+    </div>
+</div>
+
+<!-- Métriques principales -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1">{{ stats_performance.total_declarations|default:0 }}</h3>
+                    <p class="mb-0 opacity-75">Total Déclarations</p>
+                </div>
+                <i class="fas fa-file-alt fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1">{{ stats_performance.taux_restitution.taux_restitution|default:0|floatformat:1 }}%</h3>
+                    <p class="mb-0 opacity-75">Taux de Résolution</p>
+                </div>
+                <i class="fas fa-check-circle fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1">{{ stats_performance.temps_moyen_validation|default:24 }}h</h3>
+                    <p class="mb-0 opacity-75">Temps Moyen</p>
+                </div>
+                <i class="fas fa-clock fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1">4.2/5</h3>
+                    <p class="mb-0 opacity-75">Satisfaction</p>
+                </div>
+                <i class="fas fa-star fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Graphiques et analyses -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Évolution des Déclarations
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-pie-chart me-2"></i>
+                    Répartition par Statut
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rapports disponibles -->
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="report-card p-4">
+            <div class="text-center">
+                <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                <h5>Rapport Mensuel</h5>
+                <p class="text-muted">Synthèse complète du mois en cours avec statistiques détaillées</p>
+                <button class="btn btn-outline-danger" onclick="generateReport('monthly')">
+                    <i class="fas fa-download"></i> Générer PDF
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="report-card p-4">
+            <div class="text-center">
+                <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
+                <h5>Export Excel</h5>
+                <p class="text-muted">Données brutes exportables pour analyse avancée</p>
+                <button class="btn btn-outline-success" onclick="generateReport('excel')">
+                    <i class="fas fa-download"></i> Télécharger Excel
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="report-card p-4">
+            <div class="text-center">
+                <i class="fas fa-chart-bar fa-3x text-info mb-3"></i>
+                <h5>Analytics Avancés</h5>
+                <p class="text-muted">Tableaux de bord interactifs avec métriques personnalisées</p>
+                <button class="btn btn-outline-info" onclick="viewAdvancedAnalytics()">
+                    <i class="fas fa-external-link-alt"></i> Voir Analytics
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tableau des performances par région -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-users-cog me-2"></i>
+            Performance des Agents
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Agent</th>
+                        <th>Déclarations Validées</th>
+                        <th>Réclamations Traitées</th>
+                        <th>Score</th>
+                        <th>Temps Moyen</th>
+                        <th>Performance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in agents_actifs %}
+                    <tr>
+                        <td>
+                            <strong>{{ agent.username }}</strong>
+                            <br><small class="text-muted">{{ agent.prefecture.nom|default:'Non assigné' }}</small>
+                        </td>
+                        <td>{{ agent.nb_declarations_validees|default:0 }}</td>
+                        <td>{{ agent.nb_reclamations_traitees|default:0 }}</td>
+                        <td>
+                            <span class="badge bg-success">
+                                {{ agent.nb_declarations_validees|default:0 }}
+                            </span>
+                        </td>
+                        <td>24h</td>
+                        <td>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-success" 
+                                     style="width: {% widthratio agent.nb_declarations_validees 10 100 %}%">
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            Aucune donnée d'agent disponible
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Données pour les graphiques
+const evolutionData = {
+    labels: {{ evolution_data|safe }}.map(item => item.mois) || ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
+    datasets: [{
+        label: 'Déclarations',
+        data: {{ evolution_data|safe }}.map(item => item.declarations) || [10, 15, 12, 20, 18, 25],
+        borderColor: '#007bff',
+        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+        tension: 0.4
+    }, {
+        label: 'Résolutions',
+        data: [8, 12, 10, 16, 15, 20],
+        borderColor: '#28a745',
+        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+        tension: 0.4
+    }]
+};
+
+const statusData = {
+    labels: ['En attente', 'Validées', 'Publiées', 'Résolues'],
+    datasets: [{
+        data: [15, 25, 30, 30],
+        backgroundColor: [
+            '#ffc107',
+            '#28a745', 
+            '#007bff',
+            '#17a2b8'
+        ]
+    }]
+};
+
+// Initialisation des graphiques
+document.addEventListener('DOMContentLoaded', function() {
+    // Graphique d'évolution
+    const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
+    new Chart(evolutionCtx, {
+        type: 'line',
+        data: evolutionData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Graphique de statut
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: statusData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+});
+
+// Fonctions de gestion des rapports
+function refreshReports() {
+    location.reload();
+}
+
+function exportAllReports() {
+    if (confirm('Générer et télécharger tous les rapports ?')) {
+        window.open('/admin/api/reports/export/all/', '_blank');
+    }
+}
+
+function generateReport(type) {
+    let url;
+    switch(type) {
+        case 'monthly':
+            url = '/admin/api/reports/monthly/pdf/';
+            break;
+        case 'excel':
+            url = '/admin/api/reports/excel/';
+            break;
+        default:
+            alert('Type de rapport non reconnu');
+            return;
+    }
+    
+    window.open(url, '_blank');
+}
+
+function viewAdvancedAnalytics() {
+    window.open('/togoretrouve-admin/statistics/', '_blank');
+}
+</script>
+{% endblock %}

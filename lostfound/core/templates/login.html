@@ -5,48 +5,378 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexion - TogoRetrouve</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 50%, #1e3a8a 100%);
+            /* linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%); */
+
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .auth-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .auth-left {
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: white;
+        }
+        
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        
+        .brand-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .brand-name {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        .auth-left h1 {
+            font-size: 42px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+        
+        .auth-left .highlight {
+            color: #10b981;
+            position: relative;
+        }
+        
+        .auth-left p {
+            font-size: 16px;
+            opacity: 0.9;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+        
+        .features-list {
+            list-style: none;
+        }
+        
+        .features-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            font-size: 15px;
+            opacity: 0.9;
+        }
+        
+        .features-list li i {
+            color: #10b981;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        
+        .auth-right {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .auth-form {
+            width: 100%;
+        }
+        
+        .form-title {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .form-title h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        
+        .form-subtitle {
+            color: #64748b;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            background: #f9fafb;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .remember-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+        }
+        
+        .remember-me input {
+            margin-right: 8px;
+        }
+        
+        .forgot-password {
+            color: #2563eb;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .forgot-password:hover {
+            color: #1d4ed8;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+        
+        .register-link {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .register-link a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .register-link a:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+        
+        .alert {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: none;
+        }
+        
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+            border-left: 4px solid #10b981;
+        }
+        
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border-left: 4px solid #ef4444;
+        }
+        
+        @media (max-width: 768px) {
+            .auth-content {
+                grid-template-columns: 1fr;
+                margin: 20px;
+            }
+            
+            .auth-left {
+                padding: 40px;
+                text-align: center;
+            }
+            
+            .auth-left h1 {
+                font-size: 32px;
+            }
+            
+            .auth-right {
+                padding: 40px 30px;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-
-    <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-blue-600">Connexion</h1>
-            <p class="text-gray-500 mt-2">Accédez à votre compte TogoRetrouve</p>
-        </div>
-
-        {% if messages %}
-            {% for message in messages %}
-                <div class="mb-4 p-3 rounded text-white 
-                    {% if message.tags == 'error' %} bg-red-500 {% else %} bg-green-500 {% endif %}">
-                    {{ message }}
+<body>
+    <div class="auth-container">
+        <div class="auth-content">
+            <!-- Section gauche -->
+            <div class="auth-left">
+                <div class="brand-logo">
+                    <div class="brand-icon">
+                        <i class="fas fa-search" style="color: white; font-size: 20px;"></i>
+                    </div>
+                    <div class="brand-name">TogoRetrouve</div>
                 </div>
-            {% endfor %}
-        {% endif %}
-
-        <form method="POST" class="space-y-5">
-            {% csrf_token %}
-            <div>
-                <label class="block mb-2 text-gray-700">Nom d'utilisateur</label>
-                <input type="text" name="username" required
-                       class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                
+                <h1>
+                    Bienvenue dans<br>
+                    le <span class="highlight">futur</span> de la récupération
+                </h1>
+                
+                <p>
+                    Connectez-vous à votre plateforme TogoRetrouvé et découvrez une nouvelle façon de retrouver vos objets perdus.
+                </p>
+                
+                <ul class="features-list">
+                    <li>
+                        <i class="fas fa-database"></i>
+                        Base de données de milliers d'objets
+                    </li>
+                    <li>
+                        <i class="fas fa-clock"></i>
+                        Signalement en temps réel 24h/24
+                    </li>
+                    <li>
+                        <i class="fas fa-shield-alt"></i>
+                        Plateforme sécurisée et vérifiée
+                    </li>
+                    <li>
+                        <i class="fas fa-map-marker-alt"></i>
+                        Couverture dans tout le Togo
+                    </li>
+                </ul>
             </div>
-            <div>
-                <label class="block mb-2 text-gray-700">Mot de passe</label>
-                <input type="password" name="password" required
-                       class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            
+            <!-- Section droite -->
+            <div class="auth-right">
+                <form class="auth-form" method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="form-title">
+                        <h2>Connexion</h2>
+                        <p class="form-subtitle">Accédez à votre espace TogoRetrouve</p>
+                    </div>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="username">Nom d'utilisateur</label>
+                        <input type="text" id="username" name="username" class="form-input" placeholder="Votre nom d'utilisateur" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="password">Mot de passe</label>
+                        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
+                    </div>
+                    
+                    <div class="remember-section">
+                        <label class="remember-me">
+                            <input type="checkbox" name="remember">
+                            <span style="font-size: 14px; color: #64748b;">Se souvenir de moi</span>
+                        </label>
+                        <a href="#" class="forgot-password">Mot de passe oublié ?</a>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        Se connecter
+                        <i class="fas fa-arrow-right" style="margin-left: 8px;"></i>
+                    </button>
+                    
+                    <div class="register-link">
+                        Pas encore de compte ? <a href="{% url 'register' %}">Rejoindre TogoRetrouve</a>
+                    </div>
+                </form>
             </div>
-            <button type="submit"
-                    class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">
-                Se connecter
-            </button>
-        </form>
-
-        <div class="text-center mt-6 text-sm text-gray-600">
-            <p>Pas encore de compte ? <a href="{% url 'register' %}" class="text-blue-600 font-medium hover:underline">Inscrivez-vous</a></p>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 

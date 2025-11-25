@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.env
+
+# Django
+*.log
+local_settings.py
+db.sqlite3-journal
+
+# Media files (optional, remove this line if you want to include media files)
+media/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# Test and development files
+test_*.py
+*_test.py
+debug_*.py

@@ -1,0 +1,149 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block page_title %}Modifier Déclaration - TogoRetrouvé Admin{% endblock %}
+{% block page_heading %}Modifier Déclaration{% endblock %}
+{% block page_description %}Compléter les informations manquantes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>Modifier la Déclaration #{{ declaration.id }}
+                    </h4>
+                    <small>Compléter les informations manquantes pour validation</small>
+                </div>
+                
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" class="row g-3">
+                        {% csrf_token %}
+                        
+                        <!-- Informations du déclarant (lecture seule) -->
+                        <div class="col-12">
+                            <h5 class="text-info border-bottom pb-2">
+                                <i class="fas fa-user me-2"></i>Informations du Déclarant (lecture seule)
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Déclarant</label>
+                            <input type="text" class="form-control" value="{{ declaration.nom_declarant }} {{ declaration.prenom_declarant }}" readonly>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Contact</label>
+                            <input type="text" class="form-control" value="{{ declaration.telephone_declarant }}" readonly>
+                        </div>
+                        
+                        <!-- Informations modifiables -->
+                        <div class="col-12 mt-4">
+                            <h5 class="text-warning border-bottom pb-2">
+                                <i class="fas fa-edit me-2"></i>Informations à Compléter
+                            </h5>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="description" class="form-label">Description *</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required>{{ declaration.description }}</textarea>
+                            <small class="form-text text-muted">Description détaillée de l'objet ou de la personne</small>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="lieu_incident" class="form-label">Lieu de l'incident *</label>
+                            <input type="text" class="form-control" id="lieu_incident" name="lieu_incident" value="{{ declaration.lieu_incident }}" required>
+                            <small class="form-text text-muted">Lieu précis où l'objet a été perdu/trouvé</small>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="date_incident" class="form-label">Date de l'incident</label>
+                            <input type="date" class="form-control" id="date_incident" name="date_incident" value="{{ declaration.date_incident|date:'Y-m-d' }}">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="photo" class="form-label">Photo</label>
+                            <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+                            {% if declaration.photo %}
+                                <small class="form-text text-success">✓ Photo actuelle présente</small>
+                            {% else %}
+                                <small class="form-text text-warning">⚠ Aucune photo attachée</small>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Catégorisation -->
+                        <div class="col-12 mt-4">
+                            <h5 class="text-warning border-bottom pb-2">
+                                <i class="fas fa-tags me-2"></i>Catégorisation
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="categorie" class="form-label">Catégorie</label>
+                            <select class="form-select" id="categorie" name="categorie">
+                                <option value="">Sélectionnez une catégorie</option>
+                                {% for categorie in categories %}
+                                <option value="{{ categorie.id }}" {% if categorie.id == declaration.categorie_id %}selected{% endif %}>
+                                    {{ categorie.nom }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="priorite" class="form-label">Priorité</label>
+                            <select class="form-select" id="priorite" name="priorite">
+                                <option value="1" {% if declaration.priorite == 1 %}selected{% endif %}>Normale</option>
+                                <option value="2" {% if declaration.priorite == 2 %}selected{% endif %}>Haute</option>
+                                <option value="3" {% if declaration.priorite == 3 %}selected{% endif %}>Urgente</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Commentaire admin -->
+                        <div class="col-12">
+                            <label for="commentaire_agent" class="form-label">Commentaire administratif</label>
+                            <textarea class="form-control" id="commentaire_agent" name="commentaire_agent" rows="2">{{ declaration.commentaire_agent }}</textarea>
+                            <small class="form-text text-muted">Commentaire interne pour l'équipe administrative</small>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="col-12 mt-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{% url 'togo_admin:pending_declarations' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Retour
+                                </a>
+                                
+                                <div>
+                                    <button type="submit" name="action" value="save" class="btn btn-warning me-2">
+                                        <i class="fas fa-save me-1"></i>Sauvegarder
+                                    </button>
+                                    <button type="submit" name="action" value="validate" class="btn btn-success">
+                                        <i class="fas fa-check me-1"></i>Sauvegarder et Valider
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Aperçu photo actuelle -->
+{% if declaration.photo %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-image me-2"></i>Photo Actuelle</h6>
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ declaration.photo.url }}" alt="Photo de la déclaration" class="img-fluid" style="max-height: 300px;">
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

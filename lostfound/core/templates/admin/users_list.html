@@ -1,0 +1,285 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Gestion des utilisateurs{% endblock %}
+{% block page_heading %}Utilisateurs{% endblock %}
+{% block page_description %}Gestion et modération des comptes utilisateurs{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Statistiques utilisateurs -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.total_users|default:0 }}</div>
+                    <div class="stats-label">Total utilisateurs</div>
+                </div>
+                <div class="text-primary fs-2">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.users_today|default:0 }}</div>
+                    <div class="stats-label">Nouveaux aujourd'hui</div>
+                </div>
+                <div class="text-success fs-2">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.active_users|default:0 }}</div>
+                    <div class="stats-label">Utilisateurs actifs</div>
+                </div>
+                <div class="text-info fs-2">
+                    <i class="fas fa-user-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.pending_verification|default:0 }}</div>
+                    <div class="stats-label">En attente vérification</div>
+                </div>
+                <div class="text-warning fs-2">
+                    <i class="fas fa-user-clock"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres et recherche -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">Recherche</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       placeholder="Nom, email, téléphone..." value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-3">
+                <label for="role" class="form-label">Rôle</label>
+                <select class="form-select" id="role" name="role">
+                    <option value="">Tous les rôles</option>
+                    <option value="citoyen" {% if request.GET.role == 'citoyen' %}selected{% endif %}>Citoyen</option>
+                    <option value="agent" {% if request.GET.role == 'agent' %}selected{% endif %}>Agent</option>
+                    <option value="admin" {% if request.GET.role == 'admin' %}selected{% endif %}>Admin</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Statut</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">Tous</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Actif</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactif</option>
+                    <option value="unverified" {% if request.GET.status == 'unverified' %}selected{% endif %}>Non vérifié</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Filtrer
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Liste des utilisateurs -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Liste des utilisateurs</h5>
+        <div>
+            <button class="btn btn-outline-primary btn-sm me-2" onclick="exportUsers()">
+                <i class="fas fa-download"></i> Exporter
+            </button>
+            <a href="#" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="fas fa-plus"></i> Nouveau utilisateur
+            </a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Utilisateur</th>
+                        <th>Rôle</th>
+                        <th>Région</th>
+                        <th>Date d'inscription</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar me-3">
+                                    {{ user.first_name|first|default:user.username|first|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                    {% if user.telephone %}
+                                        <br><small class="text-muted"><i class="fas fa-phone"></i> {{ user.telephone }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ user.role }}">{{ user.get_role_display }}</span>
+                        </td>
+                        <td>
+                            {% if user.region %}
+                                <div>{{ user.region.nom }}</div>
+                                {% if user.prefecture %}
+                                    <small class="text-muted">{{ user.prefecture.nom }}</small>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>{{ user.date_joined|date:"d/m/Y" }}</div>
+                            <small class="text-muted">{{ user.date_joined|time:"H:i" }}</small>
+                        </td>
+                        <td>
+                            {% if user.actif %}
+                                {% if user.verifie %}
+                                    <span class="badge-status badge-actif"><i class="fas fa-check-circle"></i> Vérifié</span>
+                                {% else %}
+                                    <span class="badge-status badge-en_attente"><i class="fas fa-clock"></i> En attente</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge-status badge-inactif"><i class="fas fa-times-circle"></i> Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="#" class="btn btn-outline-primary" title="Voir détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="btn btn-outline-secondary" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if not user.verifie and user.actif %}
+                                    <button class="btn btn-outline-success" title="Vérifier le compte" 
+                                            onclick="verifyUser({{ user.id }})">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                {% endif %}
+                                {% if user.actif %}
+                                    <button class="btn btn-outline-warning" title="Désactiver" 
+                                            onclick="toggleUserStatus({{ user.id }}, false)">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-outline-success" title="Activer" 
+                                            onclick="toggleUserStatus({{ user.id }}, true)">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <div class="text-muted">Aucun utilisateur trouvé</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    {% if users.has_other_pages %}
+    <div class="card-footer">
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                {% if users.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">&laquo; Premier</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ users.previous_page_number }}">Précédent</a></li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">Page {{ users.number }} sur {{ users.paginator.num_pages }}</span>
+                </li>
+                
+                {% if users.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ users.next_page_number }}">Suivant</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ users.paginator.num_pages }}">Dernier &raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function verifyUser(userId) {
+    if (!confirm('Confirmer la vérification de ce compte utilisateur ?')) return;
+    
+    try {
+        const response = await makeRequest(`/api/admin/user/${userId}/verify/`, 'POST');
+        if (response.success) {
+            showAlert('Utilisateur vérifié avec succès', 'success');
+            location.reload();
+        } else {
+            showAlert(response.error || 'Erreur lors de la vérification', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication avec le serveur', 'error');
+    }
+}
+
+async function toggleUserStatus(userId, activate) {
+    const action = activate ? 'activer' : 'désactiver';
+    if (!confirm(`Confirmer ${action} ce compte utilisateur ?`)) return;
+    
+    try {
+        const response = await makeRequest(`/api/admin/user/${userId}/toggle-status/`, 'POST', {
+            activate: activate
+        });
+        if (response.success) {
+            showAlert(`Utilisateur ${activate ? 'activé' : 'désactivé'} avec succès`, 'success');
+            location.reload();
+        } else {
+            showAlert(response.error || `Erreur lors de ${action}`, 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication avec le serveur', 'error');
+    }
+}
+
+function exportUsers() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', 'csv');
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
+}
+</script>
+{% endblock %}

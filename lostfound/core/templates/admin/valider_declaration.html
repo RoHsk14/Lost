@@ -1,0 +1,408 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Validation de Déclaration - TogoRetrouvé Admin{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+    .declaration-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .status-badge {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+    }
+    .action-buttons {
+        position: sticky;
+        top: 20px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+    }
+    .photo-gallery img {
+        border-radius: 10px;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+    .photo-gallery img:hover {
+        transform: scale(1.05);
+    }
+    .validation-form {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+    }
+    .timeline-item {
+        border-left: 3px solid #e9ecef;
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+    }
+    .timeline-item.active {
+        border-left-color: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0"><i class="fas fa-clipboard-check"></i> Validation de Déclaration</h1>
+                    <p class="text-muted">{{ declaration.numero_declaration }} - {{ declaration.nom_objet }}</p>
+                </div>
+                <a href="{% url 'togo_admin:declarations' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Détails de la déclaration -->
+        <div class="col-lg-8">
+            <div class="card declaration-card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file-alt"></i> {{ declaration.nom_objet }}
+                        </h5>
+                        <div>
+                            {% if declaration.statut == 'cree' %}
+                                <span class="status-badge bg-warning text-dark">En attente de validation</span>
+                            {% elif declaration.statut == 'valide' %}
+                                <span class="status-badge bg-success">Validé</span>
+                            {% elif declaration.statut == 'publie' %}
+                                <span class="status-badge bg-info">Publié</span>
+                            {% elif declaration.statut == 'rejete' %}
+                                <span class="status-badge bg-danger">Rejeté</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Informations principales -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-info-circle"></i> Informations Générales</h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td><strong>Numéro :</strong></td>
+                                    <td>{{ declaration.numero_declaration }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Type :</strong></td>
+                                    <td>
+                                        {% if declaration.type_declaration == 'perdu' %}
+                                            <span class="badge bg-danger">Objet Perdu</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Objet Trouvé</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Catégorie :</strong></td>
+                                    <td>{{ declaration.categorie.nom|default:"Non spécifiée" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date incident :</strong></td>
+                                    <td>{{ declaration.date_incident|date:"d/m/Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date déclaration :</strong></td>
+                                    <td>{{ declaration.date_declaration|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-user"></i> Déclarant</h6>
+                            <div class="card bg-light">
+                                <div class="card-body p-3">
+                                    <h6 class="mb-1">{{ declaration.declarant.get_full_name|default:declaration.declarant.username }}</h6>
+                                    <p class="mb-1 small text-muted">{{ declaration.declarant.email }}</p>
+                                    {% if declaration.declarant.telephone %}
+                                        <p class="mb-1 small"><i class="fas fa-phone"></i> {{ declaration.declarant.telephone }}</p>
+                                    {% endif %}
+                                    <span class="badge bg-secondary">{{ declaration.declarant.get_role_display }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Localisation -->
+                    <div class="mb-4">
+                        <h6 class="text-primary"><i class="fas fa-map-marker-alt"></i> Localisation</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong>Région :</strong> {{ declaration.region.nom|default:"Non spécifiée" }}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Préfecture :</strong> {{ declaration.prefecture.nom|default:"Non spécifiée" }}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Structure :</strong> {{ declaration.structure_locale.nom|default:"Non spécifiée" }}
+                            </div>
+                        </div>
+                        {% if declaration.lieu_precis %}
+                        <div class="mt-2">
+                            <strong>Lieu précis :</strong> {{ declaration.lieu_precis }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <h6 class="text-primary"><i class="fas fa-align-left"></i> Description</h6>
+                        <div class="bg-light p-3 rounded">
+                            {{ declaration.description|linebreaks }}
+                        </div>
+                        
+                        {% if declaration.commentaire_declarant %}
+                        <div class="mt-3">
+                            <h6 class="text-secondary"><i class="fas fa-comment"></i> Commentaire du déclarant</h6>
+                            <div class="bg-info bg-opacity-10 p-3 rounded">
+                                {{ declaration.commentaire_declarant|linebreaks }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Photos -->
+                    {% if declaration.photo_principale or photos %}
+                    <div class="mb-4">
+                        <h6 class="text-primary"><i class="fas fa-camera"></i> Photos</h6>
+                        <div class="photo-gallery">
+                            <div class="row">
+                                {% if declaration.photo_principale %}
+                                <div class="col-md-3 mb-3">
+                                    <img src="{{ declaration.photo_principale.url }}" 
+                                         class="img-fluid" 
+                                         alt="Photo principale"
+                                         onclick="viewPhoto('{{ declaration.photo_principale.url }}')">
+                                    <small class="text-muted d-block">Photo principale</small>
+                                </div>
+                                {% endif %}
+                                
+                                {% for photo in photos %}
+                                <div class="col-md-3 mb-3">
+                                    <img src="{{ photo.photo.url }}" 
+                                         class="img-fluid" 
+                                         alt="{{ photo.legende }}"
+                                         onclick="viewPhoto('{{ photo.photo.url }}')">
+                                    {% if photo.legende %}
+                                        <small class="text-muted d-block">{{ photo.legende }}</small>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Commentaire agent existant -->
+                    {% if declaration.commentaire_agent %}
+                    <div class="mb-4">
+                        <h6 class="text-warning"><i class="fas fa-user-tie"></i> Commentaire de l'agent</h6>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded">
+                            {{ declaration.commentaire_agent|linebreaks }}
+                            {% if declaration.agent_validateur %}
+                                <br><small class="text-muted">
+                                    Par {{ declaration.agent_validateur.get_full_name }} le {{ declaration.date_publication|date:"d/m/Y H:i" }}
+                                </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Réclamations -->
+            {% if reclamations %}
+            <div class="card declaration-card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-hand-paper"></i> Réclamations ({{ reclamations.count }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for reclamation in reclamations %}
+                    <div class="border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="mb-1">{{ reclamation.reclamant.get_full_name }}</h6>
+                                <small class="text-muted">{{ reclamation.date_reclamation|date:"d/m/Y H:i" }}</small>
+                            </div>
+                            <span class="badge 
+                                {% if reclamation.statut == 'soumise' %}bg-warning
+                                {% elif reclamation.statut == 'approuvee' %}bg-success
+                                {% elif reclamation.statut == 'rejetee' %}bg-danger
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ reclamation.get_statut_display }}
+                            </span>
+                        </div>
+                        <p class="mb-0">{{ reclamation.justification }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Actions de validation -->
+        <div class="col-lg-4">
+            <div class="action-buttons mb-4">
+                <h5 class="text-primary mb-3"><i class="fas fa-tools"></i> Actions</h5>
+                
+                <!-- Statut actuel -->
+                <div class="alert alert-info">
+                    <strong>Statut actuel :</strong> {{ declaration.get_statut_display }}
+                </div>
+                
+                <!-- Formulaire de validation -->
+                {% if peut_valider or peut_publier or peut_rejeter %}
+                <form method="post" class="validation-form">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="commentaire_agent" class="form-label">Commentaire (optionnel)</label>
+                        <textarea class="form-control" id="commentaire_agent" name="commentaire_agent" 
+                                  rows="4" placeholder="Votre commentaire sur cette déclaration..."></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {% if peut_valider %}
+                        <button type="submit" name="action" value="valider" class="btn btn-success">
+                            <i class="fas fa-check"></i> Valider la Déclaration
+                        </button>
+                        {% endif %}
+                        
+                        {% if peut_publier %}
+                        <button type="submit" name="action" value="publier" class="btn btn-primary">
+                            <i class="fas fa-globe"></i> Publier
+                        </button>
+                        {% endif %}
+                        
+                        {% if peut_rejeter %}
+                        <button type="submit" name="action" value="rejeter" class="btn btn-outline-danger"
+                                onclick="return confirm('Êtes-vous sûr de vouloir rejeter cette déclaration ?')">
+                            <i class="fas fa-times"></i> Rejeter
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle"></i> Aucune action disponible pour le statut actuel.
+                </div>
+                {% endif %}
+                
+                <!-- Actions secondaires -->
+                <div class="mt-3 d-grid gap-2">
+                    <a href="{% url 'togo_admin:declaration_detail' declaration.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-eye"></i> Voir Détails Complets
+                    </a>
+                    
+                    <a href="mailto:{{ declaration.declarant.email }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-envelope"></i> Contacter le Déclarant
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Timeline de validation -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="card-title mb-0"><i class="fas fa-history"></i> Historique</h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item active">
+                            <strong>Création</strong><br>
+                            <small class="text-muted">{{ declaration.date_declaration|date:"d/m/Y H:i" }}</small>
+                        </div>
+                        
+                        {% if declaration.date_publication %}
+                        <div class="timeline-item active">
+                            <strong>Validation</strong><br>
+                            <small class="text-muted">{{ declaration.date_publication|date:"d/m/Y H:i" }}</small>
+                            {% if declaration.agent_validateur %}
+                                <br><small>par {{ declaration.agent_validateur.get_full_name }}</small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if declaration.statut == 'publie' %}
+                        <div class="timeline-item active">
+                            <strong>Publication</strong><br>
+                            <small class="text-muted">Visible publiquement</small>
+                        </div>
+                        {% endif %}
+                        
+                        {% if declaration.date_restitution %}
+                        <div class="timeline-item active">
+                            <strong>Restitution</strong><br>
+                            <small class="text-muted">{{ declaration.date_restitution|date:"d/m/Y H:i" }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour visualiser les photos -->
+<div class="modal fade" id="photoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Photo de la déclaration</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalPhoto" src="" class="img-fluid" alt="">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Visualiser une photo en grand
+function viewPhoto(photoUrl) {
+    document.getElementById('modalPhoto').src = photoUrl;
+    new bootstrap.Modal(document.getElementById('photoModal')).show();
+}
+
+// Confirmation pour les actions critiques
+document.querySelectorAll('form button[name="action"]').forEach(button => {
+    if (button.value === 'rejeter') {
+        button.addEventListener('click', function(e) {
+            const commentaire = document.getElementById('commentaire_agent').value.trim();
+            if (button.value === 'rejeter' && !commentaire) {
+                e.preventDefault();
+                alert('Veuillez saisir un commentaire expliquant le motif de rejet.');
+                document.getElementById('commentaire_agent').focus();
+            }
+        });
+    }
+});
+
+// Auto-resize du textarea
+document.getElementById('commentaire_agent').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = this.scrollHeight + 'px';
+});
+</script>
+{% endblock %}

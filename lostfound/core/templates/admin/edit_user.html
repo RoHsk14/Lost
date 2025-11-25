@@ -1,0 +1,135 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block page_title %}Modifier Utilisateur - TogoRetrouvé Admin{% endblock %}
+{% block page_heading %}Modifier Utilisateur{% endblock %}
+{% block page_description %}Modification des informations utilisateur{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>Modifier l'Utilisateur
+                    </h4>
+                    <small>Modification des informations de {{ user_to_edit.first_name }} {{ user_to_edit.last_name }}</small>
+                </div>
+                
+                <div class="card-body">
+                    <form method="post" class="row g-3">
+                        {% csrf_token %}
+                        
+                        <!-- Informations personnelles -->
+                        <div class="col-12">
+                            <h5 class="text-warning border-bottom pb-2">
+                                <i class="fas fa-user me-2"></i>Informations Personnelles
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="nom" class="form-label">Nom *</label>
+                            <input type="text" class="form-control" id="nom" name="nom" value="{{ user_to_edit.last_name }}" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="prenom" class="form-label">Prénom *</label>
+                            <input type="text" class="form-control" id="prenom" name="prenom" value="{{ user_to_edit.first_name }}" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ user_to_edit.email }}" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="telephone" class="form-label">Téléphone</label>
+                            <input type="tel" class="form-control" id="telephone" name="telephone" value="{{ user_to_edit.telephone }}">
+                        </div>
+                        
+                        <!-- Informations de connexion -->
+                        <div class="col-12 mt-4">
+                            <h5 class="text-warning border-bottom pb-2">
+                                <i class="fas fa-key me-2"></i>Informations de Connexion
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Nom d'utilisateur</label>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ user_to_edit.username }}" readonly>
+                            <small class="form-text text-muted">Le nom d'utilisateur ne peut pas être modifié</small>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Nouveau mot de passe</label>
+                            <input type="password" class="form-control" id="password" name="password">
+                            <small class="form-text text-muted">Laissez vide pour conserver l'actuel</small>
+                        </div>
+                        
+                        <!-- Localisation -->
+                        <div class="col-12 mt-4">
+                            <h5 class="text-warning border-bottom pb-2">
+                                <i class="fas fa-map-marker-alt me-2"></i>Localisation
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="prefecture" class="form-label">Préfecture</label>
+                            <select class="form-select" id="prefecture" name="prefecture">
+                                <option value="">Sélectionnez une préfecture</option>
+                                {% for prefecture in prefectures %}
+                                <option value="{{ prefecture.id }}" {% if prefecture.id == user_to_edit.prefecture_id %}selected{% endif %}>
+                                    {{ prefecture.nom }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="region" class="form-label">Région</label>
+                            <select class="form-select" id="region" name="region">
+                                <option value="">Sélectionnez une région</option>
+                                {% for region in regions %}
+                                <option value="{{ region.id }}" {% if region.id == user_to_edit.region_id %}selected{% endif %}>
+                                    {{ region.nom }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Statut -->
+                        <div class="col-12 mt-4">
+                            <h5 class="text-warning border-bottom pb-2">
+                                <i class="fas fa-toggle-on me-2"></i>Statut du Compte
+                            </h5>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_active" 
+                                       name="is_active" {% if user_to_edit.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    Compte actif
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Boutons d'action -->
+                        <div class="col-12 mt-4">
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'togo_admin:users_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Retour
+                                </a>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-save me-1"></i>Mettre à jour
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,70 +1,231 @@
-{% extends 'admin_base.html' %}
+{% extends 'superadmin/base.html' %}
 
 {% block title %}Dashboard Superadmin{% endblock %}
+{% block page_title %}Dashboard Super Administrateur{% endblock %}
+{% block page_subtitle %}Vue globale du système TogoRetrouve{% endblock %}
 
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">Bienvenue {{ request.user.username }} 👋</h1>
 
-<!-- Section Utilisateurs/Admins -->
-<section class="mb-8">
-    <h2 class="text-xl font-semibold mb-2">Admins locaux</h2>
-    <a href="{% url 'superadmin_gestion_admins' %}" class="text-blue-600 font-semibold mb-2 inline-block">🛠️ Gérer les admins</a>
-    <table class="min-w-full bg-white shadow-md rounded mb-4">
-        <thead>
-            <tr class="bg-gray-100">
-                <th class="py-2 px-4">Nom</th>
-                <th class="py-2 px-4">Email</th>
-                <th class="py-2 px-4">Zone</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for admin in utilisateurs %}
-            <tr class="border-t">
-                <td class="py-2 px-4">{{ admin.username }}</td>
-                <td class="py-2 px-4">{{ admin.email }}</td>
-                <td class="py-2 px-4">{{ admin.zone }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="3" class="py-2 px-4 text-gray-500 text-center">Aucun admin trouvé</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</section>
+<!-- Statistiques globales -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Signalements</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.total_signalements|default:0 }}</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-list-alt text-blue-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Utilisateurs</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.total_utilisateurs|default:0 }}</p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-users text-green-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Administrateurs</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.total_admins|default:0 }}</p>
+            </div>
+            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-shield-alt text-red-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Réunions</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.total_reunions|default:0 }}</p>
+            </div>
+            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-handshake text-purple-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Taux de succès</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.taux_succes|default:0 }}%</p>
+            </div>
+            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-chart-line text-yellow-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
 
-<!-- Section Signalements -->
-<section>
-    <h2 class="text-xl font-semibold mb-2">Signalements récents</h2>
-    <table class="min-w-full bg-white shadow-md rounded">
-        <thead>
-            <tr class="bg-gray-100">
-                <th class="py-2 px-4">Objet</th>
-                <th class="py-2 px-4">Zone</th>
-                <th class="py-2 px-4">Utilisateur</th>
-                <th class="py-2 px-4">Statut</th>
-                <th class="py-2 px-4">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for signalement in signalements %}
-            <tr class="border-t">
-                <td class="py-2 px-4">{{ signalement.objet.nom }}</td>
-                <td class="py-2 px-4">{{ signalement.zone }}</td>
-                <td class="py-2 px-4">{{ signalement.utilisateur.username }}</td>
-                <td class="py-2 px-4">{{ signalement.statut }}</td>
-                <td class="py-2 px-4">
-                    {% if signalement.statut == 'En attente' %}
-                    <a href="#" class="text-green-600 font-semibold">✅ Valider</a>
-                    {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" class="py-2 px-4 text-gray-500 text-center">Aucun signalement</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</section>
+<!-- Actions administrateur et contenu principal -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    
+    <!-- Administrateurs locaux -->
+    <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Administrateurs locaux</h3>
+                <a href="{% url 'superadmin_gestion_admins' %}" class="text-red-600 hover:text-red-800 text-sm font-medium">Gérer tout</a>
+            </div>
+        </div>
+        <div class="p-6">
+            {% if utilisateurs %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Nom</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Email</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Zone</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for admin in utilisateurs|slice:":5" %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-3 px-4">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                                        <span class="text-red-600 font-semibold text-sm">{{ admin.username|first|upper }}</span>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900">{{ admin.username }}</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-sm text-gray-600">{{ admin.email }}</td>
+                            <td class="py-3 px-4 text-sm text-gray-600">{{ admin.zone|default:"Non définie" }}</td>
+                            <td class="py-3 px-4">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Actif
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-users-cog text-3xl mb-2"></i>
+                <p>Aucun administrateur configuré</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Actions rapides superadmin -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Actions système</h3>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4">
+                <a href="{% url 'superadmin_creer_admin' %}" class="flex items-center p-4 rounded-lg bg-red-50 hover:bg-red-100 transition">
+                    <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-user-plus text-white"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">Créer un admin</p>
+                        <p class="text-sm text-gray-600">Nouvel administrateur local</p>
+                    </div>
+                </a>
+                
+                <a href="{% url 'superadmin_utilisateurs' %}" class="flex items-center p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition">
+                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-users text-white"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">Gérer utilisateurs</p>
+                        <p class="text-sm text-gray-600">Tous les utilisateurs</p>
+                    </div>
+                </a>
+                
+                <a href="{% url 'superadmin_rapports' %}" class="flex items-center p-4 rounded-lg bg-green-50 hover:bg-green-100 transition">
+                    <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-chart-bar text-white"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">Rapports détaillés</p>
+                        <p class="text-sm text-gray-600">Analytics système</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Signalements récents système -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">Signalements récents (Système)</h3>
+            <a href="{% url 'signalements_list' %}" class="text-red-600 hover:text-red-800 text-sm font-medium">Voir tout</a>
+        </div>
+    </div>
+    <div class="p-6">
+        {% if signalements %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Objet</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Zone</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Utilisateur</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Statut</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Date</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for signalement in signalements|slice:":8" %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 px-4 text-sm font-medium text-gray-900">{{ signalement.objet.nom }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600">{{ signalement.zone|default:"Non définie" }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600">{{ signalement.utilisateur.username }}</td>
+                        <td class="py-3 px-4">
+                            {% if signalement.statut == 'trouve' %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Trouvé
+                            </span>
+                            {% elif signalement.statut == 'perdu' %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Perdu
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                En cours
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600">{{ signalement.date_signalement|timesince }}</td>
+                        <td class="py-3 px-4">
+                            <a href="{% url 'signalement_detail' signalement.id %}" class="text-red-600 hover:text-red-800">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-gray-500">
+            <i class="fas fa-inbox text-3xl mb-2"></i>
+            <p>Aucun signalement récent</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
 {% endblock %}

@@ -1,0 +1,504 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Déclaration {{ declaration.numero_declaration }}{% endblock %}
+{% block admin_title %}Déclaration {{ declaration.numero_declaration }}{% endblock %}
+
+{% block extra_head %}
+<style>
+/* Styles simples et modernes pour la déclaration */
+.declaration-page {
+    padding: 0;
+    margin: 0;
+}
+
+.declaration-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.declaration-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.declaration-meta {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 1rem;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+}
+
+.status-cree { background: #f59e0b; color: white; }
+.status-valide { background: #10b981; color: white; }
+.status-publie { background: #3b82f6; color: white; }
+.status-restitue { background: #06b6d4; color: white; }
+.status-rejete { background: #ef4444; color: white; }
+
+.progress-bar-container {
+    background: rgba(255, 255, 255, 0.2);
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 1rem;
+}
+
+.progress-bar {
+    height: 100%;
+    background: white;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.info-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.field-group {
+    margin-bottom: 1.5rem;
+}
+
+.field-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.field-value {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 1rem;
+    color: #1f2937;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+}
+
+.field-value.large {
+    min-height: auto;
+    align-items: flex-start;
+    line-height: 1.6;
+}
+
+.image-container {
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.declaration-image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.declaration-image:hover {
+    transform: scale(1.02);
+}
+
+.actions-card {
+    background: #f8fafc;
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.btn-action {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-validate {
+    background: #10b981;
+    color: white;
+}
+
+.btn-reject {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-publish {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-back {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    color: white;
+}
+
+.comment-box {
+    width: 100%;
+    min-height: 100px;
+    padding: 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    resize: vertical;
+}
+
+.comment-box:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.status-display {
+    text-align: center;
+    padding: 2rem;
+    border-radius: 12px;
+    margin: 1rem 0;
+}
+
+.status-display.success {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.status-display.info {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.status-display.danger {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.status-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .field-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .declaration-header {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="declaration-page">
+    <!-- En-tête de la déclaration -->
+    <div class="declaration-header">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div>
+                <h1 class="declaration-title">{{ declaration.numero_declaration }}</h1>
+                <p class="declaration-meta">
+                    <i class="fas fa-{{ declaration.type_declaration == 'perdu' and 'search' or 'gift' }}"></i>
+                    {% if declaration.type_declaration == 'perdu' %}Objet déclaré perdu{% else %}Objet trouvé{% endif %}
+                    • {{ declaration.date_declaration|date:"d/m/Y à H:i" }}
+                </p>
+            </div>
+            <span class="status-badge status-{{ declaration.statut }}">
+                {{ declaration.get_statut_display }}
+            </span>
+        </div>
+        
+        <!-- Barre de progression -->
+        <div class="progress-bar-container">
+            {% if declaration.statut == 'cree' %}
+                <div class="progress-bar" style="width: 25%;"></div>
+            {% elif declaration.statut == 'valide' %}
+                <div class="progress-bar" style="width: 50%;"></div>
+            {% elif declaration.statut == 'publie' %}
+                <div class="progress-bar" style="width: 75%;"></div>
+            {% elif declaration.statut == 'restitue' %}
+                <div class="progress-bar" style="width: 100%;"></div>
+            {% elif declaration.statut == 'rejete' %}
+                <div class="progress-bar" style="width: 25%; background: #ef4444;"></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Informations sur l'objet -->
+    <div class="info-card">
+        <h2 class="section-title">
+            <i class="fas fa-box"></i>
+            Informations sur l'objet
+        </h2>
+        
+        <div class="field-row">
+            <div class="field-group">
+                <label class="field-label">Nom de l'objet</label>
+                <div class="field-value">
+                    <strong>{{ declaration.nom_objet }}</strong>
+                </div>
+            </div>
+            
+            <div class="field-group">
+                <label class="field-label">Type de déclaration</label>
+                <div class="field-value">
+                    {% if declaration.type_declaration == 'perdu' %}
+                        🔍 {{ declaration.get_type_declaration_display }}
+                    {% else %}
+                        🎁 {{ declaration.get_type_declaration_display }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if declaration.categorie %}
+        <div class="field-row">
+            <div class="field-group">
+                <label class="field-label">Catégorie</label>
+                <div class="field-value">{{ declaration.categorie.nom }}</div>
+            </div>
+            
+            <div class="field-group">
+                <label class="field-label">Date d'incident</label>
+                <div class="field-value">{{ declaration.date_incident|date:"d/m/Y" }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if declaration.description %}
+        <div class="field-group">
+            <label class="field-label">Description</label>
+            <div class="field-value large">{{ declaration.description|linebreaks }}</div>
+        </div>
+        {% endif %}
+
+        {% if declaration.photo_principale %}
+        <div class="field-group">
+            <label class="field-label">Photo de l'objet</label>
+            <div class="image-container">
+                <img src="{{ declaration.photo_principale.url }}" 
+                     class="declaration-image" 
+                     alt="Photo de l'objet"
+                     onclick="window.open(this.src, '_blank')">
+                <p style="margin-top: 0.5rem; color: #6b7280; font-size: 0.875rem;">
+                    <i class="fas fa-expand"></i> Cliquer pour agrandir
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Lieu et circonstances -->
+    <div class="info-card">
+        <h2 class="section-title">
+            <i class="fas fa-map-marker-alt"></i>
+            Lieu et circonstances
+        </h2>
+        
+        <div class="field-row">
+            <div class="field-group">
+                <label class="field-label">Lieu précis</label>
+                <div class="field-value">{{ declaration.lieu_precis }}</div>
+            </div>
+            
+            {% if declaration.prefecture %}
+            <div class="field-group">
+                <label class="field-label">Préfecture</label>
+                <div class="field-value">{{ declaration.prefecture.nom }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if declaration.region %}
+        <div class="field-group">
+            <label class="field-label">Région</label>
+            <div class="field-value">{{ declaration.region.nom }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Informations du déclarant -->
+    <div class="info-card">
+        <h2 class="section-title">
+            <i class="fas fa-user"></i>
+            Informations du déclarant
+        </h2>
+        
+        <div class="field-row">
+            <div class="field-group">
+                <label class="field-label">Nom complet</label>
+                <div class="field-value">{{ declaration.declarant.get_full_name|default:declaration.declarant.username }}</div>
+            </div>
+            
+            <div class="field-group">
+                <label class="field-label">Email</label>
+                <div class="field-value">
+                    <a href="mailto:{{ declaration.declarant.email }}" style="color: #3b82f6;">
+                        {{ declaration.declarant.email }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if declaration.declarant.telephone %}
+        <div class="field-row">
+            <div class="field-group">
+                <label class="field-label">Téléphone</label>
+                <div class="field-value">
+                    <a href="tel:{{ declaration.declarant.telephone }}" style="color: #10b981;">
+                        {{ declaration.declarant.telephone }}
+                    </a>
+                </div>
+            </div>
+            
+            <div class="field-group">
+                <label class="field-label">Membre depuis</label>
+                <div class="field-value">{{ declaration.declarant.date_joined|date:"d/m/Y" }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if declaration.commentaire_declarant %}
+        <div class="field-group">
+            <label class="field-label">Commentaire du déclarant</label>
+            <div class="field-value large">{{ declaration.commentaire_declarant|linebreaks }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Actions de validation -->
+    {% if declaration.statut == 'cree' %}
+    <div class="actions-card">
+        <h3 style="margin-bottom: 1rem; color: #1f2937;">Actions de validation</h3>
+        <form method="post">
+            {% csrf_token %}
+            <textarea name="commentaire_agent" class="comment-box" 
+                      placeholder="Commentaire de validation (optionnel)..."></textarea>
+            
+            <div class="action-buttons">
+                <button type="submit" name="action" value="valider" class="btn-action btn-validate">
+                    <i class="fas fa-check"></i> Valider
+                </button>
+                <button type="submit" name="action" value="rejeter" class="btn-action btn-reject"
+                        onclick="return confirm('Confirmer le rejet ?')">
+                    <i class="fas fa-times"></i> Rejeter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% elif declaration.statut == 'valide' %}
+    <div class="actions-card">
+        <h3 style="margin-bottom: 1rem; color: #1f2937;">Publication</h3>
+        <form method="post">
+            {% csrf_token %}
+            <textarea name="commentaire_agent" class="comment-box" 
+                      placeholder="Commentaire de publication (optionnel)..."></textarea>
+            
+            <div class="action-buttons">
+                <button type="submit" name="action" value="publier" class="btn-action btn-publish">
+                    <i class="fas fa-globe"></i> Publier maintenant
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% elif declaration.statut == 'publie' %}
+    <div class="status-display success">
+        <div class="status-icon">✅</div>
+        <h3>Déclaration publiée</h3>
+        {% if declaration.date_publication %}
+        <p>Publiée le {{ declaration.date_publication|date:"d/m/Y à H:i" }}</p>
+        {% endif %}
+    </div>
+
+    {% elif declaration.statut == 'restitue' %}
+    <div class="status-display info">
+        <div class="status-icon">🤝</div>
+        <h3>Objet restitué</h3>
+        {% if declaration.date_restitution %}
+        <p>Restitué le {{ declaration.date_restitution|date:"d/m/Y à H:i" }}</p>
+        {% endif %}
+    </div>
+
+    {% elif declaration.statut == 'rejete' %}
+    <div class="status-display danger">
+        <div class="status-icon">❌</div>
+        <h3>Déclaration rejetée</h3>
+        <p>Cette déclaration a été rejetée par un agent</p>
+    </div>
+    {% endif %}
+
+    <!-- Navigation -->
+    <div style="margin-top: 2rem; text-align: center;">
+        <a href="{% url 'togo_admin:declarations_list' %}" class="btn-action btn-back">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+    </div>
+</div>
+{% endblock %}

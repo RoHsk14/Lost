@@ -1,0 +1,413 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Statistiques détaillées{% endblock %}
+{% block page_heading %}Statistiques{% endblock %}
+{% block page_description %}Analytics détaillés et métriques du système{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- KPI principaux -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ kpi.total_declarations|default:0 }}</div>
+                    <div class="stats-label">Total déclarations</div>
+                    <small class="text-success">+{{ kpi.growth_declarations|default:0 }}% ce mois</small>
+                </div>
+                <div class="text-danger fs-2">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ kpi.resolution_rate|floatformat:1 }}%</div>
+                    <div class="stats-label">Taux de résolution</div>
+                    <small class="text-info">Objectif: 85%</small>
+                </div>
+                <div class="text-success fs-2">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ kpi.avg_response_time|floatformat:0 }}h</div>
+                    <div class="stats-label">Temps réponse moyen</div>
+                    <small class="text-warning">-12% vs mois dernier</small>
+                </div>
+                <div class="text-info fs-2">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ kpi.user_satisfaction|floatformat:1 }}/5</div>
+                    <div class="stats-label">Satisfaction utilisateur</div>
+                    <small class="text-success">{{ kpi.satisfaction_count }} avis</small>
+                </div>
+                <div class="text-warning fs-2">
+                    <i class="fas fa-star"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Graphiques principaux -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-chart-area me-2"></i>Évolution mensuelle</h6>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary active" onclick="updatePeriod('month')">Mois</button>
+                    <button class="btn btn-outline-secondary" onclick="updatePeriod('week')">Semaine</button>
+                    <button class="btn btn-outline-secondary" onclick="updatePeriod('year')">Année</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="evolutionChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Statuts des déclarations</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="150"></canvas>
+                
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">En attente</span>
+                        <span class="badge bg-warning">{{ status_stats.pending|default:0 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Validées</span>
+                        <span class="badge bg-info">{{ status_stats.validated|default:0 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Publiées</span>
+                        <span class="badge bg-primary">{{ status_stats.published|default:0 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Restituées</span>
+                        <span class="badge bg-success">{{ status_stats.returned|default:0 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tableaux détaillés -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-users me-2"></i>Performance des agents</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Agent</th>
+                                <th>Région</th>
+                                <th>Traités</th>
+                                <th>Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for agent in agent_stats %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-2" style="width: 25px; height: 25px; font-size: 0.7rem;">
+                                            {{ agent.first_name|first }}{{ agent.last_name|first }}
+                                        </div>
+                                        <span class="fw-bold" style="font-size: 0.9rem;">{{ agent.get_full_name }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ agent.region.nom|default:"-" }}</td>
+                                <td><span class="badge bg-light text-dark">{{ agent.processed_count }}</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 60px; height: 6px;">
+                                            <div class="progress-bar bg-success" style="width: {{ agent.performance }}%"></div>
+                                        </div>
+                                        <small>{{ agent.performance|floatformat:0 }}%</small>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">Aucune donnée disponible</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-tags me-2"></i>Catégories populaires</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Catégorie</th>
+                                <th>Déclarations</th>
+                                <th>Taux résolution</th>
+                                <th>Tendance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category in category_stats %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ category.nom }}</div>
+                                </td>
+                                <td><span class="badge bg-primary">{{ category.count }}</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 50px; height: 6px;">
+                                            <div class="progress-bar bg-success" style="width: {{ category.resolution_rate }}%"></div>
+                                        </div>
+                                        <small>{{ category.resolution_rate|floatformat:0 }}%</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if category.trend > 0 %}
+                                        <span class="text-success"><i class="fas fa-arrow-up"></i> +{{ category.trend }}%</span>
+                                    {% elif category.trend < 0 %}
+                                        <span class="text-danger"><i class="fas fa-arrow-down"></i> {{ category.trend }}%</span>
+                                    {% else %}
+                                        <span class="text-muted"><i class="fas fa-minus"></i> Stable</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">Aucune donnée disponible</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Métriques avancées -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Métriques avancées par région</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Région</th>
+                                <th>Déclarations<br><small class="text-muted">Total / Mois</small></th>
+                                <th>Performance<br><small class="text-muted">Taux résolution</small></th>
+                                <th>Temps moyen<br><small class="text-muted">Traitement</small></th>
+                                <th>Agents<br><small class="text-muted">Actifs</small></th>
+                                <th>Score global</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for region in advanced_stats %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ region.nom }}</div>
+                                    <small class="text-muted">{{ region.prefecture_count }} préfectures</small>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ region.total_declarations }}</div>
+                                    <small class="text-success">+{{ region.monthly_declarations }} ce mois</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 60px; height: 8px;">
+                                            <div class="progress-bar bg-success" style="width: {{ region.resolution_rate }}%"></div>
+                                        </div>
+                                        <span class="fw-bold">{{ region.resolution_rate|floatformat:1 }}%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ region.avg_processing_time|floatformat:0 }}h</div>
+                                    {% if region.time_improvement > 0 %}
+                                        <small class="text-success"><i class="fas fa-arrow-down"></i> -{{ region.time_improvement }}%</small>
+                                    {% else %}
+                                        <small class="text-danger"><i class="fas fa-arrow-up"></i> +{{ region.time_degradation }}%</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ region.active_agents }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="fw-bold me-2">{{ region.global_score|floatformat:0 }}</span>
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= region.rating %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-muted"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if region.global_score >= 80 %}
+                                        <span class="badge bg-success">Excellent</span>
+                                    {% elif region.global_score >= 60 %}
+                                        <span class="badge bg-primary">Bon</span>
+                                    {% elif region.global_score >= 40 %}
+                                        <span class="badge bg-warning">Moyen</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Critique</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                                    <div class="text-muted">Aucune donnée statistique disponible</div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Configuration des graphiques
+const chartColors = {
+    primary: '#dc3545',
+    success: '#198754',
+    warning: '#fd7e14', 
+    info: '#0dcaf0'
+};
+
+// Graphique évolution
+const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
+const evolutionChart = new Chart(evolutionCtx, {
+    type: 'line',
+    data: {
+        labels: {{ evolution_data.labels|safe }},
+        datasets: [{
+            label: 'Déclarations',
+            data: {{ evolution_data.declarations|safe }},
+            borderColor: chartColors.primary,
+            backgroundColor: chartColors.primary + '20',
+            tension: 0.4
+        }, {
+            label: 'Résolutions',
+            data: {{ evolution_data.resolutions|safe }},
+            borderColor: chartColors.success,
+            backgroundColor: chartColors.success + '20',
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Graphique statuts
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+const statusChart = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['En attente', 'Validées', 'Publiées', 'Restituées'],
+        datasets: [{
+            data: [
+                {{ status_stats.pending|default:0 }},
+                {{ status_stats.validated|default:0 }},
+                {{ status_stats.published|default:0 }},
+                {{ status_stats.returned|default:0 }}
+            ],
+            backgroundColor: [
+                chartColors.warning,
+                chartColors.info,
+                chartColors.primary,
+                chartColors.success
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Changer la période
+function updatePeriod(period) {
+    // Mettre à jour les boutons
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Recharger les données
+    window.location.href = `?period=${period}`;
+}
+
+// Auto-refresh toutes les 5 minutes
+setTimeout(() => {
+    location.reload();
+}, 300000);
+</script>
+{% endblock %}

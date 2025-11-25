@@ -7,9 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #6B73FF 0%, #000DFF 50%, #0085FF 100%);
-        }
         .search-shadow {
             box-shadow: 0 10px 30px rgba(0, 13, 255, 0.2);
         }
@@ -45,82 +42,88 @@
     
 
     <!-- Header -->
-    <header class="gradient-bg text-white">
-        <div class="container mx-auto px-4 py-6">
+    <header class="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="flex justify-between items-center">
+                <!-- Logo -->
                 <div class="flex items-center space-x-2">
-                    <i class="fas fa-search-location text-3xl"></i>
-                    <h1 class="text-2xl font-bold">TogoRetrouve</h1>
+                    <i class="fas fa-search-location text-2xl sm:text-3xl"></i>
+                    <a href="{% url 'index' %}" class="text-xl sm:text-2xl font-bold tracking-wide hover:text-blue-200 transition">
+                        TogoRetrouve
+                    </a>
                 </div>
-                <nav class="hidden md:flex space-x-8">
-                    <a href="{% url 'index' %}" class="hover:text-blue-200 font-medium">Accueil</a>
-                    <a href="{% url 'objets_list' %}" class="hover:text-blue-200 font-medium">Objets trouvés</a>
-                    <a href="{% url 'objets_perdus_list' %}" class="hover:text-blue-200 font-medium">Objets perdus</a>
-                    <a href="{% url 'signalements_list' %}" class="hover:text-blue-200 font-medium">Signalements</a>
-                    <a href="{% url 'signalement_add' %}" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full font-medium transition">Signaler</a>
+                
+                <!-- Menu principal (Desktop) -->
+                <nav class="hidden md:flex space-x-4 lg:space-x-8">
+                    <a href="{% url 'index' %}" class="hover:text-blue-200 font-medium transition text-sm lg:text-base">Accueil</a>
+                    <a href="{% url 'objets_list' %}" class="hover:text-blue-200 font-medium transition text-sm lg:text-base">Objets trouvés</a>
+                    <a href="{% url 'objets_perdus_list' %}" class="hover:text-blue-200 font-medium transition text-sm lg:text-base">Objets perdus</a>
+                    <a href="{% url 'signalements_list' %}" class="hover:text-blue-200 font-medium transition text-sm lg:text-base">Signalements</a>
+                    <a href="{% url 'signalement_add' %}" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full font-medium transition text-sm lg:text-base">Signaler</a>
                 </nav>
                 
-                <div class="relative flex items-center gap-4">
+                <!-- Espace utilisateur -->
+                <div class="relative flex items-center gap-2 sm:gap-4">
                     {% if user.is_authenticated %}
-                      <div class="relative group">
-                        <button class="flex items-center gap-2 bg-blue-800 text-white px-4 py-2 rounded-full hover:bg-blue-900 transition">
-                          <div class="w-8 h-8 bg-white text-blue-800 font-bold flex items-center justify-center rounded-full">
-                            {{ user.username|first|upper }}
-                          </div>
-                          <span class="hidden sm:inline font-medium">{{ user.username }}</span>
-                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                  
-                        <!-- Menu déroulant -->
-                        <div class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transform scale-95 group-hover:scale-100 transition-all duration-200 origin-top-right z-50">
-                          <div class="py-2">
-                            <div class="px-4 py-2 border-b border-gray-100">
-                              <p class="text-sm font-medium text-gray-700">{{ user.get_full_name|default:user.username }}</p>
-                              <p class="text-xs text-gray-500">{{ user.email }}</p>
+                        <div class="relative group">
+                            <button class="flex items-center gap-1 sm:gap-2 bg-blue-800 text-white px-3 sm:px-4 py-2 rounded-full hover:bg-blue-900 transition">
+                                <div class="w-6 h-6 sm:w-8 sm:h-8 bg-white text-blue-800 font-bold flex items-center justify-center rounded-full text-xs sm:text-base">
+                                    {{ user.username|first|upper }}
+                                </div>
+                                <span class="hidden sm:inline font-medium text-sm lg:text-base">{{ user.username }}</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <!-- Menu déroulant -->
+                            <div class="absolute right-0 mt-2 w-56 sm:w-64 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transform scale-95 group-hover:scale-100 transition-all duration-200 origin-top-right z-50">
+                                <div class="py-2">
+                                    <div class="px-4 py-2 border-b border-gray-100">
+                                        <p class="text-sm font-medium text-gray-700">{{ user.get_full_name|default:user.username }}</p>
+                                        <p class="text-xs text-gray-500">{{ user.email }}</p>
+                                    </div>
+                                    <a href="{% url 'utilisateur_dashboard' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                        <i class="fas fa-tachometer-alt mr-3 text-blue-500"></i>
+                                        Tableau de bord
+                                    </a>
+                                    <a href="{% url 'utilisateur_profil' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                        <i class="fas fa-user mr-3 text-green-500"></i>
+                                        Mon profil
+                                    </a>
+                                    <a href="{% url 'mes_signalements' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                        <i class="fas fa-list-alt mr-3 text-purple-500"></i>
+                                        Mes signalements
+                                    </a>
+                                    <a href="{% url 'utilisateur_parametres' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                        <i class="fas fa-cog mr-3 text-gray-500"></i>
+                                        Paramètres
+                                    </a>
+                                    <div class="border-t border-gray-100 mt-1">
+                                        <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100 transition text-sm">
+                                            <i class="fas fa-sign-out-alt mr-3"></i>
+                                            Déconnexion
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
-                            <a href="{% url 'utilisateur_dashboard' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
-                              <i class="fas fa-tachometer-alt mr-3 text-blue-500"></i>
-                              Tableau de bord
-                            </a>
-                            <a href="{% url 'utilisateur_profil' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
-                              <i class="fas fa-user mr-3 text-green-500"></i>
-                              Mon profil
-                            </a>
-                            <a href="{% url 'mes_signalements' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
-                              <i class="fas fa-list-alt mr-3 text-purple-500"></i>
-                              Mes signalements
-                            </a>
-                            <a href="{% url 'utilisateur_parametres' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
-                              <i class="fas fa-cog mr-3 text-gray-500"></i>
-                              Paramètres
-                            </a>
-                            <div class="border-t border-gray-100 mt-1">
-                              <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100 transition text-sm">
-                                <i class="fas fa-sign-out-alt mr-3"></i>
-                                Déconnexion
-                              </a>
-                            </div>
-                          </div>
                         </div>
-                      </div>
                     {% else %}
-                      <a href="{% url 'login' %}" class="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
-                        Connexion
-                      </a>
-                      <a href="{% url 'register' %}" class="px-5 py-2 rounded-full font-medium bg-blue-800 text-white hover:bg-blue-900 transition">
-                        Inscription
-                      </a>
+                        <a href="{% url 'login' %}" class="bg-white text-blue-600 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-200 transition text-sm">
+                            Connexion
+                        </a>
+                        <a href="{% url 'register' %}" class="px-3 sm:px-5 py-2 rounded-full font-medium bg-blue-800 text-white hover:bg-blue-900 transition text-sm">
+                            Inscription
+                        </a>
                     {% endif %}
-                    
+                
                     <!-- Menu mobile hamburger -->
                     <button class="md:hidden p-2 rounded-lg hover:bg-blue-800 transition" onclick="toggleMobileMenu()">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
                     </button>
-                  </div>
+                </div>
             </div>
             
             <!-- Menu mobile -->
@@ -130,7 +133,7 @@
                     <a href="{% url 'objets_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Objets trouvés</a>
                     <a href="{% url 'objets_perdus_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Objets perdus</a>
                     <a href="{% url 'signalements_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Signalements</a>
-                    <a href="{% url 'signalement_add' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Faire un signalement</a>
+                    <a href="{% url 'signalement_add' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Signaler</a>
                     {% if user.is_authenticated %}
                         <div class="border-t border-blue-600 pt-2 mt-2">
                             <a href="{% url 'utilisateur_dashboard' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Dashboard</a>
@@ -143,8 +146,15 @@
         </div>
     </header>
 
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
+
     <!-- Hero Section -->
-    <section class="gradient-bg text-white py-16 md:py-24">
+    <section class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 md:py-24">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center">
             <div class="md:w-1/2 mb-8 md:mb-0 text-center md:text-left">
                 <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">Retrouvez vos objets perdus facilement</h2>

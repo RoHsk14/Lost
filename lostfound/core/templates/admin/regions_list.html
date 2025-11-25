@@ -1,0 +1,337 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Gestion des régions{% endblock %}
+{% block page_heading %}Régions & Préfectures{% endblock %}
+{% block page_description %}Configuration géographique et structures locales{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Statistiques régions -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.total_regions|default:0 }}</div>
+                    <div class="stats-label">Régions</div>
+                </div>
+                <div class="text-danger fs-2">
+                    <i class="fas fa-map"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.total_prefectures|default:0 }}</div>
+                    <div class="stats-label">Préfectures</div>
+                </div>
+                <div class="text-primary fs-2">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.total_agents|default:0 }}</div>
+                    <div class="stats-label">Agents assignés</div>
+                </div>
+                <div class="text-success fs-2">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.coverage_rate|floatformat:1 }}%</div>
+                    <div class="stats-label">Couverture agent</div>
+                </div>
+                <div class="text-info fs-2">
+                    <i class="fas fa-percentage"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <h6 class="mb-3"><i class="fas fa-plus me-2"></i>Actions rapides</h6>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRegionModal">
+                        <i class="fas fa-map-plus me-2"></i>Nouvelle région
+                    </button>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPrefectureModal">
+                        <i class="fas fa-plus-circle me-2"></i>Nouvelle préfecture
+                    </button>
+                    <button class="btn btn-info" onclick="importFromCSV()">
+                        <i class="fas fa-file-import me-2"></i>Importer CSV
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="mb-3"><i class="fas fa-search me-2"></i>Recherche</h6>
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Rechercher région ou préfecture..." 
+                           id="searchInput" onkeyup="filterRegions()">
+                    <button class="btn btn-outline-secondary" onclick="clearSearch()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des régions et préfectures -->
+<div class="row" id="regionsList">
+    {% for region in regions %}
+    <div class="col-lg-6 mb-4 region-card" data-search="{{ region.nom|lower }} {{ region.code|lower }}">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0">
+                        <i class="fas fa-map me-2 text-danger"></i>{{ region.nom }}
+                        <span class="badge bg-light text-dark ms-2">{{ region.code }}</span>
+                    </h6>
+                    <small class="text-muted">
+                        {{ region.prefectures.count }} préfectures • 
+                        {{ region.agents_count|default:0 }} agents • 
+                        {{ region.declarations_count|default:0 }} déclarations
+                    </small>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" onclick="editRegion({{ region.id }})">
+                            <i class="fas fa-edit me-2"></i>Modifier
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="viewRegionStats({{ region.id }})">
+                            <i class="fas fa-chart-bar me-2"></i>Statistiques
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteRegion({{ region.id }})">
+                            <i class="fas fa-trash me-2"></i>Supprimer
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 40%;">Préfecture</th>
+                                <th style="width: 20%;">Code</th>
+                                <th style="width: 20%;">Agents</th>
+                                <th style="width: 20%;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prefecture in region.prefectures.all %}
+                            <tr data-search="{{ prefecture.nom|lower }} {{ prefecture.code|lower }}">
+                                <td>
+                                    <div class="fw-bold">{{ prefecture.nom }}</div>
+                                    {% if prefecture.actif %}
+                                        <span class="badge-status badge-actif"><i class="fas fa-check-circle"></i> Active</span>
+                                    {% else %}
+                                        <span class="badge-status badge-inactif"><i class="fas fa-times-circle"></i> Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge bg-light text-dark">{{ prefecture.code }}</span></td>
+                                <td>
+                                    <span class="badge bg-primary">{{ prefecture.agents_count|default:0 }}</span>
+                                    {% if prefecture.agents_count == 0 %}
+                                        <i class="fas fa-exclamation-triangle text-warning ms-1" title="Aucun agent assigné"></i>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" title="Modifier" 
+                                                onclick="editPrefecture({{ prefecture.id }})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-outline-info" title="Assigner agents" 
+                                                onclick="assignAgents({{ prefecture.id }})">
+                                            <i class="fas fa-user-plus"></i>
+                                        </button>
+                                        {% if prefecture.actif %}
+                                            <button class="btn btn-outline-warning" title="Désactiver" 
+                                                    onclick="togglePrefecture({{ prefecture.id }}, false)">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        {% else %}
+                                            <button class="btn btn-outline-success" title="Activer" 
+                                                    onclick="togglePrefecture({{ prefecture.id }}, true)">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-3 text-muted">
+                                    <i class="fas fa-map-marker-alt fa-2x mb-2"></i>
+                                    <div>Aucune préfecture dans cette région</div>
+                                    <button class="btn btn-sm btn-primary mt-2" 
+                                            onclick="addPrefectureToRegion({{ region.id }})">
+                                        <i class="fas fa-plus me-1"></i>Ajouter préfecture
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Footer avec métriques -->
+            <div class="card-footer bg-light">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="fw-bold text-primary">{{ region.declarations_count|default:0 }}</div>
+                        <small class="text-muted">Déclarations</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold text-success">{{ region.resolution_rate|default:0|floatformat:0 }}%</div>
+                        <small class="text-muted">Résolution</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold text-info">{{ region.avg_response_time|default:0|floatformat:0 }}h</div>
+                        <small class="text-muted">Temps moyen</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-map fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucune région configurée</h5>
+                <p class="text-muted mb-4">Commencez par créer votre première région pour organiser le système.</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRegionModal">
+                    <i class="fas fa-plus me-2"></i>Créer ma première région
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterRegions() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const regionCards = document.querySelectorAll('.region-card');
+    
+    regionCards.forEach(card => {
+        const text = card.getAttribute('data-search');
+        const prefectureRows = card.querySelectorAll('tbody tr[data-search]');
+        
+        let regionMatch = text.includes(search);
+        let hasVisiblePrefectures = false;
+        
+        prefectureRows.forEach(row => {
+            const prefText = row.getAttribute('data-search');
+            if (prefText.includes(search)) {
+                row.style.display = '';
+                hasVisiblePrefectures = true;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        if (regionMatch || hasVisiblePrefectures || search === '') {
+            card.style.display = '';
+            if (search === '') {
+                prefectureRows.forEach(row => row.style.display = '');
+            }
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    filterRegions();
+}
+
+async function editRegion(regionId) {
+    // Implémenter l'édition de région
+    window.location.href = `/togoretrouve-admin/region/${regionId}/edit/`;
+}
+
+async function deleteRegion(regionId) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette région ? Cette action est irréversible.')) return;
+    
+    try {
+        const response = await makeRequest(`/api/admin/region/${regionId}/delete/`, 'DELETE');
+        if (response.success) {
+            showAlert('Région supprimée avec succès', 'success');
+            location.reload();
+        } else {
+            showAlert(response.error || 'Erreur lors de la suppression', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication avec le serveur', 'error');
+    }
+}
+
+async function togglePrefecture(prefectureId, activate) {
+    try {
+        const response = await makeRequest(`/api/admin/prefecture/${prefectureId}/toggle/`, 'POST', {
+            activate: activate
+        });
+        if (response.success) {
+            showAlert(`Préfecture ${activate ? 'activée' : 'désactivée'} avec succès`, 'success');
+            location.reload();
+        } else {
+            showAlert(response.error || 'Erreur lors de la modification', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication avec le serveur', 'error');
+    }
+}
+
+function editPrefecture(prefectureId) {
+    window.location.href = `/togoretrouve-admin/prefecture/${prefectureId}/edit/`;
+}
+
+function assignAgents(prefectureId) {
+    window.location.href = `/togoretrouve-admin/prefecture/${prefectureId}/agents/`;
+}
+
+function addPrefectureToRegion(regionId) {
+    window.location.href = `/togoretrouve-admin/prefecture/add/?region=${regionId}`;
+}
+
+function viewRegionStats(regionId) {
+    window.open(`/togoretrouve-admin/region/${regionId}/stats/`, '_blank');
+}
+
+function importFromCSV() {
+    // Implémenter l'import CSV
+    window.location.href = '/togoretrouve-admin/regions/import/';
+}
+</script>
+{% endblock %}

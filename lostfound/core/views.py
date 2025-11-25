@@ -129,20 +129,24 @@ User = get_user_model()
 # ---------------------------
 @login_required
 def home(request):
-    if request.user.is_superuser or request.user.role == 'superadmin':
+    if request.user.is_superuser or (hasattr(request.user, 'role') and request.user.role == 'superadmin'):
         return redirect('superadmin_dashboard')
-    elif request.user.role == 'admin':
-        return redirect('admin_dashboard')
+    elif hasattr(request.user, 'role') and request.user.role == 'admin':
+        return redirect('togo_admin:dashboard')  # Nouvelle interface TailAdmin
+    elif request.user.is_staff:  # Admin Django classique
+        return redirect('togo_admin:dashboard')
     else:
         return redirect('utilisateur_dashboard')
 
 def home_redirect(request):
     user = request.user
     if user.is_authenticated:
-        if user.role == 'admin':
-            return redirect('admin_dashboard')
-        elif user.role == 'superadmin':
+        if user.is_superuser or (hasattr(user, 'role') and user.role == 'superadmin'):
             return redirect('superadmin_dashboard')
+        elif hasattr(user, 'role') and user.role == 'admin':
+            return redirect('togo_admin:dashboard')  # Nouvelle interface TailAdmin
+        elif user.is_staff:  # Admin Django classique
+            return redirect('togo_admin:dashboard')
     return redirect('index')
 
 # ---------------------------
@@ -534,7 +538,16 @@ def login_view(request):
         if user:
             login(request, user)
             messages.success(request, "Connexion réussie !")
-            return redirect('home')
+            
+            # Redirection intelligente selon le rôle
+            if user.is_superuser or (hasattr(user, 'role') and user.role == 'superadmin'):
+                return redirect('superadmin_dashboard')
+            elif hasattr(user, 'role') and user.role == 'admin':
+                return redirect('togo_admin:dashboard')  # Vers la nouvelle interface TailAdmin
+            elif user.is_staff:  # Admin Django classique
+                return redirect('togo_admin:dashboard')
+            else:
+                return redirect('home')  # Utilisateurs normaux
         else:
             messages.error(request, "Nom d'utilisateur ou mot de passe incorrect.")
     return render(request, 'login.html')
