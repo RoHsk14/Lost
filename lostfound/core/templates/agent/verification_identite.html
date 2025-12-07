@@ -1,0 +1,467 @@
+{% extends 'agent/base.html' %}
+
+{% block title %}Documents à vérifier - TogoRetrouve{% endblock %}
+
+{% block page_title %}Documents à vérifier{% endblock %}
+{% block page_subtitle %}Gestion des documents d'identité et pièces justificatives{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Statistiques des vérifications -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="flex items-center mb-3">
+                        <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-3">
+                            <i class="fas fa-clock text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wider">En attente</h3>
+                            <p class="text-xs text-gray-400">À vérifier</p>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-bold text-gray-900" id="documents-en-attente">{{ stats.en_attente|default:0 }}</p>
+                </div>
+                <div class="text-orange-500">
+                    <i class="fas fa-arrow-up text-sm"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="flex items-center mb-3">
+                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-3">
+                            <i class="fas fa-eye text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wider">En cours</h3>
+                            <p class="text-xs text-gray-400">Vérification</p>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-bold text-gray-900" id="documents-en-cours">{{ stats.en_cours|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="flex items-center mb-3">
+                        <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center mr-3">
+                            <i class="fas fa-check text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wider">Validés</h3>
+                            <p class="text-xs text-gray-400">Approuvés</p>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-bold text-gray-900" id="documents-valides">{{ stats.valides|default:0 }}</p>
+                </div>
+                <div class="text-green-500">
+                    <i class="fas fa-arrow-up text-sm"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="flex items-center mb-3">
+                        <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center mr-3">
+                            <i class="fas fa-times text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wider">Rejetés</h3>
+                            <p class="text-xs text-gray-400">Non conformes</p>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-bold text-gray-900" id="documents-rejetes">{{ stats.rejetes|default:0 }}</p>
+                </div>
+                <div class="text-red-500">
+                    <i class="fas fa-arrow-down text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Fichiers de la messagerie -->
+    {% if fichiers_conversations %}
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-4">
+                        <i class="fas fa-comments text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Fichiers de la messagerie</h3>
+                        <p class="text-sm text-gray-600">Documents et images partagés dans les conversations</p>
+                    </div>
+                </div>
+                <span class="inline-flex items-center px-4 py-2 bg-white rounded-full text-sm font-semibold text-blue-700 border border-blue-200">
+                    <i class="fas fa-file-alt mr-2"></i>
+                    {{ stats.fichiers_messagerie }} fichier{{ stats.fichiers_messagerie|pluralize }}
+                </span>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Fichier
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Envoyé par
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Signalement lié
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Date d'envoi
+                        </th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for item in fichiers_conversations %}
+                        <tr class="hover:bg-gray-50 transition-colors group">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    {% if item.message.is_image %}
+                                        <img src="{{ item.message.fichier.url }}" 
+                                             alt="Aperçu" 
+                                             class="w-16 h-16 rounded-xl object-cover mr-4 shadow-sm border border-gray-200">
+                                    {% else %}
+                                        <div class="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center mr-4">
+                                            <i class="fas fa-file-alt text-blue-600 text-xl"></i>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div>
+                                        <h4 class="text-sm font-semibold text-gray-900">{{ item.message.file_name }}</h4>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            {% if item.message.is_image %}
+                                                <i class="fas fa-image mr-1"></i> Image
+                                            {% else %}
+                                                <i class="fas fa-file mr-1"></i> Document
+                                            {% endif %}
+                                            {% if item.message.file_size %}
+                                                · {{ item.message.file_size|filesizeformat }}
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
+                                        {{ item.message.sender.first_name|first|default:item.message.sender.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-semibold text-gray-900">
+                                            {{ item.message.sender.get_full_name|default:item.message.sender.username }}
+                                        </h4>
+                                        <p class="text-xs text-gray-500">
+                                            {% if item.message.sender.telephone %}
+                                                <i class="fas fa-phone mr-1"></i> {{ item.message.sender.telephone }}
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    {% if item.signalement.photo_principale %}
+                                        <img src="{{ item.signalement.photo_principale.url }}" 
+                                             alt="{{ item.signalement.nom_objet }}" 
+                                             class="w-12 h-12 rounded-xl object-cover mr-3 shadow-sm">
+                                    {% else %}
+                                        <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mr-3">
+                                            <i class="fas fa-box text-gray-400"></i>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div>
+                                        <h4 class="text-sm font-semibold text-gray-900">{{ item.signalement.nom_objet }}</h4>
+                                        <p class="text-xs font-mono text-primary-600 bg-primary-50 px-2 py-0.5 rounded mt-1 inline-block">
+                                            #{{ item.signalement.numero_declaration }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                <div class="space-y-1">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-calendar-alt mr-2 text-gray-400 text-xs"></i>
+                                        {{ item.message.created_at|date:"d/m/Y" }}
+                                    </div>
+                                    <div class="text-xs text-gray-400">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        {{ item.message.created_at|time:"H:i" }}
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <a href="{{ item.message.fichier.url }}" 
+                                       target="_blank"
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all duration-200 hover:shadow-sm">
+                                        <i class="fas fa-eye mr-1"></i>
+                                        Voir
+                                    </a>
+                                    
+                                    <a href="{% url 'togo_agent:messagerie' %}?conversation_id={{ item.conversation.id }}"
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg transition-all duration-200 hover:shadow-sm">
+                                        <i class="fas fa-comments mr-1"></i>
+                                        Contacter
+                                    </a>
+                                    
+                                    <a href="{% url 'togo_agent:signalement_detail' item.signalement.id %}"
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-all duration-200 hover:shadow-sm">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Détails
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center">
+                                <div class="max-w-sm mx-auto">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        <i class="fas fa-inbox text-gray-400 text-2xl"></i>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun fichier partagé</h3>
+                                    <p class="text-gray-500">
+                                        Les fichiers envoyés dans les conversations apparaîtront ici.
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden p-12 text-center">
+        <div class="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <i class="fas fa-inbox text-gray-400 text-3xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-3">Aucun fichier à vérifier</h3>
+        <p class="text-gray-500 max-w-md mx-auto">
+            Les fichiers envoyés par les citoyens dans la messagerie apparaîtront ici pour faciliter leur consultation.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Pagination si nécessaire -->
+    {% if page_obj.has_other_pages %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Affichage de 
+                    <span class="font-medium">{{ page_obj.start_index }}</span>
+                    à 
+                    <span class="font-medium">{{ page_obj.end_index }}</span>
+                    sur 
+                    <span class="font-medium">{{ page_obj.paginator.count }}</span>
+                    documents
+                </div>
+                
+                <nav class="flex items-center space-x-1">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" 
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                            <i class="fas fa-angle-left mr-1"></i>
+                            Précédent
+                        </a>
+                    {% endif %}
+                    
+                    <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 border border-primary-300 rounded-lg">
+                        {{ page_obj.number }}
+                    </span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" 
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Suivant
+                            <i class="fas fa-angle-right ml-1"></i>
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal de vérification de document -->
+<div id="modal-verification" class="fixed inset-0 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+        
+        <div class="relative bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <!-- Header du modal -->
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Vérification de document</h3>
+                    <p class="text-sm text-gray-500">Examinez attentivement les documents soumis</p>
+                </div>
+                <button onclick="fermerModalVerification()" 
+                        class="w-10 h-10 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Contenu du modal -->
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-140px)]" id="modal-content">
+                <!-- Le contenu sera chargé dynamiquement -->
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-gray-400 text-2xl mb-2"></i>
+                    <p class="text-gray-500">Chargement des documents...</p>
+                </div>
+            </div>
+            
+            <!-- Footer du modal -->
+            <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-end space-x-3">
+                <button onclick="fermerModalVerification()" 
+                        class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                    Fermer
+                </button>
+                <button onclick="validerDocument()" 
+                        class="px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors">
+                    <i class="fas fa-check mr-2"></i>
+                    Valider
+                </button>
+                <button onclick="rejeterDocument()" 
+                        class="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors">
+                    <i class="fas fa-times mr-2"></i>
+                    Rejeter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript pour la gestion des documents -->
+<script>
+let reclamationEnCours = null;
+
+// Ouvrir le modal de vérification
+function ouvrirModalVerification(reclamationId) {
+    reclamationEnCours = reclamationId;
+    document.getElementById('modal-verification').classList.remove('hidden');
+    
+    // Charger les détails de la réclamation
+    fetch(`/agent/verification/${reclamationId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mettre à jour le contenu du modal
+                document.getElementById('modal-content').innerHTML = data.html;
+            } else {
+                showToast('Erreur lors du chargement des documents', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showToast('Erreur lors du chargement', 'error');
+        });
+}
+
+// Fermer le modal
+function fermerModalVerification() {
+    document.getElementById('modal-verification').classList.add('hidden');
+    reclamationEnCours = null;
+}
+
+// Ouvrir un document dans un nouvel onglet
+function ouvrirDocument(url, type) {
+    window.open(url, '_blank');
+}
+
+// Valider un document
+function validerDocument(reclamationId = null) {
+    const id = reclamationId || reclamationEnCours;
+    if (!id) return;
+    
+    fetch(`/agent/verification/${id}/valider/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Document validé avec succès', 'success');
+            // Recharger la page ou mettre à jour la ligne du tableau
+            location.reload();
+        } else {
+            showToast('Erreur lors de la validation', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showToast('Erreur lors de la validation', 'error');
+    });
+}
+
+// Rejeter un document
+function rejeterDocument(reclamationId = null) {
+    const id = reclamationId || reclamationEnCours;
+    if (!id) return;
+    
+    const raison = prompt('Raison du rejet (optionnel):');
+    
+    fetch(`/agent/verification/${id}/rejeter/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ raison: raison })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Document rejeté', 'warning');
+            // Recharger la page ou mettre à jour la ligne du tableau
+            location.reload();
+        } else {
+            showToast('Erreur lors du rejet', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showToast('Erreur lors du rejet', 'error');
+    });
+}
+
+// Fermer le modal en cliquant à l'extérieur
+document.getElementById('modal-verification')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        fermerModalVerification();
+    }
+});
+
+// Gestion de la touche Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !document.getElementById('modal-verification').classList.contains('hidden')) {
+        fermerModalVerification();
+    }
+});
+</script>
+{% endblock %}

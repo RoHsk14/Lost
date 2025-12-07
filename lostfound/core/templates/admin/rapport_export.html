@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport TogoRetrouvé - {{ periode|default:"30" }} derniers jours</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .rapport-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .rapport-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .rapport-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="1" fill="white" opacity="0.1"/><circle cx="80" cy="80" r="1" fill="white" opacity="0.1"/><circle cx="40" cy="60" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        }
+
+        .rapport-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .rapport-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .rapport-content {
+            padding: 25px;
+        }
+
+        .section-title {
+            color: #667eea;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title i {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--accent-color);
+        }
+
+        .metric-card.primary::before { background: linear-gradient(90deg, #667eea, #764ba2); }
+        .metric-card.success::before { background: linear-gradient(90deg, #11998e, #38ef7d); }
+        .metric-card.warning::before { background: linear-gradient(90deg, #f093fb, #f5576c); }
+        .metric-card.info::before { background: linear-gradient(90deg, #4facfe, #00f2fe); }
+        .metric-card.secondary::before { background: linear-gradient(90deg, #a8edea, #fed6e3); }
+        .metric-card.danger::before { background: linear-gradient(90deg, #ff9a9e, #fecfef); }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 6px;
+            line-height: 1;
+        }
+
+        .metric-label {
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+        }
+
+        .data-table table {
+            margin-bottom: 0;
+        }
+
+        .data-table thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            padding: 15px 12px;
+            border: none;
+            font-size: 0.85rem;
+        }
+
+        .data-table tbody td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f3f4;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .progress-modern {
+            height: 12px;
+            border-radius: 20px;
+            background: #e9ecef;
+            overflow: hidden;
+        }
+
+        .progress-bar-modern {
+            height: 100%;
+            border-radius: 20px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .badge-modern {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-modern.warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .badge-modern.secondary {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #333;
+        }
+
+        .footer-info {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .footer-info strong {
+            color: #495057;
+        }
+
+        .print-actions {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .btn-print {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-print:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        /* Styles d'impression */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+                font-size: 11px !important;
+            }
+
+            .print-actions {
+                display: none !important;
+            }
+
+            .rapport-container {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+                max-width: none !important;
+            }
+
+            .rapport-header {
+                background: #667eea !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                padding: 15px !important;
+            }
+
+            .rapport-title {
+                font-size: 1.8rem !important;
+                margin-bottom: 5px !important;
+            }
+
+            .rapport-subtitle {
+                font-size: 1rem !important;
+            }
+
+            .rapport-content {
+                padding: 15px !important;
+            }
+
+            .section-title {
+                font-size: 1.2rem !important;
+                margin-bottom: 15px !important;
+                page-break-after: avoid;
+            }
+
+            .section-title i {
+                width: 30px !important;
+                height: 30px !important;
+                font-size: 0.8rem !important;
+            }
+
+            .metric-grid {
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 12px !important;
+                margin-bottom: 20px !important;
+            }
+
+            .metric-card {
+                padding: 12px !important;
+                border-radius: 8px !important;
+                page-break-inside: avoid;
+            }
+
+            .metric-value {
+                font-size: 1.5rem !important;
+                margin-bottom: 4px !important;
+            }
+
+            .metric-label {
+                font-size: 0.8rem !important;
+            }
+
+            .data-table {
+                margin-bottom: 15px !important;
+                page-break-inside: avoid;
+            }
+
+            .data-table thead th {
+                background: #667eea !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                padding: 8px !important;
+                font-size: 0.75rem !important;
+            }
+
+            .data-table tbody td {
+                padding: 6px !important;
+                font-size: 0.8rem !important;
+            }
+
+            .footer-info {
+                padding: 10px !important;
+                font-size: 0.8rem !important;
+            }
+
+            @page {
+                size: A4;
+                margin: 12mm;
+            }
+        }
+
+        /* Animation d'entrée */
+        .fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Actions d'impression -->
+    <div class="print-actions">
+        <button class="btn btn-print" onclick="window.print()">
+            <i class="fas fa-print me-2"></i>Imprimer PDF
+        </button>
+    </div>
+
+    <div class="rapport-container fade-in">
+        <!-- En-tête du rapport -->
+        <div class="rapport-header">
+            <h1 class="rapport-title">
+                <i class="fas fa-chart-line me-3"></i>RAPPORT TOGORETROUVÉ
+            </h1>
+            <p class="rapport-subtitle">
+                <i class="fas fa-calendar-alt me-2"></i>
+                Période: {{ periode|default:"30" }} derniers jours
+                <span class="mx-3">•</span>
+                <i class="fas fa-clock me-2"></i>
+                Généré le {{ date_generation|date:"d/m/Y à H:i" }}
+            </p>
+        </div>
+
+        <div class="rapport-content">
+            <!-- Section Métriques Principales -->
+            <div class="section-title">
+                <i class="fas fa-tachometer-alt"></i>
+                Métriques Principales
+            </div>
+
+            <div class="metric-grid">
+                <div class="metric-card primary">
+                    <div class="metric-value">{{ total_signalements|default:"0" }}</div>
+                    <div class="metric-label">Total Signalements</div>
+                </div>
+                <div class="metric-card info">
+                    <div class="metric-value">{{ signalements_periode|default:"0" }}</div>
+                    <div class="metric-label">Cette Période</div>
+                </div>
+                <div class="metric-card warning">
+                    <div class="metric-value">{{ signalements_en_attente|default:"0" }}</div>
+                    <div class="metric-label">En Attente</div>
+                </div>
+                <div class="metric-card success">
+                    <div class="metric-value">{{ signalements_valides|default:"0" }}</div>
+                    <div class="metric-label">Validés</div>
+                </div>
+                <div class="metric-card secondary">
+                    <div class="metric-value">{{ signalements_restitues|default:"0" }}</div>
+                    <div class="metric-label">Restitués</div>
+                </div>
+                <div class="metric-card danger">
+                    <div class="metric-value">{{ taux_restitution|default:"0" }}%</div>
+                    <div class="metric-label">Taux de Réussite</div>
+                </div>
+            </div>
+
+            <!-- Section Répartition Géographique -->
+            <div class="section-title">
+                <i class="fas fa-map-marked-alt"></i>
+                Répartition par Région
+            </div>
+
+            <div class="data-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-globe-africa me-2"></i>Région</th>
+                            <th class="text-center"><i class="fas fa-hashtag me-2"></i>Nombre</th>
+                            <th class="text-center"><i class="fas fa-percentage me-2"></i>Pourcentage</th>
+                            <th class="text-center"><i class="fas fa-chart-bar me-2"></i>Progression</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for region in repartition_regions %}
+                        <tr>
+                            <td class="fw-bold">{{ region.region__nom|default:"Non spécifiée" }}</td>
+                            <td class="text-center fw-semibold">{{ region.count }}</td>
+                            <td class="text-center">
+                                <span class="badge-modern">{% widthratio region.count total_signalements 100 %}%</span>
+                            </td>
+                            <td class="text-center" style="width: 200px;">
+                                <div class="progress-modern">
+                                    <div class="progress-bar-modern" style="width: {% widthratio region.count total_signalements 100 %}%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                Aucune donnée disponible pour cette période
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Section Top Agents -->
+            <div class="section-title">
+                <i class="fas fa-users"></i>
+                Top Agents Performants
+            </div>
+
+            <div class="data-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-user-tie me-2"></i>Agent</th>
+                            <th class="text-center"><i class="fas fa-tasks me-2"></i>Traités</th>
+                            <th class="text-center"><i class="fas fa-star me-2"></i>Performance</th>
+                            <th class="text-center"><i class="fas fa-trophy me-2"></i>Rang</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for agent in top_agents %}
+                        <tr>
+                            <td class="fw-bold">{{ agent.get_full_name|default:agent.username }}</td>
+                            <td class="text-center fw-semibold">{{ agent.signalements_traites }}</td>
+                            <td class="text-center">
+                                {% if agent.signalements_traites > 10 %}
+                                <span class="badge-modern">Excellent</span>
+                                {% elif agent.signalements_traites > 5 %}
+                                <span class="badge-modern warning">Bon</span>
+                                {% else %}
+                                <span class="badge-modern secondary">Moyen</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <i class="fas fa-medal" style="color: {% if forloop.counter == 1 %}#FFD700{% elif forloop.counter == 2 %}#C0C0C0{% elif forloop.counter == 3 %}#CD7F32{% else %}#6c757d{% endif %};"></i>
+                                #{{ forloop.counter }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                                <i class="fas fa-user-slash me-2"></i>
+                                Aucun agent actif sur la période
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Section Statistiques Utilisateurs -->
+            <div class="section-title">
+                <i class="fas fa-users-cog"></i>
+                Statistiques Utilisateurs
+            </div>
+
+            <div class="metric-grid">
+                <div class="metric-card primary">
+                    <div class="metric-value">{{ total_utilisateurs|default:"0" }}</div>
+                    <div class="metric-label">Total Utilisateurs</div>
+                </div>
+                <div class="metric-card success">
+                    <div class="metric-value">{{ utilisateurs_actifs|default:"0" }}</div>
+                    <div class="metric-label">Utilisateurs Actifs</div>
+                </div>
+                <div class="metric-card info">
+                    <div class="metric-value">{{ nouveaux_utilisateurs|default:"0" }}</div>
+                    <div class="metric-label">Nouveaux Utilisateurs</div>
+                </div>
+                <div class="metric-card warning">
+                    <div class="metric-value">{{ agents_actifs|default:"0" }}/{{ total_agents|default:"0" }}</div>
+                    <div class="metric-label">Agents Actifs</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pied de page -->
+        <div class="footer-info">
+            <p class="mb-2">
+                <strong><i class="fas fa-chart-pie me-2"></i>TogoRetrouvé</strong> - 
+                Plateforme Nationale de Gestion des Objets Perdus et Retrouvés
+            </p>
+            <p class="mb-0">
+                <i class="fas fa-calendar me-2"></i>
+                Rapport généré automatiquement le <strong>{{ date_generation|date:"d/m/Y à H:i" }}</strong>
+                <span class="mx-2">•</span>
+                <i class="fas fa-clock me-2"></i>
+                Période d'analyse: <strong>{{ periode|default:"30" }} derniers jours</strong>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Animation des cartes métriques au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.metric-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'all 0.6s ease';
+                    
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 100);
+            });
+            
+            // Auto-print après 2 secondes si paramètre print=true
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('print') === 'true') {
+                setTimeout(() => {
+                    window.print();
+                }, 2000);
+            }
+        });
+
+        // Animation des barres de progression
+        setTimeout(() => {
+            const progressBars = document.querySelectorAll('.progress-bar-modern');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 500);
+            });
+        }, 800);
+    </script>
+</body>
+</html>

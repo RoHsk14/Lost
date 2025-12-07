@@ -25,7 +25,23 @@ SECRET_KEY = 'django-insecure-iu0lmv7b!z4u$5#j*^&vod68qzb7gd5m(l5@eho9le=1vfo0q0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*']
+
+# Configuration CSRF pour éviter les erreurs de token
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+# Cookies CSRF
+CSRF_COOKIE_SECURE = False  # True en production avec HTTPS
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_USE_SESSIONS = True
+
+# Debug CSRF temporaire (à retirer en production)
+CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
+CSRF_COOKIE_AGE = 60 * 60 * 24  # 24 heures
 
 # si BASE_DIR est un Path (pathlib)
 MEDIA_URL = '/media/'
@@ -46,10 +62,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',  # Django Channels pour WebSocket
     'core',
     'widget_tweaks',
     'rest_framework',
-
 ]
 
 MIDDLEWARE = [
@@ -161,3 +177,51 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Cache configuration for performance
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 600,  # 10 minutes
+        'OPTIONS': {
+            'MAX_ENTRIES': 2000,
+            'CULL_FREQUENCY': 4,
+        }
+    }
+}
+
+# Session configuration for better performance
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_CACHE_ALIAS = 'default'
+SESSION_COOKIE_AGE = 86400  # 24 hours
+
+# Database connection pooling and optimization
+CONN_MAX_AGE = 600  # Keep database connections alive for 10 minutes
+
+
+# ===== DJANGO CHANNELS CONFIGURATION =====
+
+# ASGI application configuration
+ASGI_APPLICATION = 'lostfound.asgi.application'
+
+# Channel layer configuration for Redis
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+
+# Configuration pour les fichiers de chat
+CHAT_FILE_MAX_SIZE = 10 * 1024 * 1024  # 10MB
+ALLOWED_CHAT_FILE_TYPES = [
+    # Images
+    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp',
+    # Documents
+    '.pdf', '.doc', '.docx', '.txt',
+    # Autres
+    '.zip', '.rar'
+]

@@ -63,15 +63,15 @@ class Utilisateur(AbstractUser):
     
     ROLE_CHOICES = [
         ('citoyen', 'Citoyen'),
-        ('agent', 'Agent de gestion'),
+        ('agent', 'Agent'),
         ('admin', 'Administrateur'),
-        ('superadmin', 'Super Administrateur'),
     ]
     role = models.CharField(max_length=12, choices=ROLE_CHOICES, default='citoyen')
     
     # Assignation géographique pour agents et admins
     region = models.ForeignKey(Region, on_delete=models.SET_NULL, blank=True, null=True)
     prefecture = models.ForeignKey(Prefecture, on_delete=models.SET_NULL, blank=True, null=True)
+    structure_locale = models.ForeignKey(StructureLocale, on_delete=models.SET_NULL, blank=True, null=True)
     
     # Métadonnées utilisateur
     date_derniere_connexion = models.DateTimeField(null=True, blank=True)
@@ -190,11 +190,30 @@ class Declaration(models.Model):
     def save(self, *args, **kwargs):
         # Générer le numéro de déclaration automatiquement
         if not self.numero_declaration:
-            prefix = 'TGR' + str(timezone.now().year)[-2:]
-            last_num = Declaration.objects.filter(
-                numero_declaration__startswith=prefix
-            ).count() + 1
-            self.numero_declaration = f"{prefix}{last_num:06d}"
+            from django.db import transaction
+            import random
+            import string
+            
+            with transaction.atomic():
+                prefix = 'TGR' + str(timezone.now().year)[-2:]
+                
+                # Générer un numéro unique avec retry en cas de collision
+                max_attempts = 10
+                for attempt in range(max_attempts):
+                    # Utiliser une approche plus robuste avec timestamp et random
+                    timestamp_part = str(int(timezone.now().timestamp()))[-6:]
+                    random_part = ''.join(random.choices(string.digits, k=2))
+                    numero = f"{prefix}{timestamp_part}{random_part}"
+                    
+                    # Vérifier l'unicité
+                    if not Declaration.objects.filter(numero_declaration=numero).exists():
+                        self.numero_declaration = numero
+                        break
+                else:
+                    # Si aucun numéro unique trouvé après max_attempts, utiliser UUID
+                    import uuid
+                    self.numero_declaration = f"{prefix}{str(uuid.uuid4())[:8].upper()}"
+        
         super().save(*args, **kwargs)
     
     def __str__(self):
@@ -371,83 +390,6 @@ class Notification(models.Model):
             self.save(update_fields=['lue', 'date_lecture'])
 
 
-class Conversation(models.Model):
-    """Conversations entre agents et utilisateurs"""
-    
-    TYPE_CHOICES = [
-        ('declaration', 'À propos d\'une déclaration'),
-        ('reclamation', 'À propos d\'une réclamation'),
-        ('general', 'Question générale'),
-        ('support', 'Support technique'),
-    ]
-    
-    # Identifiants
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    
-    # Relations
-    declaration = models.ForeignKey(Declaration, on_delete=models.CASCADE, null=True, blank=True)
-    reclamation = models.ForeignKey(Reclamation, on_delete=models.CASCADE, null=True, blank=True)
-    
-    # Participants
-    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='conversations_utilisateur')
-    agent = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, blank=True, 
-                             related_name='conversations_agent',
-                             limit_choices_to={'role__in': ['agent', 'admin', 'superadmin']})
-    
-    # Informations
-    type_conversation = models.CharField(max_length=15, choices=TYPE_CHOICES, default='general')
-    sujet = models.CharField(max_length=200)
-    statut = models.CharField(max_length=15, choices=[
-        ('ouverte', 'Ouverte'),
-        ('en_cours', 'En cours'),
-        ('fermee', 'Fermée'),
-        ('archivee', 'Archivée')
-    ], default='ouverte')
-    
-    # Dates
-    date_creation = models.DateTimeField(auto_now_add=True)
-    date_dernier_message = models.DateTimeField(auto_now_add=True)
-    date_fermeture = models.DateTimeField(null=True, blank=True)
-    
-    # Métadonnées
-    priorite = models.IntegerField(default=1, choices=[(1, 'Normale'), (2, 'Haute'), (3, 'Urgente')])
-    
-    class Meta:
-        ordering = ['-date_dernier_message']
-    
-    def __str__(self):
-        return f"{self.sujet} - {self.utilisateur.username}"
-
-
-class Message(models.Model):
-    """Messages dans les conversations"""
-    
-    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
-    auteur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE)
-    contenu = models.TextField()
-    
-    # Pièces jointes
-    fichier_joint = models.FileField(upload_to='messages/', blank=True, null=True)
-    nom_fichier = models.CharField(max_length=255, blank=True)
-    
-    # Statut
-    lu = models.BooleanField(default=False)
-    date_lecture = models.DateTimeField(null=True, blank=True)
-    
-    # Dates
-    date_creation = models.DateTimeField(auto_now_add=True)
-    date_modification = models.DateTimeField(auto_now=True)
-    
-    # Métadonnées
-    est_interne = models.BooleanField(default=False, help_text="Message interne visible uniquement par les agents")
-    
-    class Meta:
-        ordering = ['date_creation']
-    
-    def __str__(self):
-        return f"Message de {self.auteur.username} - {self.date_creation.strftime('%d/%m/%Y %H:%M')}"
-
-
 class ActionLog(models.Model):
     """Log des actions pour audit et suivi"""
     
@@ -621,3 +563,179 @@ class CommentaireAnonyme(models.Model):
     def get_display_name(self):
         """Retourne le nom d'affichage (pseudo ou 'Anonyme')"""
         return self.pseudo or "Anonyme"
+
+
+# ===== MODÈLES DE MESSAGERIE TEMPS RÉEL =====
+
+class Conversation(models.Model):
+    """
+    Conversation privée entre un agent et un déclarant pour un signalement spécifique
+    """
+    signalement = models.ForeignKey(
+        Declaration, 
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='conversations',
+        help_text="Signalement concerné par cette conversation"
+    )
+    agent = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        limit_choices_to={'role__in': ['agent', 'admin']},
+        related_name='conversations_agent',
+        help_text="Agent participant à la conversation"
+    )
+    declarant = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        limit_choices_to={'role': 'citoyen'},
+        related_name='conversations_declarant',
+        help_text="Déclarant participant à la conversation"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'core_conversation_chat'
+        unique_together = ['signalement', 'agent', 'declarant']
+        ordering = ['-updated_at']
+        verbose_name = "Conversation"
+        verbose_name_plural = "Conversations"
+    
+    def __str__(self):
+        return f"Conversation {self.agent.get_full_name()} ↔ {self.declarant.get_full_name()} - {self.signalement.numero_declaration}"
+    
+    @property
+    def unread_count_for_agent(self):
+        """Nombre de messages non lus par l'agent"""
+        return self.messages.filter(sender=self.declarant, is_read=False).count()
+    
+    @property
+    def unread_count_for_declarant(self):
+        """Nombre de messages non lus par le déclarant"""
+        return self.messages.filter(sender=self.agent, is_read=False).count()
+    
+    @property
+    def dernier_message(self):
+        """Retourne le dernier message de la conversation"""
+        return self.messages.order_by('-created_at').first()
+        return self.messages.filter(sender=self.agent, is_read=False).count()
+    
+    def get_last_message(self):
+        """Retourne le dernier message de la conversation"""
+        return self.messages.order_by('-created_at').first()
+
+
+class Message(models.Model):
+    """
+    Message dans une conversation entre agent et déclarant
+    """
+    TYPE_CHOICES = [
+        ('texte', 'Message texte'),
+        ('fichier', 'Fichier joint'),
+        ('systeme', 'Message système'),
+    ]
+    
+    conversation = models.ForeignKey(
+        Conversation,
+        on_delete=models.CASCADE,
+        related_name='messages',
+        help_text="Conversation à laquelle appartient ce message"
+    )
+    sender = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='messages_sent',
+        help_text="Expéditeur du message"
+    )
+    receiver = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='messages_received',
+        help_text="Destinataire du message"
+    )
+    contenu = models.TextField(
+        max_length=2000,
+        blank=True,
+        help_text="Contenu du message (max 2000 caractères)"
+    )
+    fichier = models.FileField(
+        upload_to='chat_files/%Y/%m/%d/',
+        null=True,
+        blank=True,
+        help_text="Fichier joint (image, PDF, etc.)"
+    )
+    type_message = models.CharField(
+        max_length=10,
+        choices=TYPE_CHOICES,
+        default='texte',
+        help_text="Type de message"
+    )
+    is_read = models.BooleanField(
+        default=False,
+        help_text="Message lu par le destinataire"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Date de lecture du message"
+    )
+    
+    class Meta:
+        db_table = 'core_message_chat'
+        ordering = ['created_at']
+        verbose_name = "Message"
+        verbose_name_plural = "Messages"
+    
+    def __str__(self):
+        if self.type_message == 'fichier':
+            return f"📎 Fichier de {self.sender.get_full_name()} à {self.receiver.get_full_name()}"
+        elif self.type_message == 'systeme':
+            return f"🤖 Message système: {self.contenu[:50]}..."
+        else:
+            return f"💬 {self.sender.get_full_name()} → {self.receiver.get_full_name()}: {self.contenu[:50]}..."
+    
+    def mark_as_read(self):
+        """Marque le message comme lu"""
+        if not self.is_read:
+            self.is_read = True
+            self.read_at = timezone.now()
+            self.save(update_fields=['is_read', 'read_at'])
+    
+    @property
+    def file_name(self):
+        """Retourne le nom du fichier si présent"""
+        if self.fichier:
+            return self.fichier.name.split('/')[-1]
+        return None
+    
+    @property
+    def file_size(self):
+        """Retourne la taille du fichier en bytes"""
+        if self.fichier:
+            try:
+                return self.fichier.size
+            except:
+                return 0
+        return 0
+    
+    @property
+    def is_image(self):
+        """Vérifie si le fichier est une image"""
+        if self.fichier:
+            try:
+                name = self.fichier.name.lower()
+                return name.endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'))
+            except:
+                return False
+        return False

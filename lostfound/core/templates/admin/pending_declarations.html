@@ -3,259 +3,697 @@
 
 {% block title %}Validation des Déclarations - TogoRetrouvé Admin{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Reset spécifique pour cette page */
+    .pending-page {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+        min-height: calc(100vh - 100px) !important;
+        padding: 2rem 0 !important;
+    }
+
+    .pending-page .page-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        border-radius: 20px !important;
+        padding: 2.5rem !important;
+        margin-bottom: 2rem !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    .pending-page .page-header::before {
+        content: '' !important;
+        position: absolute !important;
+        top: -50% !important;
+        right: -50px !important;
+        width: 200px !important;
+        height: 200px !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-radius: 50% !important;
+    }
+
+    .pending-page .page-header h1 {
+        color: white !important;
+        font-size: 2.5rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.5rem !important;
+        position: relative !important;
+        z-index: 2 !important;
+    }
+
+    .pending-page .page-header p {
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-size: 1.1rem !important;
+        margin-bottom: 0 !important;
+        position: relative !important;
+        z-index: 2 !important;
+    }
+
+    .pending-page .stats-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+        gap: 1.5rem !important;
+        margin-bottom: 2.5rem !important;
+    }
+
+    .pending-page .stat-card {
+        background: white !important;
+        border-radius: 16px !important;
+        padding: 2rem !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        border-left: 4px solid !important;
+        transition: all 0.3s ease !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    .pending-page .stat-card::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important;
+        right: 0 !important;
+        width: 80px !important;
+        height: 80px !important;
+        opacity: 0.1 !important;
+        border-radius: 50% !important;
+        transform: translate(30px, -30px) !important;
+    }
+
+    .pending-page .stat-card.warning {
+        border-left-color: #f59e0b !important;
+    }
+
+    .pending-page .stat-card.warning::before {
+        background: #f59e0b !important;
+    }
+
+    .pending-page .stat-card.danger {
+        border-left-color: #ef4444 !important;
+    }
+
+    .pending-page .stat-card.danger::before {
+        background: #ef4444 !important;
+    }
+
+    .pending-page .stat-card.info {
+        border-left-color: #06b6d4 !important;
+    }
+
+    .pending-page .stat-card.info::before {
+        background: #06b6d4 !important;
+    }
+
+    .pending-page .stat-card.success {
+        border-left-color: #10b981 !important;
+    }
+
+    .pending-page .stat-card.success::before {
+        background: #10b981 !important;
+    }
+
+    .pending-page .stat-card:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    .pending-page .stat-number {
+        font-size: 3rem !important;
+        font-weight: 800 !important;
+        line-height: 1 !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .pending-page .stat-label {
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        color: #64748b !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    .pending-page .stat-icon {
+        font-size: 2.5rem !important;
+        margin-bottom: 1rem !important;
+        opacity: 0.8 !important;
+    }
+
+    .pending-page .filters-card {
+        background: white !important;
+        border-radius: 16px !important;
+        padding: 2rem !important;
+        margin-bottom: 2rem !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
+    .pending-page .filters-title {
+        font-size: 1.25rem !important;
+        font-weight: 600 !important;
+        color: #1e293b !important;
+        margin-bottom: 1.5rem !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+
+    .pending-page .modern-select {
+        background: #f8fafc !important;
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 0.75rem 1rem !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+        font-size: 0.95rem !important;
+    }
+
+    .pending-page .modern-select:focus {
+        outline: none !important;
+        border-color: #3b82f6 !important;
+        background: white !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    }
+
+    .pending-page .declarations-card {
+        background: white !important;
+        border-radius: 16px !important;
+        overflow: hidden !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
+    .pending-page .modern-table {
+        margin-bottom: 0 !important;
+    }
+
+    .pending-page .modern-table th {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        font-size: 0.875rem !important;
+        padding: 1.25rem 1rem !important;
+        border: none !important;
+    }
+
+    .pending-page .modern-table td {
+        padding: 1.5rem 1rem !important;
+        vertical-align: middle !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+    }
+
+    .pending-page .modern-table tr:hover {
+        background: #f8fafc !important;
+    }
+
+    .pending-page .badge-modern {
+        padding: 0.5rem 1rem !important;
+        border-radius: 50px !important;
+        font-weight: 600 !important;
+        font-size: 0.75rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    .pending-page .badge-warning { background: rgba(251, 191, 36, 0.15) !important; color: #d97706 !important; }
+    .pending-page .badge-danger { background: rgba(239, 68, 68, 0.15) !important; color: #dc2626 !important; }
+    .pending-page .badge-success { background: rgba(34, 197, 94, 0.15) !important; color: #16a34a !important; }
+    .pending-page .badge-info { background: rgba(6, 182, 212, 0.15) !important; color: #0891b2 !important; }
+    .pending-page .badge-secondary { background: rgba(100, 116, 139, 0.15) !important; color: #475569 !important; }
+
+    .pending-page .action-buttons {
+        display: flex !important;
+        gap: 0.5rem !important;
+        flex-wrap: wrap !important;
+    }
+
+    .pending-page .btn-modern {
+        padding: 0.5rem !important;
+        border-radius: 8px !important;
+        border: none !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 0.875rem !important;
+    }
+
+    .pending-page .btn-view {
+        background: rgba(59, 130, 246, 0.1) !important;
+        color: #2563eb !important;
+    }
+
+    .pending-page .btn-view:hover {
+        background: rgba(59, 130, 246, 0.2) !important;
+        transform: scale(1.05) !important;
+    }
+
+    .pending-page .btn-validate {
+        background: rgba(34, 197, 94, 0.1) !important;
+        color: #16a34a !important;
+    }
+
+    .pending-page .btn-validate:hover {
+        background: rgba(34, 197, 94, 0.2) !important;
+        transform: scale(1.05) !important;
+    }
+
+    .pending-page .btn-edit {
+        background: rgba(251, 191, 36, 0.1) !important;
+        color: #d97706 !important;
+    }
+
+    .pending-page .btn-edit:hover {
+        background: rgba(251, 191, 36, 0.2) !important;
+        transform: scale(1.05) !important;
+    }
+
+    .pending-page .btn-reject {
+        background: rgba(239, 68, 68, 0.1) !important;
+        color: #dc2626 !important;
+    }
+
+    .pending-page .btn-reject:hover {
+        background: rgba(239, 68, 68, 0.2) !important;
+        transform: scale(1.05) !important;
+    }
+
+    .pending-page .empty-state {
+        text-align: center !important;
+        padding: 4rem 2rem !important;
+        color: #64748b !important;
+    }
+
+    .pending-page .empty-state i {
+        font-size: 4rem !important;
+        margin-bottom: 1rem !important;
+        opacity: 0.5 !important;
+    }
+
+    .pending-page .pagination-modern {
+        justify-content: center !important;
+        margin-top: 2rem !important;
+    }
+
+    .pending-page .pagination-modern .page-link {
+        border: none !important;
+        border-radius: 8px !important;
+        margin: 0 0.25rem !important;
+        padding: 0.75rem 1rem !important;
+        color: #64748b !important;
+        font-weight: 600 !important;
+    }
+
+    .pending-page .pagination-modern .page-item.active .page-link {
+        background: #3b82f6 !important;
+        color: white !important;
+    }
+
+    .pending-page .pagination-modern .page-link:hover {
+        background: #f1f5f9 !important;
+        color: #1e293b !important;
+    }
+
+    @media (max-width: 768px) {
+        .pending-page .page-header {
+            padding: 1.5rem !important;
+        }
+
+        .pending-page .page-header h1 {
+            font-size: 2rem !important;
+        }
+
+        .pending-page .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+            gap: 1rem !important;
+        }
+
+        .pending-page .stat-card {
+            padding: 1.5rem !important;
+        }
+
+        .pending-page .stat-number {
+            font-size: 2.5rem !important;
+        }
+
+        .pending-page .action-buttons {
+            justify-content: center !important;
+        }
+
+        .pending-page .modern-table {
+            font-size: 0.875rem !important;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-warning text-dark">
-                    <h4 class="card-title mb-0">
-                        <i class="fas fa-clipboard-check me-2"></i>Déclarations en Attente de Validation
-                    </h4>
-                    <small>Déclarations nécessitant une validation ou des informations complémentaires</small>
+<div class="pending-page">
+    <div class="container-fluid px-4">
+        <!-- En-tête moderne -->
+        <div class="page-header">
+            <h1><i class="fas fa-clipboard-check me-3"></i>Déclarations en Attente</h1>
+            <p>Validez et gérez les déclarations nécessitant une attention particulière</p>
+        </div>
+
+        <!-- Statistiques modernes -->
+        <div class="stats-grid">
+            <div class="stat-card warning">
+                <div class="stat-icon text-warning">
+                    <i class="fas fa-clock"></i>
                 </div>
-                
-                <div class="card-body">
-                    <!-- Statistiques rapides -->
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="card bg-warning text-dark">
-                                <div class="card-body text-center">
-                                    <h3>{{ pending_count }}</h3>
-                                    <small>En attente</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-danger text-white">
-                                <div class="card-body text-center">
-                                    <h3>{{ incomplete_count }}</h3>
-                                    <small>Incomplètes</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-info text-white">
-                                <div class="card-body text-center">
-                                    <h3>{{ today_count }}</h3>
-                                    <small>Aujourd'hui</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-success text-white">
-                                <div class="card-body text-center">
-                                    <h3>{{ validated_today }}</h3>
-                                    <small>Validées aujourd'hui</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Filtres -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <select class="form-select" id="filterStatus">
-                                <option value="">Tous les statuts</option>
-                                <option value="en_attente">En attente</option>
-                                <option value="incomplet">Informations incomplètes</option>
-                                <option value="a_verifier">À vérifier</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <select class="form-select" id="filterType">
-                                <option value="">Tous les types</option>
-                                <option value="objet_perdu">Objet perdu</option>
-                                <option value="objet_trouve">Objet trouvé</option>
-                                <option value="personne_disparue">Personne disparue</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- Liste des déclarations -->
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Type</th>
-                                    <th>Déclarant</th>
-                                    <th>Date</th>
-                                    <th>Statut</th>
-                                    <th>Problème</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for declaration in pending_declarations %}
-                                <tr>
-                                    <td>
-                                        <span class="badge bg-secondary">#{{ declaration.id }}</span>
-                                    </td>
-                                    <td>
-                                        {% if declaration.signalement_type == 'objet_perdu' %}
-                                            <span class="badge bg-danger">Objet Perdu</span>
-                                        {% elif declaration.signalement_type == 'objet_trouve' %}
-                                            <span class="badge bg-success">Objet Trouvé</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">Personne</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div>
-                                            <strong>{{ declaration.nom_declarant }} {{ declaration.prenom_declarant }}</strong>
-                                            <br>
-                                            <small class="text-muted">{{ declaration.telephone_declarant }}</small>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div>
-                                            {{ declaration.date_declaration|date:"d/m/Y" }}
-                                            <br>
-                                            <small class="text-muted">{{ declaration.date_declaration|time:"H:i" }}</small>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        {% if declaration.statut == 'en_attente' %}
-                                            <span class="badge bg-warning">En attente</span>
-                                        {% elif declaration.statut == 'incomplet' %}
-                                            <span class="badge bg-danger">Incomplet</span>
-                                        {% else %}
-                                            <span class="badge bg-info">{{ declaration.statut|capfirst }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <small class="text-muted">
-                                            {% if not declaration.description %}
-                                                Description manquante<br>
-                                            {% endif %}
-                                            {% if not declaration.lieu_incident %}
-                                                Lieu manquant<br>
-                                            {% endif %}
-                                            {% if not declaration.photo %}
-                                                Photo manquante<br>
-                                            {% endif %}
-                                        </small>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group-vertical btn-group-sm">
-                                            <button class="btn btn-outline-primary btn-sm" 
-                                                    onclick="viewDeclaration({{ declaration.id }})"
-                                                    title="Voir les détails">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-outline-success btn-sm"
-                                                    onclick="validateDeclaration({{ declaration.id }})"
-                                                    title="Valider">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                            <button class="btn btn-outline-warning btn-sm"
-                                                    onclick="editDeclaration({{ declaration.id }})"
-                                                    title="Modifier">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-outline-danger btn-sm"
-                                                    onclick="rejectDeclaration({{ declaration.id }})"
-                                                    title="Rejeter">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="7" class="text-center py-4">
-                                        <div class="text-muted">
-                                            <i class="fas fa-clipboard-check fa-3x mb-3"></i>
-                                            <br>
-                                            Aucune déclaration en attente de validation
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Pagination -->
-                    {% if pending_declarations.has_other_pages %}
-                    <nav aria-label="Pagination des déclarations">
-                        <ul class="pagination justify-content-center">
-                            {% if pending_declarations.has_previous %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ pending_declarations.previous_page_number }}">Précédent</a>
-                                </li>
-                            {% endif %}
-                            
-                            {% for num in pending_declarations.paginator.page_range %}
-                                {% if pending_declarations.number == num %}
-                                    <li class="page-item active">
-                                        <span class="page-link">{{ num }}</span>
-                                    </li>
+                <div class="stat-number text-warning">{{ pending_count }}</div>
+                <div class="stat-label">En attente</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-icon text-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-number text-danger">{{ incomplete_count }}</div>
+                <div class="stat-label">Incomplètes</div>
+            </div>
+            <div class="stat-card info">
+                <div class="stat-icon text-info">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="stat-number text-info">{{ today_count }}</div>
+                <div class="stat-label">Aujourd'hui</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-icon text-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-number text-success">{{ validated_today }}</div>
+                <div class="stat-label">Validées aujourd'hui</div>
+            </div>
+        </div>
+
+        <!-- Filtres modernes -->
+        <div class="filters-card">
+            <h3 class="filters-title">
+                <i class="fas fa-filter text-primary"></i>
+                Filtres de recherche
+            </h3>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold text-dark">Statut</label>
+                    <select class="form-select modern-select" id="filterStatus">
+                        <option value="">Tous les statuts</option>
+                        <option value="en_attente">En attente</option>
+                        <option value="incomplet">Informations incomplètes</option>
+                        <option value="a_verifier">À vérifier</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold text-dark">Type</label>
+                    <select class="form-select modern-select" id="filterType">
+                        <option value="">Tous les types</option>
+                        <option value="objet_perdu">Objet perdu</option>
+                        <option value="objet_trouve">Objet trouvé</option>
+                        <option value="personne_disparue">Personne disparue</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <!-- Table moderne des déclarations -->
+        <div class="declarations-card">
+            <div class="table-responsive">
+                <table class="table modern-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag me-2"></i>ID</th>
+                            <th><i class="fas fa-tag me-2"></i>Type</th>
+                            <th><i class="fas fa-user me-2"></i>Déclarant</th>
+                            <th><i class="fas fa-calendar me-2"></i>Date</th>
+                            <th><i class="fas fa-info-circle me-2"></i>Statut</th>
+                            <th><i class="fas fa-exclamation-triangle me-2"></i>Problèmes</th>
+                            <th><i class="fas fa-cogs me-2"></i>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for declaration in pending_declarations %}
+                        <tr>
+                            <td>
+                                <span class="badge-modern badge-secondary">#{{ declaration.id }}</span>
+                            </td>
+                            <td>
+                                {% if declaration.type_declaration == 'perdu' %}
+                                    <span class="badge-modern badge-danger">
+                                        <i class="fas fa-search me-1"></i>Objet Perdu
+                                    </span>
                                 {% else %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                                    </li>
+                                    <span class="badge-modern badge-success">
+                                        <i class="fas fa-gift me-1"></i>Objet Trouvé
+                                    </span>
                                 {% endif %}
-                            {% endfor %}
-                            
-                            {% if pending_declarations.has_next %}
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="fw-semibold text-dark">{{ declaration.declarant.get_full_name|default:declaration.declarant.username }}</div>
+                                    <small class="text-muted">{{ declaration.declarant.email }}</small>
+                                    {% if declaration.declarant.telephone %}
+                                    <br><small class="text-muted"><i class="fas fa-phone me-1"></i>{{ declaration.declarant.telephone }}</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">{{ declaration.date_declaration|date:"d/m/Y" }}</div>
+                                <small class="text-muted">{{ declaration.date_declaration|date:"H:i" }}</small>
+                            </td>
+                            <td>
+                                {% if declaration.statut == 'cree' %}
+                                    <span class="badge-modern badge-warning">
+                                        <i class="fas fa-clock me-1"></i>En attente
+                                    </span>
+                                {% elif declaration.statut == 'incomplet' %}
+                                    <span class="badge-modern badge-danger">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Incomplet
+                                    </span>
+                                {% else %}
+                                    <span class="badge-modern badge-info">
+                                        <i class="fas fa-info-circle me-1"></i>{{ declaration.get_statut_display }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {% if not declaration.description %}
+                                        <div><i class="fas fa-file-alt text-danger me-1"></i>Description manquante</div>
+                                    {% endif %}
+                                    {% if not declaration.lieu_precis %}
+                                        <div><i class="fas fa-map-marker-alt text-danger me-1"></i>Lieu manquant</div>
+                                    {% endif %}
+                                    {% if not declaration.nom_objet %}
+                                        <div><i class="fas fa-tag text-danger me-1"></i>Nom objet manquant</div>
+                                    {% endif %}
+                                    {% if declaration.description and declaration.lieu_precis and declaration.nom_objet %}
+                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i>Complet</span>
+                                    {% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-modern btn-view" 
+                                            onclick="viewDeclaration({{ declaration.id }})"
+                                            title="Voir les détails">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-modern btn-validate"
+                                            onclick="validateDeclaration({{ declaration.id }})"
+                                            title="Valider">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="btn-modern btn-edit"
+                                            onclick="editDeclaration({{ declaration.id }})"
+                                            title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-modern btn-reject"
+                                            onclick="rejectDeclaration({{ declaration.id }})"
+                                            title="Rejeter">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <i class="fas fa-clipboard-check"></i>
+                                    <h4>Aucune déclaration en attente</h4>
+                                    <p class="mb-0">Toutes les déclarations ont été traitées !</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination moderne -->
+            {% if pending_declarations.has_other_pages %}
+            <div class="p-4">
+                <nav aria-label="Pagination des déclarations">
+                    <ul class="pagination pagination-modern">
+                        {% if pending_declarations.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ pending_declarations.previous_page_number }}">
+                                    <i class="fas fa-chevron-left me-1"></i>Précédent
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in pending_declarations.paginator.page_range %}
+                            {% if pending_declarations.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% else %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ pending_declarations.next_page_number }}">Suivant</a>
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
                                 </li>
                             {% endif %}
-                        </ul>
-                    </nav>
-                    {% endif %}
+                        {% endfor %}
+                        
+                        {% if pending_declarations.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ pending_declarations.next_page_number }}">
+                                    Suivant<i class="fas fa-chevron-right ms-1"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal moderne de validation -->
+<div class="modal fade" id="validationModal" tabindex="-1" aria-labelledby="validationModalLabel">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content" style="border: none; border-radius: 16px; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none;">
+                <h5 class="modal-title text-white fw-bold" id="validationModalLabel">
+                    <i class="fas fa-clipboard-check me-2"></i>Validation de Déclaration
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body p-0" id="validationContent">
+                <!-- Contenu chargé dynamiquement -->
+                <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <p class="text-muted">Chargement des détails...</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal de validation -->
-<div class="modal fade" id="validationModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Validation de Déclaration</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="validationContent">
-                <!-- Contenu chargé dynamiquement -->
-            </div>
-        </div>
-    </div>
-</div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
+// Fonctions de gestion des déclarations
 function viewDeclaration(id) {
+    // Afficher le modal avec le contenu de chargement
+    const modal = new bootstrap.Modal(document.getElementById('validationModal'));
+    modal.show();
+    
     // Charger les détails de la déclaration
     fetch(`/togoretrouve-admin/declarations/${id}/`)
-        .then(response => response.text())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur lors du chargement');
+            }
+            return response.text();
+        })
         .then(html => {
             document.getElementById('validationContent').innerHTML = html;
-            new bootstrap.Modal(document.getElementById('validationModal')).show();
+        })
+        .catch(error => {
+            document.getElementById('validationContent').innerHTML = `
+                <div class="p-4 text-center">
+                    <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                    <h5>Erreur de chargement</h5>
+                    <p class="text-muted">Impossible de charger les détails de la déclaration.</p>
+                </div>
+            `;
         });
 }
 
 function validateDeclaration(id) {
-    if (confirm('Êtes-vous sûr de vouloir valider cette déclaration ?')) {
-        fetch(`/togoretrouve-admin/declarations/${id}/validate/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Erreur lors de la validation');
-            }
-        });
-    }
+    Swal.fire({
+        title: 'Valider cette déclaration ?',
+        text: 'Cette action validera définitivement la déclaration.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, valider',
+        cancelButtonText: 'Annuler',
+        background: '#ffffff',
+        borderRadius: '16px',
+        customClass: {
+            popup: 'shadow-lg',
+            confirmButton: 'px-4 py-2 rounded-lg',
+            cancelButton: 'px-4 py-2 rounded-lg'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/togoretrouve-admin/declarations/${id}/validate/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Validée !',
+                        text: 'La déclaration a été validée avec succès.',
+                        icon: 'success',
+                        confirmButtonColor: '#10b981',
+                        background: '#ffffff',
+                        borderRadius: '16px'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Erreur',
+                        text: 'Une erreur est survenue lors de la validation.',
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444',
+                        background: '#ffffff',
+                        borderRadius: '16px'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    title: 'Erreur',
+                    text: 'Une erreur de connexion est survenue.',
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444',
+                    background: '#ffffff',
+                    borderRadius: '16px'
+                });
+            });
+        }
+    });
 }
 
 function editDeclaration(id) {
@@ -263,56 +701,144 @@ function editDeclaration(id) {
 }
 
 function rejectDeclaration(id) {
-    const reason = prompt('Raison du rejet (optionnel):');
-    if (reason !== null) {
-        fetch(`/togoretrouve-admin/declarations/${id}/reject/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({reason: reason})
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Erreur lors du rejet');
+    Swal.fire({
+        title: 'Rejeter cette déclaration',
+        text: 'Veuillez préciser la raison du rejet :',
+        input: 'textarea',
+        inputPlaceholder: 'Motif du rejet...',
+        inputAttributes: {
+            'aria-label': 'Motif du rejet'
+        },
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Rejeter',
+        cancelButtonText: 'Annuler',
+        background: '#ffffff',
+        borderRadius: '16px',
+        customClass: {
+            popup: 'shadow-lg',
+            input: 'form-control',
+            confirmButton: 'px-4 py-2 rounded-lg',
+            cancelButton: 'px-4 py-2 rounded-lg'
+        },
+        inputValidator: (value) => {
+            if (!value || value.trim() === '') {
+                return 'Veuillez saisir un motif de rejet';
             }
-        });
-    }
+        }
+    }).then((result) => {
+        if (result.isConfirmed && result.value) {
+            fetch(`/togoretrouve-admin/declarations/${id}/reject/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({reason: result.value.trim()})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Rejetée',
+                        text: 'La déclaration a été rejetée.',
+                        icon: 'info',
+                        confirmButtonColor: '#3b82f6',
+                        background: '#ffffff',
+                        borderRadius: '16px'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Erreur',
+                        text: 'Une erreur est survenue lors du rejet.',
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444',
+                        background: '#ffffff',
+                        borderRadius: '16px'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    title: 'Erreur',
+                    text: 'Une erreur de connexion est survenue.',
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444',
+                    background: '#ffffff',
+                    borderRadius: '16px'
+                });
+            });
+        }
+    });
 }
 
-// Filtres
+// Gestion des filtres
 document.getElementById('filterStatus').addEventListener('change', function() {
-    const status = this.value;
-    const type = document.getElementById('filterType').value;
-    const url = new URL(window.location);
-    
-    if (status) url.searchParams.set('status', status);
-    else url.searchParams.delete('status');
-    
-    if (type) url.searchParams.set('type', type);
-    else url.searchParams.delete('type');
-    
-    window.location = url;
+    updateFilters();
 });
 
 document.getElementById('filterType').addEventListener('change', function() {
-    const type = this.value;
+    updateFilters();
+});
+
+function updateFilters() {
     const status = document.getElementById('filterStatus').value;
+    const type = document.getElementById('filterType').value;
     const url = new URL(window.location);
     
-    if (type) url.searchParams.set('type', type);
-    else url.searchParams.delete('type');
+    if (status) {
+        url.searchParams.set('status', status);
+    } else {
+        url.searchParams.delete('status');
+    }
     
-    if (status) url.searchParams.set('status', status);
-    else url.searchParams.delete('status');
+    if (type) {
+        url.searchParams.set('type', type);
+    } else {
+        url.searchParams.delete('type');
+    }
+    
+    // Réinitialiser la page
+    url.searchParams.delete('page');
     
     window.location = url;
+}
+
+// Animation des cartes de statistiques au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // Pré-sélectionner les filtres depuis les paramètres URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const statusFilter = urlParams.get('status');
+    const typeFilter = urlParams.get('type');
+    
+    if (statusFilter) {
+        document.getElementById('filterStatus').value = statusFilter;
+    }
+    
+    if (typeFilter) {
+        document.getElementById('filterType').value = typeFilter;
+    }
 });
 </script>
+
+<!-- SweetAlert2 pour les modales modernes -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 {% csrf_token %}
 {% endblock %}

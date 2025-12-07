@@ -165,11 +165,11 @@
                 
                 <!-- Badge -->
                 <div class="absolute top-3 left-3 z-10">
-                    {% if s.statut == 'trouve' %}
+                    {% if s.type_declaration == 'trouve' %}
                         <span class="bg-emerald-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
                             TROUVÉ
                         </span>
-                    {% elif s.statut == 'perdu' %}
+                    {% elif s.type_declaration == 'perdu' %}
                         <span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
                             PERDU
                         </span>
@@ -182,12 +182,27 @@
                 
                 <!-- Image -->
                 <div class="h-32 relative overflow-hidden">
-                    {% if s.photo %}
-                        <img src="{{ s.photo.url }}" alt="{{ s.objet.nom }}" 
-                             class="w-full h-full object-cover">
+                    {% if s.photo_principale %}
+                        <img src="{{ s.photo_principale.url }}" alt="{{ s.nom_objet }}" 
+                             class="w-full h-full object-cover"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center" style="display:none;">
+                            <div class="text-center">
+                                <i class="fas fa-image text-gray-400 text-2xl mb-2"></i>
+                                <p class="text-xs text-gray-500">Image indisponible</p>
+                            </div>
+                        </div>
                     {% else %}
-                        <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                            <i class="fas fa-search text-gray-400 text-2xl"></i>
+                        <div class="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+                            <div class="text-center">
+                                {% if s.type_declaration == 'trouve' %}
+                                    <i class="fas fa-search text-emerald-500 text-2xl mb-2"></i>
+                                    <p class="text-xs text-emerald-600 font-medium">Objet trouvé</p>
+                                {% else %}
+                                    <i class="fas fa-question text-red-500 text-2xl mb-2"></i>
+                                    <p class="text-xs text-red-600 font-medium">Objet perdu</p>
+                                {% endif %}
+                            </div>
                         </div>
                     {% endif %}
                 </div>
@@ -195,26 +210,26 @@
                 <!-- Contenu -->
                 <div class="p-4">
                     <h3 class="font-semibold text-gray-800 text-sm mb-2 line-clamp-1">
-                        {{ s.objet.nom }}
+                        {{ s.nom_objet }}
                     </h3>
                     
                     <div class="flex items-center text-xs text-gray-500 mb-2">
                         <i class="fas fa-user text-blue-500 mr-1"></i>
-                        <span class="truncate">{{ s.utilisateur.username|default:"Anonyme" }}</span>
+                        <span class="truncate">{{ s.declarant.username|default:"Anonyme" }}</span>
                     </div>
                     
-                    {% if s.lieu %}
+                    {% if s.lieu_precis %}
                     <div class="flex items-center text-xs text-gray-500 mb-3">
                         <i class="fas fa-map-marker-alt text-red-500 mr-1"></i>
-                        <span class="truncate">{{ s.lieu }}</span>
+                        <span class="truncate">{{ s.lieu_precis }}</span>
                     </div>
                     {% endif %}
                     
                     <div class="flex gap-2">
                         <a href="{% url 'signalement_detail' s.id %}" 
                            class="flex-1 
-                                  {% if s.statut == 'trouve' %}bg-emerald-500 hover:bg-emerald-600
-                                  {% elif s.statut == 'perdu' %}bg-red-500 hover:bg-red-600
+                                  {% if s.type_declaration == 'trouve' %}bg-emerald-500 hover:bg-emerald-600
+                                  {% elif s.type_declaration == 'perdu' %}bg-red-500 hover:bg-red-600
                                   {% else %}bg-blue-500 hover:bg-blue-600{% endif %}
                                   text-white px-3 py-2 rounded text-xs font-medium text-center transition-colors">
                             Voir

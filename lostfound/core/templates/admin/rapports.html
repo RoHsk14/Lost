@@ -1,228 +1,241 @@
-{% extends 'admin/base.html' %}
-{% load static %}
+{% extends "admin/base.html" %}
 
-{% block title %}Rapports{% endblock %}
-{% block admin_title %}Rapports et Analytics{% endblock %}
+{% block page_title %}Rapports et Analytics{% endblock %}
+{% block page_heading %}Rapports Complets{% endblock %}
+{% block page_description %}Analyse détaillée des données de la plateforme{% endblock %}
 
 {% block extra_head %}
 <style>
 .metric-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 10px;
-    padding: 20px;
-    transition: transform 0.2s;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border-radius: 15px !important;
+    padding: 25px !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
 }
 
 .metric-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-5px) !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
 }
 
-.report-card {
-    border: 1px solid #dee2e6;
-    border-radius: 10px;
-    transition: all 0.2s;
+.metric-value {
+    font-size: 2.5rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 5px !important;
+    color: white !important;
 }
 
-.report-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    border-color: #007bff;
+.metric-label {
+    opacity: 0.9 !important;
+    font-size: 0.95rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    color: white !important;
 }
 
 .chart-container {
-    position: relative;
-    height: 300px;
+    background: white !important;
+    border-radius: 15px !important;
+    padding: 25px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    margin-bottom: 25px !important;
+}
+
+.export-btn {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+    border: none !important;
+    color: white !important;
+    padding: 12px 25px !important;
+    border-radius: 25px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+}
+
+.export-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(17, 153, 142, 0.4) !important;
+    color: white !important;
+    text-decoration: none !important;
+}
+
+.table-modern {
+    background: white !important;
+    border-radius: 15px !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+.table-modern th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 15px !important;
+}
+
+.table-modern td {
+    border: none !important;
+    padding: 15px !important;
+    border-bottom: 1px solid #f1f3f4 !important;
+}
+
+.progress-custom {
+    height: 10px !important;
+    border-radius: 10px !important;
+    background: #f1f3f4 !important;
+}
+
+.progress-bar-custom {
+    border-radius: 10px !important;
+    background: linear-gradient(90deg, #ff9a9e 0%, #fecfef 100%) !important;
+    height: 100% !important;
+}
+
+.btn-group .btn {
+    border-radius: 8px !important;
+    margin: 0 2px !important;
 }
 </style>
 {% endblock %}
 
-{% block admin_content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="mb-0">
-        <i class="fas fa-chart-bar me-2 text-primary"></i>
-        Rapports et Analytics
-    </h4>
-    <div class="d-flex gap-2">
-        <button class="btn btn-outline-primary" onclick="refreshReports()">
-            <i class="fas fa-sync"></i> Actualiser
-        </button>
-        <button class="btn btn-primary" onclick="exportAllReports()">
-            <i class="fas fa-download"></i> Exporter Tout
+{% block content %}
+<!-- Contrôles de période et export -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="btn-group">
+            <a href="?periode=7" class="btn {% if periode == '7' %}btn-primary{% else %}btn-outline-secondary{% endif %}">7 jours</a>
+            <a href="?periode=30" class="btn {% if periode == '30' %}btn-primary{% else %}btn-outline-secondary{% endif %}">30 jours</a>
+            <a href="?periode=90" class="btn {% if periode == '90' %}btn-primary{% else %}btn-outline-secondary{% endif %}">90 jours</a>
+            <a href="?periode=365" class="btn {% if periode == '365' %}btn-primary{% else %}btn-outline-secondary{% endif %}">1 an</a>
+        </div>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="?periode={{ periode }}&export=csv" class="export-btn me-2">
+            <i class="fas fa-download me-2"></i>Exporter CSV
+        </a>
+        <a href="?periode={{ periode }}&export=pdf&view=page" target="_blank" class="export-btn me-2">
+            <i class="fas fa-file-pdf me-2"></i>Exporter PDF
+        </a>
+        <button class="export-btn" onclick="exportJSON()">
+            <i class="fas fa-code me-2"></i>Exporter JSON
         </button>
     </div>
 </div>
 
 <!-- Métriques principales -->
 <div class="row mb-4">
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="mb-1">{{ stats_performance.total_declarations|default:0 }}</h3>
-                    <p class="mb-0 opacity-75">Total Déclarations</p>
-                </div>
-                <i class="fas fa-file-alt fa-2x opacity-50"></i>
-            </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="metric-value">{{ total_signalements }}</div>
+            <div class="metric-label">Total Signalements</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="mb-1">{{ stats_performance.taux_restitution.taux_restitution|default:0|floatformat:1 }}%</h3>
-                    <p class="mb-0 opacity-75">Taux de Résolution</p>
-                </div>
-                <i class="fas fa-check-circle fa-2x opacity-50"></i>
-            </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="metric-value">{{ signalements_periode }}</div>
+            <div class="metric-label">Cette Période</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="mb-1">{{ stats_performance.temps_moyen_validation|default:24 }}h</h3>
-                    <p class="mb-0 opacity-75">Temps Moyen</p>
-                </div>
-                <i class="fas fa-clock fa-2x opacity-50"></i>
-            </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+            <div class="metric-value">{{ signalements_en_attente }}</div>
+            <div class="metric-label">En Attente</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="mb-1">4.2/5</h3>
-                    <p class="mb-0 opacity-75">Satisfaction</p>
-                </div>
-                <i class="fas fa-star fa-2x opacity-50"></i>
-            </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333;">
+            <div class="metric-value">{{ signalements_valides }}</div>
+            <div class="metric-label">Validés</div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #333;">
+            <div class="metric-value">{{ signalements_restitues }}</div>
+            <div class="metric-label">Restitués</div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+            <div class="metric-value">{{ taux_restitution }}%</div>
+            <div class="metric-label">Taux Réussite</div>
         </div>
     </div>
 </div>
 
-<!-- Graphiques et analyses -->
+<!-- Graphiques temporairement désactivés -->
+
+
+
+
+
+<!-- Tableaux de données -->
 <div class="row mb-4">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-chart-line me-2"></i>
-                    Évolution des Déclarations
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="evolutionChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-pie-chart me-2"></i>
-                    Répartition par Statut
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="statusChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Rapports disponibles -->
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="report-card p-4">
-            <div class="text-center">
-                <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
-                <h5>Rapport Mensuel</h5>
-                <p class="text-muted">Synthèse complète du mois en cours avec statistiques détaillées</p>
-                <button class="btn btn-outline-danger" onclick="generateReport('monthly')">
-                    <i class="fas fa-download"></i> Générer PDF
-                </button>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="report-card p-4">
-            <div class="text-center">
-                <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
-                <h5>Export Excel</h5>
-                <p class="text-muted">Données brutes exportables pour analyse avancée</p>
-                <button class="btn btn-outline-success" onclick="generateReport('excel')">
-                    <i class="fas fa-download"></i> Télécharger Excel
-                </button>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="report-card p-4">
-            <div class="text-center">
-                <i class="fas fa-chart-bar fa-3x text-info mb-3"></i>
-                <h5>Analytics Avancés</h5>
-                <p class="text-muted">Tableaux de bord interactifs avec métriques personnalisées</p>
-                <button class="btn btn-outline-info" onclick="viewAdvancedAnalytics()">
-                    <i class="fas fa-external-link-alt"></i> Voir Analytics
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Tableau des performances par région -->
-<div class="card">
-    <div class="card-header">
-        <h5 class="card-title mb-0">
-            <i class="fas fa-users-cog me-2"></i>
-            Performance des Agents
-        </h5>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead class="table-dark">
+    <!-- Signalements par région -->
+    <div class="col-lg-6 mb-4">
+        <div class="table-modern">
+            <table class="table mb-0">
+                <thead>
                     <tr>
-                        <th>Agent</th>
-                        <th>Déclarations Validées</th>
-                        <th>Réclamations Traitées</th>
-                        <th>Score</th>
-                        <th>Temps Moyen</th>
-                        <th>Performance</th>
+                        <th>🌍 Région</th>
+                        <th class="text-center">Nombre</th>
+                        <th class="text-center">%</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for agent in agents_actifs %}
+                    {% for region in repartition_regions %}
                     <tr>
-                        <td>
-                            <strong>{{ agent.username }}</strong>
-                            <br><small class="text-muted">{{ agent.prefecture.nom|default:'Non assigné' }}</small>
-                        </td>
-                        <td>{{ agent.nb_declarations_validees|default:0 }}</td>
-                        <td>{{ agent.nb_reclamations_traitees|default:0 }}</td>
-                        <td>
-                            <span class="badge bg-success">
-                                {{ agent.nb_declarations_validees|default:0 }}
-                            </span>
-                        </td>
-                        <td>24h</td>
-                        <td>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-success" 
-                                     style="width: {% widthratio agent.nb_declarations_validees 10 100 %}%">
-                                </div>
+                        <td class="fw-semibold">{{ region.region__nom|default:"Non spécifiée" }}</td>
+                        <td class="text-center">{{ region.count }}</td>
+                        <td class="text-center">
+                            <div class="progress-custom">
+                                <div class="progress-bar-custom" style="width: {% widthratio region.count total_signalements 100 %}%"></div>
                             </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center text-muted">
-                            Aucune donnée d'agent disponible
+                        <td colspan="3" class="text-center text-muted">Aucune donnée disponible</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Top agents performants -->
+    <div class="col-lg-6 mb-4">
+        <div class="table-modern">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>👨‍💼 Top Agents</th>
+                        <th class="text-center">Traités</th>
+                        <th class="text-center">Performance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in top_agents %}
+                    <tr>
+                        <td class="fw-semibold">{{ agent.get_full_name|default:agent.username }}</td>
+                        <td class="text-center">{{ agent.signalements_traites }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-success">
+                                {% if agent.signalements_traites > 10 %}Excellent
+                                {% elif agent.signalements_traites > 5 %}Bon
+                                {% else %}Moyen{% endif %}
+                            </span>
                         </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">Aucun agent actif sur la période</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -230,106 +243,213 @@
         </div>
     </div>
 </div>
+
+<!-- Métriques utilisateurs -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="chart-container">
+            <h5 class="fw-bold mb-4">👥 Statistiques Utilisateurs</h5>
+            <div class="row">
+                <div class="col-md-3 text-center">
+                    <div class="p-3">
+                        <h3 class="text-primary mb-1">{{ total_utilisateurs }}</h3>
+                        <small class="text-muted">Total Utilisateurs</small>
+                    </div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="p-3">
+                        <h3 class="text-success mb-1">{{ utilisateurs_actifs }}</h3>
+                        <small class="text-muted">Actifs ({{ jours }} jours)</small>
+                    </div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="p-3">
+                        <h3 class="text-info mb-1">{{ nouveaux_utilisateurs }}</h3>
+                        <small class="text-muted">Nouveaux</small>
+                    </div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="p-3">
+                        <h3 class="text-warning mb-1">{{ agents_actifs }}/{{ total_agents }}</h3>
+                        <small class="text-muted">Agents Actifs</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Évolution hebdomadaire remplace l'évolution quotidienne -->
 {% endblock %}
 
 {% block extra_js %}
+<!-- Scripts simplifiés -->
 <script>
-// Données pour les graphiques
-const evolutionData = {
-    labels: {{ evolution_data|safe }}.map(item => item.mois) || ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
-    datasets: [{
-        label: 'Déclarations',
-        data: {{ evolution_data|safe }}.map(item => item.declarations) || [10, 15, 12, 20, 18, 25],
-        borderColor: '#007bff',
-        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-        tension: 0.4
-    }, {
-        label: 'Résolutions',
-        data: [8, 12, 10, 16, 15, 20],
-        borderColor: '#28a745',
-        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-        tension: 0.4
-    }]
-};
-
-const statusData = {
-    labels: ['En attente', 'Validées', 'Publiées', 'Résolues'],
-    datasets: [{
-        data: [15, 25, 30, 30],
-        backgroundColor: [
-            '#ffc107',
-            '#28a745', 
-            '#007bff',
-            '#17a2b8'
-        ]
-    }]
-};
-
-// Initialisation des graphiques
 document.addEventListener('DOMContentLoaded', function() {
-    // Graphique d'évolution
-    const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
-    new Chart(evolutionCtx, {
-        type: 'line',
-        data: evolutionData,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-
-    // Graphique de statut
-    const statusCtx = document.getElementById('statusChart').getContext('2d');
-    new Chart(statusCtx, {
-        type: 'doughnut',
-        data: statusData,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
+    console.log('Page de rapports chargée sans graphiques.');
+    
+    // Pas de graphiques pour le moment
 });
 
-// Fonctions de gestion des rapports
-function refreshReports() {
-    location.reload();
-}
-
-function exportAllReports() {
-    if (confirm('Générer et télécharger tous les rapports ?')) {
-        window.open('/admin/api/reports/export/all/', '_blank');
+// Export JSON
+function exportJSON() {
+    try {
+        const data = {{ rapport_json|safe }} || {
+            export_date: new Date().toISOString(),
+            periode: '{{ periode|default:"30" }}',
+            total_signalements: {{ total_signalements|default:"0" }},
+            message: 'Données de rapport exportées'
+        };
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `rapport_togoretrouve_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        console.log('Export JSON réussi!');
+    } catch (error) {
+        console.error('Erreur lors de l\'export JSON:', error);
+        alert('Erreur lors de l\'export. Voir la console pour plus de détails.');
     }
 }
 
-function generateReport(type) {
-    let url;
-    switch(type) {
-        case 'monthly':
-            url = '/admin/api/reports/monthly/pdf/';
-            break;
-        case 'excel':
-            url = '/admin/api/reports/excel/';
-            break;
-        default:
-            alert('Type de rapport non reconnu');
-            return;
-    }
+// Fonction pour générer le PDF côté client
+function exportPDF() {
+    // Masquer temporairement les boutons d'export pour l'impression
+    const exportButtons = document.querySelectorAll('.export-btn');
+    const btnGroup = document.querySelector('.btn-group');
     
-    window.open(url, '_blank');
-}
-
-function viewAdvancedAnalytics() {
-    window.open('/togoretrouve-admin/statistics/', '_blank');
+    exportButtons.forEach(btn => btn.style.display = 'none');
+    if (btnGroup) btnGroup.style.display = 'none';
+    
+    // Ajouter un en-tête pour le PDF
+    const header = document.createElement('div');
+    header.style.cssText = 'text-align: center; margin-bottom: 20px; page-break-inside: avoid;';
+    header.innerHTML = `
+        <h1 style="color: #667eea; margin-bottom: 10px;">📊 RAPPORT TOGORETROUVÉ</h1>
+        <p style="color: #666; margin: 0;">Période: {{ periode|default:"30" }} derniers jours</p>
+        <p style="color: #666; margin: 0; font-size: 14px;">Généré le ${new Date().toLocaleDateString('fr-FR', { 
+            year: 'numeric', month: 'long', day: 'numeric', 
+            hour: '2-digit', minute: '2-digit' 
+        })}</p>
+        <hr style="border: 1px solid #667eea; margin: 15px 0;">
+    `;
+    
+    // Insérer l'en-tête au début du contenu
+    const content = document.querySelector('.container-fluid') || document.body;
+    content.insertBefore(header, content.firstChild);
+    
+    // Lancer l'impression
+    window.print();
+    
+    // Restaurer l'affichage après impression
+    setTimeout(() => {
+        exportButtons.forEach(btn => btn.style.display = 'inline-block');
+        if (btnGroup) btnGroup.style.display = 'flex';
+        header.remove();
+    }, 1000);
 }
 </script>
+
+<!-- CSS pour l'impression PDF -->
+<style media="print">
+@page {
+    size: A4;
+    margin: 15mm;
+    @top-center {
+        content: "Rapport TogoRetrouvé";
+    }
+    @bottom-center {
+        content: "Page " counter(page) " sur " counter(pages);
+    }
+}
+
+.no-print, .export-btn, .btn-group {
+    display: none !important;
+}
+
+.chart-container {
+    page-break-inside: avoid;
+    margin-bottom: 20px !important;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+}
+
+.metric-card {
+    background: #f8f9fa !important;
+    color: #333 !important;
+    border: 1px solid #dee2e6 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+}
+
+.metric-value {
+    color: #333 !important;
+}
+
+.metric-label {
+    color: #666 !important;
+}
+
+.table-modern {
+    box-shadow: none !important;
+    page-break-inside: avoid;
+}
+
+.table-modern th {
+    background: #6c757d !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
+
+.table-modern td {
+    border-bottom: 1px solid #ddd !important;
+}
+
+.progress-bar-custom {
+    background: #007bff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
+
+body {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+    color: #333 !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #333 !important;
+    page-break-after: avoid;
+}
+
+.row {
+    page-break-inside: avoid;
+}
+
+.col-lg-6, .col-md-6 {
+    width: 48% !important;
+    float: left !important;
+    margin-right: 4% !important;
+}
+
+.col-lg-2, .col-md-4 {
+    width: 31% !important;
+    float: left !important;
+    margin-right: 3.5% !important;
+    margin-bottom: 10px !important;
+}
+
+.badge {
+    color: #333 !important;
+    background: #f8f9fa !important;
+    border: 1px solid #ddd !important;
+}
+</style>
 {% endblock %}

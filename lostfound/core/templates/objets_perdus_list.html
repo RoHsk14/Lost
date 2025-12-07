@@ -177,52 +177,73 @@
 
         {% if objets_perdus %}
         <!-- Grille d'objets perdus -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {% for signalement in objets_perdus %}
-            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 hover:border-red-200">
+            <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 hover:border-red-300 h-80 flex flex-col">
                 
-                <!-- Badge -->
-                <div class="absolute top-3 left-3 z-10">
-                    <span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                <!-- Image avec badge -->
+                <div class="h-48 relative bg-gray-100">
+                    <!-- Badge -->
+                    <span class="absolute top-3 left-3 z-10 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
                         PERDU
                     </span>
-                </div>
-                
-                <!-- Image -->
-                <div class="h-32 relative overflow-hidden">
-                    {% if signalement.photo %}
-                        <img src="{{ signalement.photo.url }}" alt="{{ signalement.objet.nom }}" 
-                             class="w-full h-full object-cover">
+                    
+                    {% if signalement.photo_principale %}
+                        <img src="{{ signalement.photo_principale.url }}" alt="{{ signalement.nom_objet }}" 
+                             class="w-full h-full object-cover"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <!-- Fallback si image ne charge pas -->
+                        <div class="w-full h-full bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center flex-col" style="display: none;">
+                            <i class="fas fa-image-slash text-red-400 text-2xl mb-2"></i>
+                            <span class="text-xs text-red-600 text-center px-2">Image<br>indisponible</span>
+                        </div>
                     {% else %}
-                        <div class="w-full h-full bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center">
-                            <i class="fas fa-search text-red-400 text-2xl"></i>
+                        <div class="w-full h-full bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center flex-col">
+                            <i class="fas fa-search text-red-400 text-2xl mb-2"></i>
+                            <span class="text-xs text-red-600 text-center">Pas d'image</span>
                         </div>
                     {% endif %}
                 </div>
                 
                 <!-- Contenu -->
-                <div class="p-4">
-                    <h3 class="font-semibold text-gray-800 text-sm mb-2 line-clamp-1">
-                        {{ signalement.objet.nom }}
-                    </h3>
-                    
-                    <div class="flex items-center text-xs text-gray-500 mb-2">
-                        <i class="fas fa-user text-red-500 mr-1"></i>
-                        <span class="truncate">{{ signalement.utilisateur.username|default:"Anonyme" }}</span>
+                <div class="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-sm mb-2 line-clamp-2 leading-tight">
+                            {{ signalement.nom_objet|default:"Objet perdu" }}
+                        </h3>
+                        
+                        <div class="flex items-center text-xs text-gray-500 mb-2">
+                            <i class="fas fa-user text-red-500 mr-2"></i>
+                            <span class="truncate">{{ signalement.declarant.get_full_name|default:signalement.declarant.username|default:"Anonyme" }}</span>
+                        </div>
+                        
+                        {% if signalement.lieu_precis %}
+                        <div class="flex items-center text-xs text-gray-500 mb-3">
+                            <i class="fas fa-map-marker-alt text-orange-500 mr-2"></i>
+                            <span class="truncate">{{ signalement.lieu_precis }}</span>
+                        </div>
+                        {% endif %}
                     </div>
                     
-                    {% if signalement.lieu %}
-                    <div class="flex items-center text-xs text-gray-500 mb-3">
-                        <i class="fas fa-map-marker-alt text-orange-500 mr-1"></i>
-                        <span class="truncate">{{ signalement.lieu }}</span>
-                    </div>
-                    {% endif %}
-                    
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 w-full">
                         <a href="{% url 'signalement_detail' signalement.id %}" 
-                           class="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-xs font-medium text-center transition-colors">
-                            Voir
+                           class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg text-xs font-medium text-center transition-colors flex items-center justify-center gap-1">
+                            <i class="fas fa-eye"></i>
+                            Détails
                         </a>
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'start_found_object' signalement.id %}"
+                           class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1">
+                            <i class="fas fa-search-plus"></i>
+                            Trouvé !
+                        </a>
+                        {% else %}
+                        <a href="{% url 'login' %}"
+                           class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1">
+                            <i class="fas fa-search-plus"></i>
+                            Trouvé !
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -297,8 +318,7 @@
 
     <script>
         function toggleMobileMenu() {
-            const menu = document.getElementById('mobileMenu');
-            menu.classList.toggle('hidden');
+            document.getElementById('mobile-menu').classList.toggle('hidden');
         }
     </script>
 

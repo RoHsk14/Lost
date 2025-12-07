@@ -280,6 +280,10 @@
             }
         }
     </style>
+    
+    {% block extra_head %}
+    <!-- Styles et scripts supplémentaires -->
+    {% endblock %}
 </head>
 <body>
     <!-- Sidebar -->
@@ -312,6 +316,18 @@
                 Valider Déclarations <span class="badge bg-warning ms-2">{{ pending_count|default:0 }}</span>
             </a>
 
+            <!-- Gestion des signalements -->
+            <a href="{% url 'togo_admin:signalements_list' %}" class="nav-link {% if 'signalement' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-exclamation-triangle"></i>
+                Gérer Signalements
+            </a>
+
+            <!-- Gestion des utilisateurs -->
+            <a href="{% url 'togo_admin:users' %}" class="nav-link {% if 'users' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                Utilisateurs
+            </a>
+
             <div class="nav-section">Statistiques</div>
             
             <!-- Rapports -->
@@ -319,16 +335,6 @@
                 <i class="fas fa-chart-line"></i>
                 Rapports
             </a>
-
-            {% if user.is_superuser %}
-            <div class="nav-section">Super Admin</div>
-            
-            <!-- Super Admin Dashboard -->
-            <a href="{% url 'superadmin_dashboard' %}" class="nav-link">
-                <i class="fas fa-crown"></i>
-                Super Admin
-            </a>
-            {% endif %}
         </nav>
 
         <!-- Sidebar footer -->

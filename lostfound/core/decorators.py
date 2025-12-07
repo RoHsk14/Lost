@@ -42,30 +42,15 @@ def agent_required(view_func):
 
 
 def admin_required(view_func):
-    """Décorateur pour vérifier que l'utilisateur est un admin ou plus"""
+    """Décorateur pour vérifier que l'utilisateur est un admin - maintenant le plus haut niveau"""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect('login')
         
-        # Vérifier si l'utilisateur a le rôle admin ou superadmin, OU est superuser Django
-        if not (request.user.is_admin_or_above() or request.user.is_superuser):
-            messages.error(request, "Accès non autorisé. Vous devez être administrateur ou super administrateur.")
-            return redirect('index')
-        
-        return view_func(request, *args, **kwargs)
-    return _wrapped_view
-
-
-def superadmin_required(view_func):
-    """Décorateur pour vérifier que l'utilisateur est un super admin"""
-    @wraps(view_func)
-    def _wrapped_view(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return redirect('login')
-        
-        if request.user.role != 'superadmin':
-            messages.error(request, "Accès non autorisé. Vous devez être super administrateur.")
+        # Vérifier si l'utilisateur a le rôle admin OU est superuser Django
+        if not (request.user.role == 'admin' or request.user.is_superuser):
+            messages.error(request, "Accès non autorisé. Vous devez être administrateur.")
             return redirect('index')
         
         return view_func(request, *args, **kwargs)
@@ -100,12 +85,8 @@ def ajax_login_required(view_func):
 
 def can_manage_declaration(user, declaration):
     """Vérifie si un utilisateur peut gérer une déclaration donnée"""
-    if user.role == 'superadmin':
-        return True
-    
     if user.role == 'admin':
-        # Admin peut gérer dans sa région
-        return declaration.region == user.region if user.region else True
+        return True  # Admin peut tout gérer maintenant
     
     if user.role == 'agent':
         # Agent peut gérer dans sa région/préfecture
@@ -119,14 +100,8 @@ def can_manage_declaration(user, declaration):
 
 def can_manage_user(manager, target_user):
     """Vérifie si un utilisateur peut gérer un autre utilisateur"""
-    if manager.role == 'superadmin':
-        return True
-    
     if manager.role == 'admin':
-        # Admin peut gérer les citoyens et agents de sa région
-        if target_user.role in ['citoyen', 'agent']:
-            return target_user.region == manager.region if manager.region else True
-        return False
+        return True  # Admin peut gérer tous les utilisateurs maintenant
     
     return False
 

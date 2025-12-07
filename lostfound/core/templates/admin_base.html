@@ -13,29 +13,25 @@
     <aside class="w-64 bg-white border-r border-gray-200 fixed h-full shadow-sm">
         <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-700 to-blue-600 text-white">
             <h1 class="text-2xl font-bold">TogoRetrouve</h1>
-            <p class="text-sm mt-1 font-medium">
-                {% if request.user.role == 'superadmin' %}Superadmin{% else %}Administrateur{% endif %}
-            </p>
+            <p class="text-sm mt-1 font-medium">Administrateur</p>
         </div>
 
         <nav class="mt-6">
             <ul class="space-y-1">
-
-                {% if request.user.role == 'superadmin' %}
                 <li>
-                    <a href="{% url 'superadmin_dashboard' %}"
+                    <a href="{% url 'togo_admin:dashboard' %}"
                        class="flex items-center px-6 py-3 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150">
                         🏠 <span class="ml-3 font-medium">Dashboard</span>
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'superadmin_gestion_admins' %}"
+                    <a href="{% url 'togo_admin:users' %}"
                        class="flex items-center px-6 py-3 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150">
-                        👥 <span class="ml-3 font-medium">Gestion Admins</span>
+                        👥 <span class="ml-3 font-medium">Utilisateurs</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#"
+                    <a href="{% url 'togo_admin:rapports' %}"
                        class="flex items-center px-6 py-3 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150">
                         📊 <span class="ml-3 font-medium">Rapports</span>
                     </a>
@@ -43,37 +39,9 @@
                 <li>
                     <a href="{% url 'signalements_list' %}"
                        class="flex items-center px-6 py-3 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150">
-                        ✅ <span class="ml-3 font-medium">Validation Signalements</span>
+                        ✅ <span class="ml-3 font-medium">Signalements</span>
                     </a>
                 </li>
-                {% endif %}
-
-                {% if request.user.role == 'admin' %}
-                <li>
-                    <a href="{% url 'admin_dashboard' %}"
-                       class="flex items-center px-6 py-3 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150">
-                        🏠 <span class="ml-3 font-medium">Dashboard</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'admin_signalements' %}"
-                       class="flex items-center px-6 py-3 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150">
-                        📢 <span class="ml-3 font-medium">Signalements</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#"
-                       class="flex items-center px-6 py-3 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150">
-                        📦 <span class="ml-3 font-medium">Objets retrouvés</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#"
-                       class="flex items-center px-6 py-3 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150">
-                        💬 <span class="ml-3 font-medium">Messagerie</span>
-                    </a>
-                </li>
-                {% endif %}
             </ul>
         </nav>
 

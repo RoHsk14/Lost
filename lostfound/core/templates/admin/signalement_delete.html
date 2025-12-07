@@ -1,0 +1,438 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Supprimer le Signalement{% endblock %}
+
+{% block extra_head %}
+<style>
+    .delete-signalement-page {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+
+    .page-header {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 24px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        color: white;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .confirmation-card {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 0;
+        margin: 0 auto;
+        max-width: 600px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+        border: none;
+    }
+
+    .card-body {
+        padding: 2rem;
+    }
+
+    .warning-icon {
+        font-size: 4rem;
+        color: #ef4444;
+        margin-bottom: 1rem;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .signalement-info {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        border-left: 4px solid #ef4444;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #fee2e2;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #7f1d1d;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-value {
+        color: #991b1b;
+        font-weight: 500;
+    }
+
+    .btn-modern {
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        min-width: 150px;
+        justify-content: center;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(107, 114, 128, 0.4);
+    }
+
+    .actions-section {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 2rem 0;
+        border-top: 1px solid #fee2e2;
+        margin-top: 2rem;
+    }
+
+    .consequences-list {
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+    }
+
+    .consequences-list h6 {
+        color: #ea580c;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .consequences-list ul {
+        margin: 0;
+        padding-left: 1.5rem;
+        color: #9a3412;
+    }
+
+    .consequences-list li {
+        margin-bottom: 0.5rem;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-perdu {
+        background: linear-gradient(135deg, #fca5a5, #ef4444);
+        color: white;
+    }
+
+    .status-trouve {
+        background: linear-gradient(135deg, #86efac, #22c55e);
+        color: white;
+    }
+
+    .status-retourne {
+        background: linear-gradient(135deg, #a78bfa, #7c3aed);
+        color: white;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: #f9fafb;
+        padding: 1rem;
+        border-radius: 8px;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-signalement-page">
+    <div class="container-fluid px-4">
+        <!-- En-tête -->
+        <div class="page-header">
+            <div class="warning-icon">⚠️</div>
+            <h1><i class="fas fa-trash me-3"></i>Confirmer la Suppression</h1>
+            <p class="mb-0">Vous êtes sur le point de supprimer définitivement ce signalement</p>
+        </div>
+
+        <!-- Carte de confirmation -->
+        <div class="confirmation-card">
+            <div class="card-header">
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ATTENTION : Action Irréversible
+                </h4>
+            </div>
+            
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h5 class="text-danger fw-bold">Êtes-vous sûr de vouloir supprimer ce signalement ?</h5>
+                    <p class="text-muted">Cette action ne peut pas être annulée.</p>
+                </div>
+
+                <!-- Informations du signalement -->
+                <div class="signalement-info">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-hashtag"></i>
+                            ID du Signalement
+                        </div>
+                        <div class="info-value">#{{ signalement.id }}</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-box"></i>
+                            Objet
+                        </div>
+                        <div class="info-value">{{ objet_nom }}</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-tag"></i>
+                            Statut
+                        </div>
+                        <div class="info-value">
+                            <span class="status-badge status-{{ signalement.statut }}">
+                                {% if signalement.statut == 'perdu' %}🔍 Perdu
+                                {% elif signalement.statut == 'trouve' %}✅ Trouvé
+                                {% elif signalement.statut == 'retourne' %}🏆 Retourné
+                                {% else %}{{ signalement.get_statut_display }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Lieu
+                        </div>
+                        <div class="info-value">{{ signalement.lieu|default:"Non spécifié" }}</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-calendar"></i>
+                            Date de Signalement
+                        </div>
+                        <div class="info-value">{{ signalement.date_signalement|date:"d F Y à H:i" }}</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-user"></i>
+                            Déclarant
+                        </div>
+                        <div class="info-value">
+                            <div class="user-info">
+                                <div class="user-avatar">
+                                    {{ signalement.utilisateur.first_name|first|default:signalement.utilisateur.username|first|upper }}
+                                </div>
+                                <div>
+                                    <strong>{{ signalement.utilisateur.get_full_name|default:signalement.utilisateur.username }}</strong>
+                                    <br><small class="text-muted">{{ signalement.utilisateur.email }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conséquences de la suppression -->
+                <div class="consequences-list">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Conséquences de cette suppression :</h6>
+                    <ul>
+                        <li>Le signalement sera <strong>définitivement supprimé</strong> de la base de données</li>
+                        <li>L'utilisateur ne pourra plus consulter son signalement</li>
+                        <li>Tous les commentaires associés seront également supprimés</li>
+                        <li>Les photos attachées seront supprimées du serveur</li>
+                        <li>Cette action sera enregistrée dans les logs d'audit</li>
+                        <li><strong>Aucune récupération ne sera possible</strong></li>
+                    </ul>
+                </div>
+
+                <!-- Actions -->
+                <div class="actions-section">
+                    <a href="{% url 'togo_admin:signalement_detail' signalement.id %}" class="btn-modern btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Annuler
+                    </a>
+                    
+                    <form method="post" style="display: inline-block;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-modern btn-danger" 
+                                onclick="return confirmDeletion()">
+                            <i class="fas fa-trash"></i>
+                            Confirmer la Suppression
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Note légale -->
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Cette action sera loggée conformément à la politique de sécurité
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmDeletion() {
+        event.preventDefault();
+        
+        Swal.fire({
+            title: 'Dernière confirmation',
+            html: `
+                <div style="text-align: center;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🗑️</div>
+                    <p><strong>Vous êtes sur le point de supprimer :</strong></p>
+                    <p style="color: #ef4444; font-weight: 600;">${'{{ objet_nom }}'}</p>
+                    <p style="color: #6b7280;">Cette action est <strong>irréversible</strong>.</p>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '<i class="fas fa-trash"></i> Oui, supprimer définitivement',
+            cancelButtonText: '<i class="fas fa-times"></i> Annuler',
+            background: '#fff',
+            backdrop: 'rgba(0,0,0,0.6)',
+            customClass: {
+                popup: 'swal-modern',
+                confirmButton: 'btn-modern btn-danger',
+                cancelButton: 'btn-modern btn-secondary'
+            },
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Soumission du formulaire avec animation
+                Swal.fire({
+                    title: 'Suppression en cours...',
+                    html: '<div class="spinner-border text-danger" role="status"></div>',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+                
+                setTimeout(() => {
+                    event.target.closest('form').submit();
+                }, 2000);
+            }
+        });
+        
+        return false;
+    }
+
+    // Animation d'entrée
+    document.addEventListener('DOMContentLoaded', function() {
+        const confirmationCard = document.querySelector('.confirmation-card');
+        if (confirmationCard) {
+            confirmationCard.style.opacity = '0';
+            confirmationCard.style.transform = 'scale(0.9) translateY(20px)';
+            
+            setTimeout(() => {
+                confirmationCard.style.transition = 'all 0.6s ease';
+                confirmationCard.style.opacity = '1';
+                confirmationCard.style.transform = 'scale(1) translateY(0)';
+            }, 200);
+        }
+    });
+</script>
+
+<style>
+    .swal-modern {
+        border-radius: 16px !important;
+    }
+    
+    .swal2-popup {
+        padding: 2rem !important;
+    }
+    
+    .btn-modern {
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        padding: 0.75rem 1.5rem !important;
+        border: none !important;
+    }
+</style>
+{% endblock %}

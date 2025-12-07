@@ -1,0 +1,522 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Signalements{% endblock %}
+
+{% block extra_head %}
+<style>
+    .signalements-page {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+
+    .page-header {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 24px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        color: white;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-header h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 900;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .filters-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .signalements-table-card {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1.5rem;
+    }
+
+    .modern-table th {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        border: none;
+        font-size: 0.9rem;
+    }
+
+    .modern-table th:first-child {
+        border-radius: 12px 0 0 0;
+    }
+
+    .modern-table th:last-child {
+        border-radius: 0 12px 0 0;
+    }
+
+    .modern-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: middle;
+    }
+
+    .modern-table tr:hover {
+        background-color: #f8fafc;
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-perdu {
+        background: linear-gradient(135deg, #fca5a5, #ef4444);
+        color: white;
+    }
+
+    .status-trouve {
+        background: linear-gradient(135deg, #86efac, #22c55e);
+        color: white;
+    }
+
+    .status-retourne {
+        background: linear-gradient(135deg, #a78bfa, #7c3aed);
+        color: white;
+    }
+
+    .btn-modern {
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        color: white;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+
+    .search-container {
+        position: relative;
+        flex: 1;
+        max-width: 400px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 16px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .search-input:focus {
+        border-color: #667eea;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 1.2rem;
+    }
+
+    .filters-row {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .filter-select {
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        background: white;
+        font-size: 0.9rem;
+        min-width: 150px;
+    }
+
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .pagination {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .pagination .page-link {
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        background: white;
+        border: 2px solid #e5e7eb;
+        color: #6b7280;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .pagination .page-link:hover {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-color: transparent;
+    }
+
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-color: transparent;
+    }
+
+    .object-image {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 2px solid #e5e7eb;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="signalements-page">
+    <div class="container-fluid px-4">
+        <!-- En-tête -->
+        <div class="page-header">
+            <h1><i class="fas fa-exclamation-triangle me-3"></i>Gestion des Signalements</h1>
+            <p class="mb-0">Visualisez, modifiez et gérez tous les signalements des utilisateurs</p>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.total_count }}</div>
+                <div class="stat-label">Total Signalements</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.perdu_count }}</div>
+                <div class="stat-label">Objets Perdus</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.trouve_count }}</div>
+                <div class="stat-label">Objets Trouvés</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.retourne_count }}</div>
+                <div class="stat-label">Retournés</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.today_count }}</div>
+                <div class="stat-label">Aujourd'hui</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.unique_users }}</div>
+                <div class="stat-label">Utilisateurs</div>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="filters-card">
+            <form method="get" class="filters-row">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" name="search" class="search-input" 
+                           placeholder="Rechercher par objet, lieu, utilisateur..." 
+                           value="{{ current_search }}">
+                </div>
+                
+                <select name="status" class="filter-select">
+                    <option value="">Tous les statuts</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if current_status_filter == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+                
+                <button type="submit" class="btn-modern btn-primary">
+                    <i class="fas fa-filter"></i>
+                    Filtrer
+                </button>
+                
+                <a href="{% url 'togo_admin:signalements_list' %}" class="btn-modern btn-secondary">
+                    <i class="fas fa-times"></i>
+                    Effacer
+                </a>
+            </form>
+        </div>
+
+        <!-- Table des signalements -->
+        <div class="signalements-table-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-list me-2"></i>
+                    Liste des Signalements ({{ signalements|length }} résultats)
+                </h4>
+            </div>
+
+            {% if signalements %}
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-image me-1"></i> Photo</th>
+                        <th><i class="fas fa-box me-1"></i> Objet</th>
+                        <th><i class="fas fa-user me-1"></i> Utilisateur</th>
+                        <th><i class="fas fa-map-marker-alt me-1"></i> Lieu</th>
+                        <th><i class="fas fa-tag me-1"></i> Statut</th>
+                        <th><i class="fas fa-calendar me-1"></i> Date</th>
+                        <th><i class="fas fa-cogs me-1"></i> Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for signalement in signalements %}
+                    <tr>
+                        <td>
+                            {% if signalement.photo %}
+                                <img src="{{ signalement.photo.url }}" alt="Photo" class="object-image">
+                            {% else %}
+                                <div class="object-image d-flex align-items-center justify-content-center bg-light">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>
+                                <strong>{{ signalement.objet.nom|default:"Sans nom" }}</strong>
+                                {% if signalement.objet.description %}
+                                <br><small class="text-muted">{{ signalement.objet.description|truncatechars:50 }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="user-info">
+                                <div class="user-avatar">
+                                    {{ signalement.utilisateur.first_name|first|default:signalement.utilisateur.username|first|upper }}
+                                </div>
+                                <div>
+                                    <strong>{{ signalement.utilisateur.get_full_name|default:signalement.utilisateur.username }}</strong>
+                                    <br><small class="text-muted">{{ signalement.utilisateur.email }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <strong>{{ signalement.lieu|default:"Non spécifié" }}</strong>
+                                {% if signalement.region %}
+                                <br><small class="text-muted">{{ signalement.region.nom }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ signalement.statut }}">
+                                {% if signalement.statut == 'perdu' %}🔍 Perdu
+                                {% elif signalement.statut == 'trouve' %}✅ Trouvé
+                                {% elif signalement.statut == 'retourne' %}🏆 Retourné
+                                {% else %}{{ signalement.get_statut_display }}
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <strong>{{ signalement.date_signalement|date:"d/m/Y" }}</strong>
+                            <br><small class="text-muted">{{ signalement.date_signalement|date:"H:i" }}</small>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="{% url 'togo_admin:signalement_detail' signalement.id %}" 
+                                   class="btn-modern btn-primary btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'togo_admin:signalement_edit' signalement.id %}" 
+                                   class="btn-modern btn-success btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if can_delete %}
+                                <a href="{% url 'togo_admin:signalement_delete' signalement.id %}" 
+                                   class="btn-modern btn-danger btn-sm"
+                                   onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce signalement ?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            {% if signalements.has_other_pages %}
+            <div class="pagination-container">
+                <nav>
+                    <ul class="pagination">
+                        {% if signalements.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if current_search %}&search={{ current_search }}{% endif %}{% if current_status_filter %}&status={{ current_status_filter }}{% endif %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ signalements.previous_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_status_filter %}&status={{ current_status_filter }}{% endif %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for num in signalements.paginator.page_range %}
+                        {% if signalements.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > signalements.number|add:'-3' and num < signalements.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_status_filter %}&status={{ current_status_filter }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if signalements.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ signalements.next_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_status_filter %}&status={{ current_status_filter }}{% endif %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ signalements.paginator.num_pages }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_status_filter %}&status={{ current_status_filter }}{% endif %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-5">
+                <div class="text-muted mb-3" style="font-size: 4rem;">📭</div>
+                <h5>Aucun signalement trouvé</h5>
+                <p class="text-muted">Il n'y a pas de signalement correspondant à vos critères de recherche.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -5,32 +5,81 @@ __pycache__/
 *.pyd
 .Python
 *.so
+*.egg
+*.egg-info/
+dist/
+build/
 .env
+.venv
+venv/
+ENV/
 
 # Django
 *.log
 local_settings.py
+db.sqlite3
 db.sqlite3-journal
+/static/
+/staticfiles/
 
-# Media files (optional, remove this line if you want to include media files)
-media/
+# Media files uploaded by users
+media/chat_files/
+media/justificatifs/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
 # OS
 .DS_Store
 Thumbs.db
+*.DS_Store
 
 # Temporary files
 *.tmp
 *.bak
 *~
+*.backup
 
-# Test and development files
+# Test, debug and migration scripts
 test_*.py
 *_test.py
 debug_*.py
+*_backup.py
+check_*.py
+diagnose_*.py
+verify_*.py
+fix_*.py
+clean_*.py
+migrate_*.py
+update_*.py
+search_*.py
+analyse*.py
+assign_*.py
+completer_*.py
+configure_*.py
+create_admin_*.py
+create_svg_*.py
+create_test_*.py
+creer_*.py
+nettoyer_*.py
+reset_*.py
+set_*.py
+aligner_*.py
+get_agent_*.py
+
+# Documentation
+*_README.md
+GUIDE_*.md
+INTERFACE_*.md
+RESOLUTION_*.md
+MESSAGERIE_*.md
+documentation_*.py
+
+# Backup templates
+*_backup.html
+*_test.html

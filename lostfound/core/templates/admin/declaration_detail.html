@@ -1,504 +1,438 @@
-{% extends 'admin/base.html' %}
-{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Déclaration {{ declaration.numero_declaration }} - TogoRetrouve</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}Déclaration {{ declaration.numero_declaration }}{% endblock %}
-{% block admin_title %}Déclaration {{ declaration.numero_declaration }}{% endblock %}
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            color: #334155;
+        }
 
-{% block extra_head %}
-<style>
-/* Styles simples et modernes pour la déclaration */
-.declaration-page {
-    padding: 0;
-    margin: 0;
-}
+        .popup-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
 
-.declaration-header {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: white;
-    padding: 2rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
+        .declaration-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
 
-.declaration-title {
-    font-size: 2rem;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-}
+        .declaration-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
 
-.declaration-meta {
-    font-size: 1rem;
-    opacity: 0.9;
-    margin-bottom: 1rem;
-}
+        .declaration-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(30px, -30px);
+        }
 
-.status-badge {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-}
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
 
-.status-cree { background: #f59e0b; color: white; }
-.status-valide { background: #10b981; color: white; }
-.status-publie { background: #3b82f6; color: white; }
-.status-restitue { background: #06b6d4; color: white; }
-.status-rejete { background: #ef4444; color: white; }
+        .declaration-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
 
-.progress-bar-container {
-    background: rgba(255, 255, 255, 0.2);
-    height: 6px;
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 1rem;
-}
+        .declaration-meta {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-.progress-bar {
-    height: 100%;
-    background: white;
-    border-radius: 3px;
-    transition: width 0.3s ease;
-}
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-.info-card {
-    background: white;
-    border-radius: 12px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e5e7eb;
-}
+        .status-cree { background: rgba(251, 191, 36, 0.2); color: #d97706; }
+        .status-valide { background: rgba(34, 197, 94, 0.2); color: #16a34a; }
+        .status-publie { background: rgba(59, 130, 246, 0.2); color: #2563eb; }
+        .status-restitue { background: rgba(168, 85, 247, 0.2); color: #9333ea; }
 
-.section-title {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #1f2937;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
+        .declaration-body {
+            padding: 2rem;
+        }
 
-.field-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin-bottom: 2rem;
-}
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
 
-.field-group {
-    margin-bottom: 1.5rem;
-}
+        .info-section {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
 
-.field-label {
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 0.5rem;
-    display: block;
-}
+        .info-section h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-.field-value {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 1rem;
-    font-size: 1rem;
-    color: #1f2937;
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-}
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
 
-.field-value.large {
-    min-height: auto;
-    align-items: flex-start;
-    line-height: 1.6;
-}
+        .info-item:last-child {
+            border-bottom: none;
+        }
 
-.image-container {
-    text-align: center;
-    margin: 1rem 0;
-}
+        .info-label {
+            font-weight: 500;
+            color: #64748b;
+        }
 
-.declaration-image {
-    max-width: 100%;
-    max-height: 300px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-    transition: transform 0.2s;
-}
+        .info-value {
+            font-weight: 600;
+            color: #1e293b;
+            text-align: right;
+        }
 
-.declaration-image:hover {
-    transform: scale(1.02);
-}
+        .description-section {
+            background: white;
+            border: 2px solid #f1f5f9;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
 
-.actions-card {
-    background: #f8fafc;
-    border: 2px dashed #d1d5db;
-    border-radius: 12px;
-    padding: 2rem;
-    text-align: center;
-    margin: 2rem 0;
-}
+        .description-section h3 {
+            color: #1e293b;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-.action-buttons {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin-top: 1.5rem;
-}
+        .description-text {
+            color: #475569;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
 
-.btn-action {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
+        .actions-section {
+            background: #f8fafc;
+            padding: 2rem;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
 
-.btn-validate {
-    background: #10b981;
-    color: white;
-}
+        .btn-modern {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
 
-.btn-reject {
-    background: #ef4444;
-    color: white;
-}
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.3);
+        }
 
-.btn-publish {
-    background: #3b82f6;
-    color: white;
-}
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px 0 rgba(59, 130, 246, 0.4);
+            color: white;
+        }
 
-.btn-back {
-    background: #6b7280;
-    color: white;
-}
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.3);
+        }
 
-.btn-action:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    color: white;
-}
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px 0 rgba(16, 185, 129, 0.4);
+            color: white;
+        }
 
-.comment-box {
-    width: 100%;
-    min-height: 100px;
-    padding: 1rem;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-family: inherit;
-    font-size: 1rem;
-    resize: vertical;
-}
+        .btn-outline {
+            background: transparent;
+            color: #64748b;
+            border: 2px solid #e2e8f0;
+        }
 
-.comment-box:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
+        .btn-outline:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #475569;
+        }
 
-.status-display {
-    text-align: center;
-    padding: 2rem;
-    border-radius: 12px;
-    margin: 1rem 0;
-}
+        .close-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            z-index: 1000;
+            transition: all 0.2s ease;
+        }
 
-.status-display.success {
-    background: #ecfdf5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
-}
+        .close-btn:hover {
+            background: rgba(0, 0, 0, 0.7);
+            transform: scale(1.1);
+        }
 
-.status-display.info {
-    background: #eff6ff;
-    color: #1e40af;
-    border: 1px solid #93c5fd;
-}
+        @media (max-width: 768px) {
+            .popup-container {
+                margin: 1rem;
+                padding: 0 10px;
+            }
 
-.status-display.danger {
-    background: #fef2f2;
-    color: #991b1b;
-    border: 1px solid #fca5a5;
-}
+            .declaration-header {
+                padding: 1.5rem;
+            }
 
-.status-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
+            .declaration-title {
+                font-size: 1.5rem;
+            }
 
-@media (max-width: 768px) {
-    .field-row {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-    }
-    
-    .declaration-header {
-        padding: 1.5rem;
-    }
-}
-</style>
-{% endblock %}
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
 
-{% block content %}
-<div class="declaration-page">
-    <!-- En-tête de la déclaration -->
-    <div class="declaration-header">
-        <div style="display: flex; justify-content: space-between; align-items: start;">
-            <div>
-                <h1 class="declaration-title">{{ declaration.numero_declaration }}</h1>
-                <p class="declaration-meta">
-                    <i class="fas fa-{{ declaration.type_declaration == 'perdu' and 'search' or 'gift' }}"></i>
-                    {% if declaration.type_declaration == 'perdu' %}Objet déclaré perdu{% else %}Objet trouvé{% endif %}
-                    • {{ declaration.date_declaration|date:"d/m/Y à H:i" }}
-                </p>
-            </div>
-            <span class="status-badge status-{{ declaration.statut }}">
-                {{ declaration.get_statut_display }}
-            </span>
-        </div>
-        
-        <!-- Barre de progression -->
-        <div class="progress-bar-container">
-            {% if declaration.statut == 'cree' %}
-                <div class="progress-bar" style="width: 25%;"></div>
-            {% elif declaration.statut == 'valide' %}
-                <div class="progress-bar" style="width: 50%;"></div>
-            {% elif declaration.statut == 'publie' %}
-                <div class="progress-bar" style="width: 75%;"></div>
-            {% elif declaration.statut == 'restitue' %}
-                <div class="progress-bar" style="width: 100%;"></div>
-            {% elif declaration.statut == 'rejete' %}
-                <div class="progress-bar" style="width: 25%; background: #ef4444;"></div>
-            {% endif %}
-        </div>
-    </div>
+            .header-content {
+                flex-direction: column;
+                align-items: start;
+            }
 
-    <!-- Informations sur l'objet -->
-    <div class="info-card">
-        <h2 class="section-title">
-            <i class="fas fa-box"></i>
-            Informations sur l'objet
-        </h2>
-        
-        <div class="field-row">
-            <div class="field-group">
-                <label class="field-label">Nom de l'objet</label>
-                <div class="field-value">
-                    <strong>{{ declaration.nom_objet }}</strong>
+            .actions-section {
+                padding: 1.5rem;
+                flex-direction: column;
+            }
+
+            .btn-modern {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Bouton de fermeture -->
+    <button class="close-btn" onclick="window.close()">
+        <i class="fas fa-times"></i>
+    </button>
+
+    <div class="popup-container">
+        <div class="declaration-card">
+            <!-- Header -->
+            <div class="declaration-header">
+                <div class="header-content">
+                    <div>
+                        <h1 class="declaration-title">{{ declaration.numero_declaration }}</h1>
+                        <p class="declaration-meta">
+                            {% if declaration.type_declaration == 'perdu' %}
+                                <i class="fas fa-search"></i>
+                            {% else %}
+                                <i class="fas fa-gift"></i>
+                            {% endif %}
+                            {% if declaration.type_declaration == 'perdu' %}Objet déclaré perdu{% else %}Objet trouvé{% endif %}
+                            • {{ declaration.date_declaration|date:"d/m/Y à H:i" }}
+                        </p>
+                    </div>
+                    <span class="status-badge status-{{ declaration.statut }}">
+                        {{ declaration.get_statut_display }}
+                    </span>
                 </div>
             </div>
-            
-            <div class="field-group">
-                <label class="field-label">Type de déclaration</label>
-                <div class="field-value">
-                    {% if declaration.type_declaration == 'perdu' %}
-                        🔍 {{ declaration.get_type_declaration_display }}
-                    {% else %}
-                        🎁 {{ declaration.get_type_declaration_display }}
-                    {% endif %}
+
+            <!-- Corps de la déclaration -->
+            <div class="declaration-body">
+                <!-- Informations principales -->
+                <div class="info-grid">
+                    <!-- Informations sur l'objet -->
+                    <div class="info-section">
+                        <h3>
+                            <i class="fas fa-box text-primary"></i>
+                            Informations objet
+                        </h3>
+                        <div class="info-item">
+                            <span class="info-label">Nom de l'objet</span>
+                            <span class="info-value">{{ declaration.nom_objet }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Catégorie</span>
+                            <span class="info-value">{{ declaration.categorie.nom|default:"Non spécifiée" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Type de déclaration</span>
+                            <span class="info-value">{{ declaration.get_type_declaration_display }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Date incident</span>
+                            <span class="info-value">{{ declaration.date_incident|date:"d/m/Y" }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Localisation -->
+                    <div class="info-section">
+                        <h3>
+                            <i class="fas fa-map-marker-alt text-danger"></i>
+                            Localisation
+                        </h3>
+                        <div class="info-item">
+                            <span class="info-label">Région</span>
+                            <span class="info-value">{{ declaration.region.nom|default:"Non spécifiée" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Préfecture</span>
+                            <span class="info-value">{{ declaration.prefecture.nom|default:"Non spécifiée" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Lieu précis</span>
+                            <span class="info-value">{{ declaration.lieu_precis|default:"Non spécifié" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Structure locale</span>
+                            <span class="info-value">{{ declaration.structure_locale.nom|default:"Non spécifiée" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="description-section">
+                    <h3>
+                        <i class="fas fa-file-alt text-info"></i>
+                        Description détaillée
+                    </h3>
+                    <div class="description-text">
+                        {{ declaration.description|default:"Aucune description fournie." }}
+                    </div>
+                </div>
+
+                <!-- Informations déclarant -->
+                <div class="info-section">
+                    <h3>
+                        <i class="fas fa-user text-success"></i>
+                        Informations déclarant
+                    </h3>
+                    <div class="info-item">
+                        <span class="info-label">Nom complet</span>
+                        <span class="info-value">{{ declaration.declarant.get_full_name|default:declaration.declarant.username }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Email</span>
+                        <span class="info-value">{{ declaration.declarant.email }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Téléphone</span>
+                        <span class="info-value">{{ declaration.declarant.telephone|default:"Non renseigné" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Date déclaration</span>
+                        <span class="info-value">{{ declaration.date_declaration|date:"d/m/Y à H:i" }}</span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        {% if declaration.categorie %}
-        <div class="field-row">
-            <div class="field-group">
-                <label class="field-label">Catégorie</label>
-                <div class="field-value">{{ declaration.categorie.nom }}</div>
-            </div>
-            
-            <div class="field-group">
-                <label class="field-label">Date d'incident</label>
-                <div class="field-value">{{ declaration.date_incident|date:"d/m/Y" }}</div>
-            </div>
-        </div>
-        {% endif %}
-
-        {% if declaration.description %}
-        <div class="field-group">
-            <label class="field-label">Description</label>
-            <div class="field-value large">{{ declaration.description|linebreaks }}</div>
-        </div>
-        {% endif %}
-
-        {% if declaration.photo_principale %}
-        <div class="field-group">
-            <label class="field-label">Photo de l'objet</label>
-            <div class="image-container">
-                <img src="{{ declaration.photo_principale.url }}" 
-                     class="declaration-image" 
-                     alt="Photo de l'objet"
-                     onclick="window.open(this.src, '_blank')">
-                <p style="margin-top: 0.5rem; color: #6b7280; font-size: 0.875rem;">
-                    <i class="fas fa-expand"></i> Cliquer pour agrandir
-                </p>
-            </div>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Lieu et circonstances -->
-    <div class="info-card">
-        <h2 class="section-title">
-            <i class="fas fa-map-marker-alt"></i>
-            Lieu et circonstances
-        </h2>
-        
-        <div class="field-row">
-            <div class="field-group">
-                <label class="field-label">Lieu précis</label>
-                <div class="field-value">{{ declaration.lieu_precis }}</div>
-            </div>
-            
-            {% if declaration.prefecture %}
-            <div class="field-group">
-                <label class="field-label">Préfecture</label>
-                <div class="field-value">{{ declaration.prefecture.nom }}</div>
-            </div>
-            {% endif %}
-        </div>
-
-        {% if declaration.region %}
-        <div class="field-group">
-            <label class="field-label">Région</label>
-            <div class="field-value">{{ declaration.region.nom }}</div>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Informations du déclarant -->
-    <div class="info-card">
-        <h2 class="section-title">
-            <i class="fas fa-user"></i>
-            Informations du déclarant
-        </h2>
-        
-        <div class="field-row">
-            <div class="field-group">
-                <label class="field-label">Nom complet</label>
-                <div class="field-value">{{ declaration.declarant.get_full_name|default:declaration.declarant.username }}</div>
-            </div>
-            
-            <div class="field-group">
-                <label class="field-label">Email</label>
-                <div class="field-value">
-                    <a href="mailto:{{ declaration.declarant.email }}" style="color: #3b82f6;">
-                        {{ declaration.declarant.email }}
+            <!-- Actions -->
+            <div class="actions-section">
+                {% if declaration.statut == 'cree' %}
+                    <a href="{% url 'togo_admin:validate_declaration' declaration.id %}" class="btn-modern btn-success">
+                        <i class="fas fa-check"></i>
+                        Valider la déclaration
                     </a>
-                </div>
-            </div>
-        </div>
-
-        {% if declaration.declarant.telephone %}
-        <div class="field-row">
-            <div class="field-group">
-                <label class="field-label">Téléphone</label>
-                <div class="field-value">
-                    <a href="tel:{{ declaration.declarant.telephone }}" style="color: #10b981;">
-                        {{ declaration.declarant.telephone }}
+                    <a href="{% url 'togo_admin:edit_declaration' declaration.id %}" class="btn-modern btn-primary">
+                        <i class="fas fa-edit"></i>
+                        Modifier
                     </a>
-                </div>
-            </div>
-            
-            <div class="field-group">
-                <label class="field-label">Membre depuis</label>
-                <div class="field-value">{{ declaration.declarant.date_joined|date:"d/m/Y" }}</div>
+                {% endif %}
+                
+                <a href="{% url 'togo_admin:pending_declarations' %}" class="btn-modern btn-outline">
+                    <i class="fas fa-list"></i>
+                    Retour à la liste
+                </a>
+                
+                <button class="btn-modern btn-outline" onclick="window.print()">
+                    <i class="fas fa-print"></i>
+                    Imprimer
+                </button>
             </div>
         </div>
-        {% endif %}
-
-        {% if declaration.commentaire_declarant %}
-        <div class="field-group">
-            <label class="field-label">Commentaire du déclarant</label>
-            <div class="field-value large">{{ declaration.commentaire_declarant|linebreaks }}</div>
-        </div>
-        {% endif %}
     </div>
 
-    <!-- Actions de validation -->
-    {% if declaration.statut == 'cree' %}
-    <div class="actions-card">
-        <h3 style="margin-bottom: 1rem; color: #1f2937;">Actions de validation</h3>
-        <form method="post">
-            {% csrf_token %}
-            <textarea name="commentaire_agent" class="comment-box" 
-                      placeholder="Commentaire de validation (optionnel)..."></textarea>
-            
-            <div class="action-buttons">
-                <button type="submit" name="action" value="valider" class="btn-action btn-validate">
-                    <i class="fas fa-check"></i> Valider
-                </button>
-                <button type="submit" name="action" value="rejeter" class="btn-action btn-reject"
-                        onclick="return confirm('Confirmer le rejet ?')">
-                    <i class="fas fa-times"></i> Rejeter
-                </button>
-            </div>
-        </form>
-    </div>
-
-    {% elif declaration.statut == 'valide' %}
-    <div class="actions-card">
-        <h3 style="margin-bottom: 1rem; color: #1f2937;">Publication</h3>
-        <form method="post">
-            {% csrf_token %}
-            <textarea name="commentaire_agent" class="comment-box" 
-                      placeholder="Commentaire de publication (optionnel)..."></textarea>
-            
-            <div class="action-buttons">
-                <button type="submit" name="action" value="publier" class="btn-action btn-publish">
-                    <i class="fas fa-globe"></i> Publier maintenant
-                </button>
-            </div>
-        </form>
-    </div>
-
-    {% elif declaration.statut == 'publie' %}
-    <div class="status-display success">
-        <div class="status-icon">✅</div>
-        <h3>Déclaration publiée</h3>
-        {% if declaration.date_publication %}
-        <p>Publiée le {{ declaration.date_publication|date:"d/m/Y à H:i" }}</p>
-        {% endif %}
-    </div>
-
-    {% elif declaration.statut == 'restitue' %}
-    <div class="status-display info">
-        <div class="status-icon">🤝</div>
-        <h3>Objet restitué</h3>
-        {% if declaration.date_restitution %}
-        <p>Restitué le {{ declaration.date_restitution|date:"d/m/Y à H:i" }}</p>
-        {% endif %}
-    </div>
-
-    {% elif declaration.statut == 'rejete' %}
-    <div class="status-display danger">
-        <div class="status-icon">❌</div>
-        <h3>Déclaration rejetée</h3>
-        <p>Cette déclaration a été rejetée par un agent</p>
-    </div>
-    {% endif %}
-
-    <!-- Navigation -->
-    <div style="margin-top: 2rem; text-align: center;">
-        <a href="{% url 'togo_admin:declarations_list' %}" class="btn-action btn-back">
-            <i class="fas fa-arrow-left"></i> Retour à la liste
-        </a>
-    </div>
-</div>
-{% endblock %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TogoRetrouvé - Espace Citoyen{% endblock %}</title>
+    
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .hover-scale {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-scale:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .chat-bubble {
+            max-width: 70%;
+        }
+        
+        .notification-badge {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-slide-up {
+            animation: slideInUp 0.6s ease-out;
+        }
+        
+        .dark .glass-card {
+            background: rgba(31, 41, 55, 0.8);
+            border: 1px solid rgba(107, 114, 128, 0.3);
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status-timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e5e7eb;
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-left: 40px;
+        }
+        
+        .timeline-dot {
+            position: absolute;
+            left: 8px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 4px;
+        }
+        
+        .timeline-dot.completed {
+            background: #10b981;
+            box-shadow: 0 0 0 4px #10b981;
+        }
+        
+        .timeline-dot.current {
+            background: #3b82f6;
+            box-shadow: 0 0 0 4px #3b82f6;
+        }
+        
+        .timeline-dot.pending {
+            background: #9ca3af;
+            box-shadow: 0 0 0 4px #9ca3af;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300" x-data="{ darkMode: false, sidebarOpen: false }" :class="{ 'dark': darkMode }">
+    
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-gray-900 transition-opacity duration-500">
+        <div class="text-center">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Chargement...</h2>
+            <p class="text-gray-600 dark:text-gray-400">Préparation de votre espace</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+        <div class="px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo et Navigation Mobile -->
+                <div class="flex items-center">
+                    <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div class="flex-shrink-0 flex items-center ml-4 lg:ml-0">
+                        <i class="fas fa-search-location text-2xl text-indigo-600 mr-3"></i>
+                        <h1 class="text-xl font-bold text-gray-900 dark:text-white">TogoRetrouvé</h1>
+                    </div>
+                </div>
+
+                <!-- Navigation Desktop -->
+                <nav class="hidden lg:flex space-x-8">
+                    <a href="{% url 'utilisateur_dashboard' %}" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md font-medium transition-colors">
+                        <i class="fas fa-home mr-2"></i>Accueil
+                    </a>
+                    <a href="{% url 'signalement_add' %}" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md font-medium transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Déclarer
+                    </a>
+                    <a href="{% url 'mes_signalements' %}" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md font-medium transition-colors">
+                        <i class="fas fa-list mr-2"></i>Mes objets
+                    </a>
+                </nav>
+
+                <!-- Actions -->
+                <div class="flex items-center space-x-4">
+                    <!-- Toggle Dark Mode -->
+                    <button @click="darkMode = !darkMode" class="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:block"></i>
+                    </button>
+
+                    <!-- Notifications -->
+                    <div class="relative">
+                        <button id="notificationBtn" class="relative p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span id="notificationCount" class="hidden absolute top-0 right-0 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center notification-badge"></span>
+                        </button>
+                        
+                        <div id="notificationsDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 z-50">
+                            <div class="p-4 border-b dark:border-gray-700">
+                                <h3 class="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                            </div>
+                            <div id="notificationsList" class="max-h-64 overflow-y-auto">
+                                <div class="p-4 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>Chargement...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profil Utilisateur -->
+                    <div class="relative">
+                        <button id="userMenuButton" class="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                            <div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-medium">
+                                {{ user.first_name|first|upper|default:user.username|first|upper }}
+                            </div>
+                            <span class="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300">{{ user.first_name|default:user.username }}</span>
+                            <i class="fas fa-chevron-down text-xs text-gray-500" id="userMenuArrow"></i>
+                        </button>
+                        
+                        <div id="userMenuDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 z-50">
+                            <div class="py-1">
+                                <a href="{% url 'utilisateur_profil' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <i class="fas fa-user mr-3"></i>Mon profil
+                                </a>
+                                <a href="{% url 'utilisateur_parametres' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <i class="fas fa-cog mr-3"></i>Paramètres
+                                </a>
+                                <hr class="my-1 border-gray-200 dark:border-gray-700">
+                                <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <i class="fas fa-sign-out-alt mr-3"></i>Déconnexion
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar Mobile -->
+    <div x-show="sidebarOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-xl lg:hidden">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center">
+                    <i class="fas fa-search-location text-2xl text-indigo-600 mr-3"></i>
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white">Menu</h2>
+                </div>
+                <button @click="sidebarOpen = false" class="p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <nav class="space-y-2">
+                <a href="{% url 'utilisateur_dashboard' %}" class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-home w-6 text-center mr-3"></i>Tableau de bord
+                </a>
+                <a href="{% url 'signalement_add' %}" class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-plus w-6 text-center mr-3"></i>Déclarer un objet
+                </a>
+                <a href="{% url 'mes_signalements' %}" class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-list w-6 text-center mr-3"></i>Mes signalements
+                </a>
+                <a href="{% url 'messagerie' %}" class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-comments w-6 text-center mr-3"></i>Messages
+                </a>
+                <a href="{% url 'utilisateur_profil' %}" class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-user w-6 text-center mr-3"></i>Mon profil
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Overlay pour mobile -->
+    <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
+
+    <!-- Main Content -->
+    <main class="min-h-screen">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Messages Toast -->
+    {% if messages %}
+    <div class="fixed top-20 right-4 z-50 space-y-2" x-data="{ show: true }" x-show="show" x-transition>
+        {% for message in messages %}
+        <div class="bg-white dark:bg-gray-800 border-l-4 {% if message.tags == 'success' %}border-green-500{% elif message.tags == 'error' %}border-red-500{% elif message.tags == 'warning' %}border-yellow-500{% else %}border-blue-500{% endif %} p-4 rounded-lg shadow-lg max-w-sm">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle text-green-500{% elif message.tags == 'error' %}fa-exclamation-triangle text-red-500{% elif message.tags == 'warning' %}fa-exclamation-triangle text-yellow-500{% else %}fa-info-circle text-blue-500{% endif %} mr-3"></i>
+                    <p class="text-sm font-medium text-gray-800 dark:text-white">{{ message }}</p>
+                </div>
+                <button @click="show = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- JavaScript -->
+    <script>
+        // Hide loading screen after page load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                }, 500);
+            }, 800);
+        });
+
+        // Initialize dark mode from localStorage
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('app', () => ({
+                darkMode: localStorage.getItem('darkMode') === 'true',
+                
+                init() {
+                    this.$watch('darkMode', (value) => {
+                        localStorage.setItem('darkMode', value);
+                    });
+                }
+            }));
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+
+    <!-- JavaScript pour les notifications et menus -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('JavaScript chargé - initialisation des menus');
+        
+        // Gestion du menu utilisateur
+        const userMenuButton = document.getElementById('userMenuButton');
+        const userMenuDropdown = document.getElementById('userMenuDropdown');
+        const userMenuArrow = document.getElementById('userMenuArrow');
+        const notificationBtn = document.getElementById('notificationBtn');
+        const notificationsDropdown = document.getElementById('notificationsDropdown');
+        const notificationsList = document.getElementById('notificationsList');
+        const notificationCount = document.getElementById('notificationCount');
+        
+        console.log('Éléments trouvés:', {
+            userMenuButton: !!userMenuButton,
+            userMenuDropdown: !!userMenuDropdown,
+            notificationBtn: !!notificationBtn,
+            notificationsDropdown: !!notificationsDropdown
+        });
+        
+        // Menu utilisateur
+        if (userMenuButton && userMenuDropdown) {
+            userMenuButton.addEventListener('click', function(e) {
+                console.log('Clic sur menu utilisateur');
+                e.stopPropagation();
+                const isHidden = userMenuDropdown.classList.contains('hidden');
+                
+                // Fermer tous les menus
+                if (notificationsDropdown) notificationsDropdown.classList.add('hidden');
+                
+                // Toggle le menu utilisateur
+                if (isHidden) {
+                    userMenuDropdown.classList.remove('hidden');
+                    if (userMenuArrow) userMenuArrow.style.transform = 'rotate(180deg)';
+                } else {
+                    userMenuDropdown.classList.add('hidden');
+                    if (userMenuArrow) userMenuArrow.style.transform = 'rotate(0deg)';
+                }
+            });
+        }
+        
+        // Menu notifications
+        if (notificationBtn && notificationsDropdown) {
+            notificationBtn.addEventListener('click', function(e) {
+                console.log('Clic sur notifications');
+                e.stopPropagation();
+                const isHidden = notificationsDropdown.classList.contains('hidden');
+                
+                // Fermer tous les menus
+                if (userMenuDropdown) {
+                    userMenuDropdown.classList.add('hidden');
+                    if (userMenuArrow) userMenuArrow.style.transform = 'rotate(0deg)';
+                }
+                
+                // Toggle les notifications
+                if (isHidden) {
+                    notificationsDropdown.classList.remove('hidden');
+                    chargerNotifications();
+                } else {
+                    notificationsDropdown.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Fermer les menus en cliquant ailleurs
+        document.addEventListener('click', function(e) {
+            if (userMenuDropdown && !userMenuButton?.contains(e.target)) {
+                userMenuDropdown.classList.add('hidden');
+                if (userMenuArrow) userMenuArrow.style.transform = 'rotate(0deg)';
+            }
+            if (notificationsDropdown && !notificationBtn?.contains(e.target)) {
+                notificationsDropdown.classList.add('hidden');
+            }
+        });
+        
+        // Fonction pour charger les notifications
+        function chargerNotifications() {
+            console.log('Chargement des notifications...');
+            if (!notificationsList) {
+                console.log('Liste de notifications non trouvée');
+                return;
+            }
+            
+            notificationsList.innerHTML = '<div class="p-4 text-center"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
+            
+            fetch('/utilisateur/notifications/')
+                .then(response => {
+                    console.log('Réponse reçue:', response.status);
+                    if (!response.ok) {
+                        throw new Error('Erreur réseau: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Données reçues:', data);
+                    
+                    if (data.notifications.length === 0) {
+                        notificationsList.innerHTML = `
+                            <div class="p-8 text-center text-gray-500">
+                                <i class="fas fa-bell-slash text-3xl mb-2"></i>
+                                <p>Aucune notification</p>
+                            </div>
+                        `;
+                    } else {
+                        let html = '';
+                        data.notifications.forEach(notif => {
+                            const iconClass = notif.icone || 'fa-bell';
+                            const colorClass = notif.couleur === 'green' ? 'bg-green-100 text-green-600' : 
+                                             notif.couleur === 'orange' ? 'bg-orange-100 text-orange-600' :
+                                             'bg-blue-100 text-blue-600';
+                            
+                            html += `
+                                <div class="p-3 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" onclick="window.location.href='${notif.url}'">
+                                    <div class="flex items-start">
+                                        <div class="w-10 h-10 ${colorClass} rounded-full flex items-center justify-center mr-3">
+                                            <i class="fas ${iconClass}"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">${notif.titre}</p>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">${notif.message}</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                ${notif.type === 'nouveau_message' ? '✉️' : '💬'} ${notif.date}
+                                            </p>
+                                        </div>
+                                        ${notif.type === 'nouveau_message' ? '<div class="w-2 h-2 bg-green-500 rounded-full"></div>' : ''}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        notificationsList.innerHTML = html;
+                    }
+                    
+                    // Mettre à jour le compteur
+                    if (notificationCount) {
+                        if (data.unread_count > 0) {
+                            notificationCount.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+                            notificationCount.classList.remove('hidden');
+                            notificationCount.style.display = 'flex';
+                        } else {
+                            notificationCount.classList.add('hidden');
+                            notificationCount.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des notifications:', error);
+                    notificationsList.innerHTML = `
+                        <div class="p-4 text-center text-red-500">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            Erreur de chargement: ${error.message}
+                        </div>
+                    `;
+                });
+        }
+        
+        // Charger les notifications au démarrage pour le compteur
+        chargerNotifications();
+        
+        // Recharger les notifications toutes les 30 secondes
+        setInterval(chargerNotifications, 30000);
+    });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
