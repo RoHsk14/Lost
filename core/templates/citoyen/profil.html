@@ -1,0 +1,300 @@
+{% extends 'citoyen/base.html' %}
+
+{% block title %}Mon Profil - TogoRetrouvé{% endblock %}
+
+{% block content %}
+<div class="p-6 space-y-8 animate-slide-up">
+    
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 text-white">
+        <div class="flex items-center">
+            <div class="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-6">
+                <i class="fas fa-user text-3xl"></i>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold mb-2">{{ user.get_full_name|default:user.username }}</h1>
+                <p class="text-indigo-100 text-lg">{{ user.email }}</p>
+                <p class="text-indigo-200 text-sm mt-1">
+                    Membre depuis {{ user.date_joined|date:"M Y" }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg text-center">
+            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-clipboard-list text-xl text-blue-600 dark:text-blue-400"></i>
+            </div>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats.total }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Total</p>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg text-center">
+            <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-search text-xl text-red-600 dark:text-red-400"></i>
+            </div>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats.perdus }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Perdus</p>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg text-center">
+            <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-check-circle text-xl text-green-600 dark:text-green-400"></i>
+            </div>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats.trouves }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Trouvés</p>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg text-center">
+            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-percentage text-xl text-purple-600 dark:text-purple-400"></i>
+            </div>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats.taux_reussite }}%</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Réussite</p>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Profile Information -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+                <i class="fas fa-user-edit text-indigo-600 mr-3"></i>
+                Informations personnelles
+            </h2>
+            
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_profile">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Nom d'utilisateur
+                        </label>
+                        <input type="text" name="username" value="{{ user.username }}" 
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white" 
+                               required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Email
+                        </label>
+                        <input type="email" name="email" value="{{ user.email }}" 
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white" 
+                               required>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Prénom
+                        </label>
+                        <input type="text" name="first_name" value="{{ user.first_name }}" 
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Nom
+                        </label>
+                        <input type="text" name="last_name" value="{{ user.last_name }}" 
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
+                    </div>
+                </div>
+                
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                        <i class="fas fa-save mr-2"></i>
+                        Sauvegarder les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Password Change -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+                <i class="fas fa-key text-indigo-600 mr-3"></i>
+                Changer le mot de passe
+            </h2>
+            
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="change_password">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Mot de passe actuel
+                    </label>
+                    <input type="password" name="old_password" 
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white" 
+                           required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Nouveau mot de passe
+                    </label>
+                    <input type="password" name="new_password1" 
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white" 
+                           required>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Minimum 8 caractères, avec lettres et chiffres
+                    </p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Confirmer le nouveau mot de passe
+                    </label>
+                    <input type="password" name="new_password2" 
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white" 
+                           required>
+                </div>
+                
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 transition-colors font-medium">
+                        <i class="fas fa-lock mr-2"></i>
+                        Changer le mot de passe
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Account Information -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+            <i class="fas fa-info-circle text-indigo-600 mr-3"></i>
+            Informations du compte
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <i class="fas fa-calendar-plus text-2xl text-indigo-600 dark:text-indigo-400 mb-3"></i>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Membre depuis</p>
+                <p class="font-semibold text-gray-900 dark:text-white">{{ user.date_joined|date:"d M Y" }}</p>
+            </div>
+            
+            <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <i class="fas fa-clock text-2xl text-green-600 dark:text-green-400 mb-3"></i>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Dernière connexion</p>
+                <p class="font-semibold text-gray-900 dark:text-white">
+                    {% if user.last_login %}{{ user.last_login|date:"d M Y" }}{% else %}Jamais{% endif %}
+                </p>
+            </div>
+            
+            <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <i class="fas fa-shield-alt text-2xl text-purple-600 dark:text-purple-400 mb-3"></i>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Status du compte</p>
+                <p class="font-semibold text-green-600 dark:text-green-400">
+                    {% if user.is_active %}Actif{% else %}Inactif{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Actions -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border-l-4 border-orange-500">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+            <i class="fas fa-exclamation-triangle text-orange-500 mr-3"></i>
+            Zone de danger
+        </h2>
+        
+        <div class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                <div>
+                    <h3 class="font-medium text-gray-900 dark:text-white">Désactiver le compte</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Votre compte sera temporairement suspendu</p>
+                </div>
+                <button onclick="confirmAction('deactivate')" class="mt-2 sm:mt-0 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm">
+                    Désactiver
+                </button>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                <div>
+                    <h3 class="font-medium text-gray-900 dark:text-white">Supprimer le compte</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Action irréversible. Toutes vos données seront perdues</p>
+                </div>
+                <button onclick="confirmAction('delete')" class="mt-2 sm:mt-0 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm">
+                    Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmAction(action) {
+    const actions = {
+        'deactivate': {
+            title: 'Désactiver le compte',
+            message: 'Êtes-vous sûr de vouloir désactiver votre compte ? Vous pourrez le réactiver plus tard.',
+            confirmText: 'Oui, désactiver',
+            cancelText: 'Annuler'
+        },
+        'delete': {
+            title: 'Supprimer le compte',
+            message: 'ATTENTION : Cette action est irréversible ! Toutes vos données seront définitivement supprimées.',
+            confirmText: 'Oui, supprimer',
+            cancelText: 'Annuler'
+        }
+    };
+    
+    const config = actions[action];
+    
+    if (confirm(config.title + '\n\n' + config.message + '\n\nTapez "CONFIRMER" pour continuer:')) {
+        const confirmation = prompt('Tapez "CONFIRMER" en majuscules pour procéder:');
+        if (confirmation === 'CONFIRMER') {
+            // Ici vous pouvez ajouter l'action réelle
+            alert('Action confirmée. (Non implémentée dans cette démo)');
+        } else {
+            alert('Action annulée - confirmation incorrecte.');
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Password strength indicator
+    const newPasswordInput = document.querySelector('input[name="new_password1"]');
+    const confirmPasswordInput = document.querySelector('input[name="new_password2"]');
+    
+    if (newPasswordInput && confirmPasswordInput) {
+        function checkPasswordMatch() {
+            const password = newPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            if (confirmPassword && password !== confirmPassword) {
+                confirmPasswordInput.setCustomValidity('Les mots de passe ne correspondent pas');
+            } else {
+                confirmPasswordInput.setCustomValidity('');
+            }
+        }
+        
+        newPasswordInput.addEventListener('input', checkPasswordMatch);
+        confirmPasswordInput.addEventListener('input', checkPasswordMatch);
+    }
+    
+    // Form validation feedback
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Traitement...';
+                submitBtn.disabled = true;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

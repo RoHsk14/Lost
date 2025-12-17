@@ -1,0 +1,599 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Déclarations{% endblock %}
+{% block admin_title %}Gestion des Déclarations{% endblock %}
+
+{% block extra_head %}
+<style>
+.status-cree { color: #6c757d; }
+.status-en_validation { color: #ffc107; }
+.status-valide { color: #28a745; }
+.status-publie { color: #007bff; }
+.status-reclame { color: #fd7e14; }
+.status-en_verification { color: #dc3545; }
+.status-restitue { color: #198754; }
+.status-rejete { color: #dc3545; }
+
+.declaration-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 4px solid #007bff;
+}
+
+.declaration-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.priority-high { border-left-color: #dc3545; }
+.priority-medium { border-left-color: #ffc107; }
+.priority-low { border-left-color: #28a745; }
+
+.action-buttons .btn {
+    border-radius: 20px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+.photo-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">
+        <i class="fas fa-file-alt me-2 text-primary"></i>
+        Gestion des Déclarations
+    </h4>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filtersModal">
+            <i class="fas fa-filter"></i> Filtres Avancés
+        </button>
+        <button class="btn btn-primary" onclick="exportDeclarations()">
+            <i class="fas fa-download"></i> Exporter
+        </button>
+    </div>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card bg-secondary text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.total }}</h5>
+                <small>Total</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.pending }}</h5>
+                <small>En Attente</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.validated }}</h5>
+                <small>Validées</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.published }}</h5>
+                <small>Publiées</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.resolved }}</h5>
+                <small>Résolues</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-dark text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.today }}</h5>
+                <small>Aujourd'hui</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres rapides -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form class="row g-3" method="GET">
+            <div class="col-md-2">
+                <select name="statut" class="form-select form-select-sm">
+                    <option value="">Tous les statuts</option>
+                    <option value="cree" {% if request.GET.statut == 'cree' %}selected{% endif %}>Créé</option>
+                    <option value="en_validation" {% if request.GET.statut == 'en_validation' %}selected{% endif %}>En validation</option>
+                    <option value="valide" {% if request.GET.statut == 'valide' %}selected{% endif %}>Validé</option>
+                    <option value="publie" {% if request.GET.statut == 'publie' %}selected{% endif %}>Publié</option>
+                    <option value="reclame" {% if request.GET.statut == 'reclame' %}selected{% endif %}>Réclamé</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="type" class="form-select form-select-sm">
+                    <option value="">Tous les types</option>
+                    <option value="objet_perdu" {% if request.GET.type == 'objet_perdu' %}selected{% endif %}>Objet perdu</option>
+                    <option value="objet_trouve" {% if request.GET.type == 'objet_trouve' %}selected{% endif %}>Objet trouvé</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="region" class="form-select form-select-sm">
+                    <option value="">Toutes les régions</option>
+                    {% for region in regions %}
+                    <option value="{{ region.id }}" {% if request.GET.region == region.id|slugify %}selected{% endif %}>{{ region.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="text" name="search" placeholder="Rechercher..." class="form-control form-control-sm" value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-2">
+                <select name="date_filter" class="form-select form-select-sm">
+                    <option value="">Toutes les dates</option>
+                    <option value="today">Aujourd'hui</option>
+                    <option value="week">Cette semaine</option>
+                    <option value="month">Ce mois</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="fas fa-search"></i> Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Liste des déclarations -->
+<div class="card">
+    <div class="card-body">
+        {% if declarations %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Photo</th>
+                        <th>Détails</th>
+                        <th>Déclarant</th>
+                        <th>Localisation</th>
+                        <th>Statut</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for declaration in declarations %}
+                    <tr class="declaration-row" data-id="{{ declaration.id }}">
+                        <td>
+                            <strong>#{{ declaration.id }}</strong>
+                            {% if declaration.urgent %}
+                            <i class="fas fa-exclamation-triangle text-danger ms-1" title="Urgent"></i>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if declaration.photo %}
+                            <img src="{{ declaration.photo.url }}" alt="Photo" class="photo-thumbnail">
+                            {% else %}
+                            <div class="photo-thumbnail bg-light d-flex align-items-center justify-content-center">
+                                <i class="fas fa-image text-muted"></i>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="fw-bold text-truncate" style="max-width: 200px;">
+                                {{ declaration.objet_nom }}
+                            </div>
+                            <small class="text-muted">
+                                {% if declaration.categorie %}{{ declaration.categorie.nom }}{% endif %}
+                            </small>
+                            <br>
+                            <small class="badge badge-outline-{{ declaration.type }}">
+                                {{ declaration.get_type_display }}
+                            </small>
+                        </td>
+                        <td>
+                            <div class="fw-bold">{{ declaration.declarant.get_full_name }}</div>
+                            <small class="text-muted">{{ declaration.declarant.email }}</small>
+                            {% if declaration.declarant.telephone %}
+                            <br><small><i class="fas fa-phone"></i> {{ declaration.declarant.telephone }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="fw-bold">{{ declaration.lieu }}</div>
+                            {% if declaration.prefecture %}
+                            <small class="text-muted">{{ declaration.prefecture.nom }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary status-{{ declaration.statut }}">
+                                {{ declaration.get_statut_display }}
+                            </span>
+                            {% if declaration.agent_assigne %}
+                            <br><small class="text-muted">
+                                Agent: {{ declaration.agent_assigne.get_full_name }}
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>{{ declaration.date_declaration|date:"d/m/Y" }}</div>
+                            <small class="text-muted">{{ declaration.date_declaration|date:"H:i" }}</small>
+                            {% if declaration.derniere_modification != declaration.date_declaration %}
+                            <br><small class="text-info">Modifiée le {{ declaration.derniere_modification|date:"d/m H:i" }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-outline-primary btn-sm" onclick="viewDeclaration({{ declaration.id }})" title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                
+                                {% if declaration.statut == 'cree' %}
+                                <button class="btn btn-outline-success btn-sm" onclick="validateDeclaration({{ declaration.id }})" title="Valider">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="rejectDeclaration({{ declaration.id }})" title="Rejeter">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                {% endif %}
+                                
+                                {% if declaration.statut == 'valide' %}
+                                <button class="btn btn-outline-info btn-sm" onclick="publishDeclaration({{ declaration.id }})" title="Publier">
+                                    <i class="fas fa-share"></i>
+                                </button>
+                                {% endif %}
+                                
+                                {% if declaration.statut == 'reclame' %}
+                                <button class="btn btn-outline-warning btn-sm" onclick="processReclaim({{ declaration.id }})" title="Traiter réclamation">
+                                    <i class="fas fa-gavel"></i>
+                                </button>
+                                {% endif %}
+                                
+                                <button class="btn btn-outline-secondary btn-sm" onclick="assignAgent({{ declaration.id }})" title="Assigner un agent">
+                                    <i class="fas fa-user-tag"></i>
+                                </button>
+                                
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" title="Plus d'actions">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="editDeclaration({{ declaration.id }})">
+                                            <i class="fas fa-edit me-2"></i>Modifier
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="duplicateDeclaration({{ declaration.id }})">
+                                            <i class="fas fa-copy me-2"></i>Dupliquer
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" onclick="exportDeclaration({{ declaration.id }})">
+                                            <i class="fas fa-download me-2"></i>Exporter PDF
+                                        </a></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteDeclaration({{ declaration.id }})">
+                                            <i class="fas fa-trash me-2"></i>Supprimer
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Pagination des déclarations" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-chevron-left"></i> Précédent
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                        </li>
+                    {% elif num == 2 or num == page_obj.paginator.num_pages|add:'-1' %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Suivant <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucune déclaration trouvée</h5>
+            <p class="text-muted">Aucune déclaration ne correspond à vos critères de recherche</p>
+            <a href="?" class="btn btn-outline-primary">
+                <i class="fas fa-refresh"></i> Réinitialiser les filtres
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Filtres Avancés -->
+<div class="modal fade" id="filtersModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-filter me-2"></i>
+                    Filtres Avancés
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="GET">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Période</label>
+                            <div class="row">
+                                <div class="col">
+                                    <input type="date" name="date_debut" class="form-control" value="{{ request.GET.date_debut }}">
+                                </div>
+                                <div class="col">
+                                    <input type="date" name="date_fin" class="form-control" value="{{ request.GET.date_fin }}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Agent Assigné</label>
+                            <select name="agent" class="form-select">
+                                <option value="">Tous les agents</option>
+                                {% for agent in agents %}
+                                <option value="{{ agent.id }}" {% if request.GET.agent == agent.id|slugify %}selected{% endif %}>
+                                    {{ agent.get_full_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Catégorie</label>
+                            <select name="categorie" class="form-select">
+                                <option value="">Toutes les catégories</option>
+                                {% for categorie in categories %}
+                                <option value="{{ categorie.id }}">{{ categorie.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Priorité</label>
+                            <select name="priorite" class="form-select">
+                                <option value="">Toutes les priorités</option>
+                                <option value="high">Haute</option>
+                                <option value="medium">Moyenne</option>
+                                <option value="low">Basse</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">Options</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="with_photo" id="withPhoto" {% if request.GET.with_photo %}checked{% endif %}>
+                                <label class="form-check-label" for="withPhoto">
+                                    Avec photo uniquement
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="urgent" id="urgent" {% if request.GET.urgent %}checked{% endif %}>
+                                <label class="form-check-label" for="urgent">
+                                    Déclarations urgentes uniquement
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <a href="?" class="btn btn-outline-warning">Réinitialiser</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Appliquer les Filtres
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Fonctions de gestion des déclarations
+function viewDeclaration(id) {
+    // Afficher les détails de la déclaration
+    window.open(`/declaration/${id}/`, '_blank');
+}
+
+function validateDeclaration(id) {
+    if (confirm('Confirmer la validation de cette déclaration ?')) {
+        fetch(`/admin/api/declarations/${id}/validate/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+                showAlert('Déclaration validée avec succès', 'success');
+            } else {
+                showAlert('Erreur lors de la validation', 'danger');
+            }
+        });
+    }
+}
+
+function rejectDeclaration(id) {
+    const reason = prompt('Motif de rejet :');
+    if (reason) {
+        fetch(`/admin/api/declarations/${id}/reject/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({reason})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+                showAlert('Déclaration rejetée', 'info');
+            } else {
+                showAlert('Erreur lors du rejet', 'danger');
+            }
+        });
+    }
+}
+
+function publishDeclaration(id) {
+    if (confirm('Publier cette déclaration ?')) {
+        fetch(`/admin/api/declarations/${id}/publish/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+                showAlert('Déclaration publiée avec succès', 'success');
+            } else {
+                showAlert('Erreur lors de la publication', 'danger');
+            }
+        });
+    }
+}
+
+function assignAgent(id) {
+    // Modal d'assignation d'agent
+    console.log('Assigner agent pour déclaration:', id);
+}
+
+function exportDeclarations() {
+    // Export des déclarations filtrées
+    const params = new URLSearchParams(window.location.search);
+    params.append('export', 'excel');
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
+}
+
+function exportDeclaration(id) {
+    // Export PDF d'une déclaration
+    window.open(`/admin/api/declarations/${id}/export/pdf/`, '_blank');
+}
+
+function editDeclaration(id) {
+    // Modifier une déclaration
+    window.location.href = `/admin/declarations/${id}/edit/`;
+}
+
+function deleteDeclaration(id) {
+    if (confirm('⚠️ ATTENTION : Supprimer définitivement cette déclaration ?\n\nCette action est irréversible.')) {
+        fetch(`/admin/api/declarations/${id}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.querySelector(`tr[data-id="${id}"]`).remove();
+                showAlert('Déclaration supprimée', 'info');
+            } else {
+                showAlert('Erreur lors de la suppression', 'danger');
+            }
+        });
+    }
+}
+
+// Utility functions
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// Auto-refresh pour les nouvelles déclarations
+setInterval(() => {
+    const badge = document.querySelector('.badge.bg-warning');
+    if (badge) {
+        fetch('/admin/api/declarations/count/?status=pending')
+            .then(response => response.json())
+            .then(data => {
+                if (data.count !== parseInt(badge.textContent)) {
+                    badge.textContent = data.count;
+                    badge.style.animation = 'pulse 0.5s';
+                }
+            });
+    }
+}, 30000); // Vérifier toutes les 30 secondes
+</script>
+{% endblock %}

@@ -1,0 +1,427 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Statistiques{% endblock %}
+{% block page_heading %}Statistiques et Rapports{% endblock %}
+{% block page_description %}Analyse complète avec exports PDF, Excel, CSV{% endblock %}
+
+{% block extra_css %}
+<style>
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.stat-card.purple::before { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.stat-card.blue::before { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.stat-card.pink::before { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+.stat-card.orange::before { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+.stat-card.green::before { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+.stat-card.red::before { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-icon {
+    font-size: 2rem;
+    opacity: 0.2;
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.filters-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.table-container {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 1rem;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-export {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.5rem 1.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Filtres de période -->
+<div class="filters-section">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Période d'analyse</h5>
+        <div class="export-buttons">
+            <button onclick="exportPDF()" class="btn btn-danger btn-export">
+                <i class="fas fa-file-pdf me-2"></i>PDF
+            </button>
+            <button onclick="exportExcel()" class="btn btn-success btn-export">
+                <i class="fas fa-file-excel me-2"></i>Excel
+            </button>
+            <button onclick="exportCSV()" class="btn btn-primary btn-export">
+                <i class="fas fa-file-csv me-2"></i>CSV
+            </button>
+        </div>
+    </div>
+    
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Date début</label>
+            <input type="date" name="date_debut" class="form-control" value="{{ date_debut }}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Date fin</label>
+            <input type="date" name="date_fin" class="form-control" value="{{ date_fin }}">
+        </div>
+        {% if regions %}
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Région</label>
+            <select name="region" class="form-select">
+                <option value="">Toutes les régions</option>
+                {% for region in regions %}
+                <option value="{{ region.id }}" {% if region_filter == region.id|stringformat:"s" %}selected{% endif %}>
+                    {{ region.nom }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-sync me-2"></i>Actualiser
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Statistiques générales -->
+<div class="stats-grid">
+    <div class="stat-card purple">
+        <i class="fas fa-clipboard-list stat-icon"></i>
+        <div class="stat-label">Total Déclarations</div>
+        <div class="stat-value">{{ stats_generales.total_declarations }}</div>
+    </div>
+    <div class="stat-card blue">
+        <i class="fas fa-search stat-icon"></i>
+        <div class="stat-label">Objets Perdus</div>
+        <div class="stat-value">{{ stats_generales.objets_perdus }}</div>
+    </div>
+    <div class="stat-card pink">
+        <i class="fas fa-check-circle stat-icon"></i>
+        <div class="stat-label">Objets Trouvés</div>
+        <div class="stat-value">{{ stats_generales.objets_trouves }}</div>
+    </div>
+    <div class="stat-card green">
+        <i class="fas fa-check-double stat-icon"></i>
+        <div class="stat-label">Validées</div>
+        <div class="stat-value">{{ stats_generales.declarations_validees }}</div>
+    </div>
+    <div class="stat-card orange">
+        <i class="fas fa-handshake stat-icon"></i>
+        <div class="stat-label">Restituées</div>
+        <div class="stat-value">{{ stats_generales.objets_restitues }}</div>
+    </div>
+    <div class="stat-card red">
+        <i class="fas fa-percentage stat-icon"></i>
+        <div class="stat-label">Taux Restitution</div>
+        <div class="stat-value">{{ stats_generales.taux_restitution }}%</div>
+    </div>
+</div>
+
+<!-- Graphique d'évolution -->
+<div class="chart-container">
+    <h5 class="mb-4"><i class="fas fa-chart-line me-2"></i>Évolution des Déclarations</h5>
+    <canvas id="evolutionChart" height="80"></canvas>
+</div>
+
+<div class="row">
+    <!-- Statistiques par catégorie -->
+    <div class="col-lg-6">
+        <div class="table-container">
+            <div class="p-3 border-bottom">
+                <h5 class="mb-0"><i class="fas fa-tags me-2"></i>Top 10 Catégories</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Catégorie</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in stats_categories %}
+                        <tr>
+                            <td>{{ stat.categorie__nom|default:"Non spécifié" }}</td>
+                            <td class="text-end"><strong>{{ stat.total }}</strong></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center py-3 text-muted">Aucune donnée</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistiques par région -->
+    <div class="col-lg-6">
+        <div class="table-container">
+            <div class="p-3 border-bottom">
+                <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Top 10 Régions</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Région</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Restituées</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in stats_regions %}
+                        <tr>
+                            <td>{{ stat.region__nom|default:"Non spécifié" }}</td>
+                            <td class="text-end"><strong>{{ stat.total }}</strong></td>
+                            <td class="text-end"><span class="badge bg-success">{{ stat.restitues }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-3 text-muted">Aucune donnée</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance des agents -->
+<div class="table-container">
+    <div class="p-3 border-bottom">
+        <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>Performance des Agents</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Agent</th>
+                    <th>Région</th>
+                    <th class="text-end">Validations</th>
+                    <th class="text-end">Restitutions</th>
+                    <th class="text-end">Total Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for agent in stats_agents %}
+                <tr>
+                    <td><strong>{{ agent.get_full_name }}</strong></td>
+                    <td>{{ agent.region.nom|default:"N/A" }}</td>
+                    <td class="text-end"><span class="badge bg-primary">{{ agent.validations }}</span></td>
+                    <td class="text-end"><span class="badge bg-success">{{ agent.restitutions }}</span></td>
+                    <td class="text-end"><strong>{{ agent.validations|add:agent.restitutions }}</strong></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-3 text-muted">Aucune donnée</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Statistiques par statut -->
+<div class="table-container">
+    <div class="p-3 border-bottom">
+        <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Répartition par Statut</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Statut</th>
+                    <th class="text-end">Nombre</th>
+                    <th>Proportion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats_statuts %}
+                <tr>
+                    <td>
+                        {% if stat.statut == 'cree' %}
+                            <span class="badge" style="background: #fbbf24;">Créée</span>
+                        {% elif stat.statut == 'valide' %}
+                            <span class="badge" style="background: #10b981;">Validée</span>
+                        {% elif stat.statut == 'publie' %}
+                            <span class="badge" style="background: #3b82f6;">Publiée</span>
+                        {% elif stat.statut == 'restitue' %}
+                            <span class="badge" style="background: #8b5cf6;">Restituée</span>
+                        {% elif stat.statut == 'rejete' %}
+                            <span class="badge" style="background: #ef4444;">Rejetée</span>
+                        {% else %}
+                            <span class="badge" style="background: #6b7280;">{{ stat.statut }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end"><strong>{{ stat.total }}</strong></td>
+                    <td>
+                        {% widthratio stat.total stats_generales.total_declarations 100 as percentage %}
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar" role="progressbar" style="width: {{ percentage }}%">
+                                {{ percentage }}%
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center py-3 text-muted">Aucune donnée</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Graphique d'évolution
+const evolutionData = {{ evolution_data|safe }};
+const ctx = document.getElementById('evolutionChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: evolutionData.labels,
+        datasets: [{
+            label: 'Déclarations par jour',
+            data: evolutionData.values,
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+// Fonctions d'export
+function exportPDF() {
+    alert('Export PDF en développement');
+    // TODO: Implémenter export PDF avec bibliothèque comme jsPDF
+}
+
+function exportExcel() {
+    alert('Export Excel en développement');
+    // TODO: Implémenter export Excel avec bibliothèque comme xlsx
+}
+
+function exportCSV() {
+    // Export CSV simple
+    const data = [];
+    data.push(['Statistiques Générales', '', '']);
+    data.push(['Total Déclarations', '{{ stats_generales.total_declarations }}', '']);
+    data.push(['Objets Perdus', '{{ stats_generales.objets_perdus }}', '']);
+    data.push(['Objets Trouvés', '{{ stats_generales.objets_trouves }}', '']);
+    data.push(['Validées', '{{ stats_generales.declarations_validees }}', '']);
+    data.push(['Restituées', '{{ stats_generales.objets_restitues }}', '']);
+    data.push(['Taux Restitution', '{{ stats_generales.taux_restitution }}%', '']);
+    
+    let csvContent = "data:text/csv;charset=utf-8," 
+        + data.map(e => e.join(",")).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "statistiques_{{ date_debut }}_{{ date_fin }}.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+{% endblock %}

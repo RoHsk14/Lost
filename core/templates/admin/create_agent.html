@@ -1,0 +1,411 @@
+{% extends "admin/base_modern.html" %}
+
+{% block page_title %}Créer un Agent{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.form-section-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-section-title i {
+    color: #667eea;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.btn-secondary {
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+}
+
+.password-display {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-top: 1rem;
+}
+
+.password-value {
+    font-family: 'Courier New', monospace;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 6px;
+    display: inline-block;
+    margin: 0.5rem 0;
+}
+
+.required-mark {
+    color: #ef4444;
+}
+
+.info-box {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-10">
+        <!-- Info Box -->
+        <div class="info-box">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-info-circle fa-2x me-3 text-primary"></i>
+                <div>
+                    <h6 class="fw-bold mb-2">Information importante</h6>
+                    <p class="mb-0 small">
+                        Les régions et préfectures sont chargées dynamiquement depuis l'API. 
+                        Assurez-vous de sélectionner une région pour charger les préfectures correspondantes.
+                        Le mot de passe temporaire sera affiché après la création et doit être communiqué à l'agent.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" id="agentForm">
+            {% csrf_token %}
+            
+            <!-- Informations Personnelles -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-user"></i>
+                    Informations Personnelles
+                </h5>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Prénom <span class="required-mark">*</span></label>
+                        <input type="text" name="first_name" class="form-control" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Nom <span class="required-mark">*</span></label>
+                        <input type="text" name="last_name" class="form-control" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Email <span class="required-mark">*</span></label>
+                        <input type="email" name="email" class="form-control" required>
+                        <small class="text-muted">Email professionnel de l'agent</small>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Téléphone</label>
+                        <input type="tel" name="telephone" class="form-control" placeholder="+228 XX XX XX XX">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations de Connexion -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-key"></i>
+                    Informations de Connexion
+                </h5>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Identifiant de connexion <span class="required-mark">*</span></label>
+                        <input type="text" name="username" class="form-control" required>
+                        <small class="text-muted">Utilisé pour se connecter à la plateforme</small>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Mot de passe temporaire <span class="required-mark">*</span></label>
+                        <div class="input-group">
+                            <input type="password" name="password" id="password" class="form-control" value="{{ temp_password }}" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                <i class="fas fa-eye" id="toggleIcon"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" type="button" onclick="generatePassword()">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">L'agent devra le changer à la première connexion</small>
+                    </div>
+                </div>
+
+                <div class="password-display text-center">
+                    <i class="fas fa-lock fa-2x text-warning mb-2"></i>
+                    <p class="fw-bold mb-1">Mot de passe temporaire à communiquer à l'agent :</p>
+                    <div class="password-value" id="passwordDisplay">{{ temp_password }}</div>
+                    <button type="button" class="btn btn-sm btn-outline-dark mt-2" onclick="copyPassword()">
+                        <i class="fas fa-copy me-2"></i>Copier
+                    </button>
+                </div>
+            </div>
+
+            <!-- Assignation Géographique -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Assignation Géographique
+                </h5>
+                
+                {% if regions %}
+                <div class="alert alert-info">✅ {{ regions|length }} région(s) chargée(s)</div>
+                {% else %}
+                <div class="alert alert-danger">❌ Aucune région dans le contexte</div>
+                {% endif %}
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Région <span class="required-mark">*</span></label>
+                        <select name="region" id="regionSelect" class="form-select" required>
+                            <option value="">Sélectionner une région</option>
+                            {% for region in regions %}
+                            <option value="{{ region.id }}">{{ region.nom }}</option>
+                            {% empty %}
+                            <option value="" disabled><!-- DEBUG: Aucune région trouvée dans le contexte --></option>
+                            {% endfor %}
+                        </select>
+                        {% comment %}DEBUG: {{ regions|length }} régions dans le contexte{% endcomment %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Préfecture <span class="required-mark">*</span></label>
+                        <select name="prefecture" id="prefectureSelect" class="form-select" required disabled>
+                            <option value="">Sélectionner d'abord une région</option>
+                        </select>
+                        <small class="text-muted"><i class="fas fa-spinner fa-spin d-none" id="prefectureLoader"></i></small>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label">Structure Locale</label>
+                        <select name="structure_locale" id="structureSelect" class="form-select" disabled>
+                            <option value="">Sélectionner d'abord une préfecture</option>
+                        </select>
+                        <input type="text" name="structure_locale_new" id="structureLocaleNew" class="form-control mt-2 d-none" placeholder="Saisir une nouvelle structure locale...">
+                        <small class="text-muted">Commissariat, Mairie, Gendarmerie, etc. <br>Si la structure n'existe pas, sélectionnez "Autre (saisir...)" puis entrez le nom.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statut -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-toggle-on"></i>
+                    Statut de l'Agent
+                </h5>
+                
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="actif" id="actifSwitch" checked>
+                    <label class="form-check-label fw-bold" for="actifSwitch">
+                        Agent Actif
+                    </label>
+                    <p class="text-muted small mb-0 mt-1">L'agent pourra se connecter et gérer les déclarations</p>
+                </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'togo_admin:agents_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Annuler
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Créer l'Agent
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Chargement dynamique des préfectures
+document.getElementById('regionSelect').addEventListener('change', function() {
+    const regionId = this.value;
+    const prefectureSelect = document.getElementById('prefectureSelect');
+    const structureSelect = document.getElementById('structureSelect');
+    const loader = document.getElementById('prefectureLoader');
+    
+    // Reset préfecture et structure
+    prefectureSelect.innerHTML = '<option value="">Chargement...</option>';
+    prefectureSelect.disabled = true;
+    structureSelect.innerHTML = '<option value="">Sélectionner d\'abord une préfecture</option>';
+    structureSelect.disabled = true;
+    loader.classList.remove('d-none');
+    
+    if (regionId) {
+        // Appel API pour charger les préfectures
+        fetch(`/togoretrouve-admin/api/prefectures/${regionId}/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur réseau');
+                }
+                return response.json();
+            })
+            .then(data => {
+                prefectureSelect.innerHTML = '<option value="">Sélectionner une préfecture</option>';
+                if (data && data.length > 0) {
+                    data.forEach(prefecture => {
+                        const option = document.createElement('option');
+                        option.value = prefecture.id;
+                        option.textContent = prefecture.nom;
+                        prefectureSelect.appendChild(option);
+                    });
+                } else {
+                    prefectureSelect.innerHTML = '<option value="">Aucune préfecture disponible</option>';
+                }
+                prefectureSelect.disabled = false;
+                loader.classList.add('d-none');
+            })
+            .catch(error => {
+                console.error('Erreur lors du chargement des préfectures:', error);
+                prefectureSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+                loader.classList.add('d-none');
+            });
+    } else {
+        prefectureSelect.innerHTML = '<option value="">Sélectionner d\'abord une région</option>';
+        loader.classList.add('d-none');
+    }
+});
+
+// Chargement dynamique des structures locales
+document.getElementById('prefectureSelect').addEventListener('change', function() {
+    const prefectureId = this.value;
+    const structureSelect = document.getElementById('structureSelect');
+    const structureLocaleNew = document.getElementById('structureLocaleNew');
+    structureSelect.innerHTML = '<option value="">Chargement...</option>';
+    structureSelect.disabled = true;
+    structureLocaleNew.classList.add('d-none');
+    structureLocaleNew.value = '';
+    if (prefectureId) {
+        fetch(`/api/structures/${prefectureId}/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur réseau');
+                }
+                return response.json();
+            })
+            .then(data => {
+                structureSelect.innerHTML = '<option value="">Aucune structure (optionnel)</option>';
+                if (data && data.length > 0) {
+                    data.forEach(structure => {
+                        const option = document.createElement('option');
+                        option.value = structure.id;
+                        option.textContent = `${structure.nom} (${structure.type_structure})`;
+                        structureSelect.appendChild(option);
+                    });
+                }
+                // Ajouter l'option "Autre (saisir...)"
+                const otherOption = document.createElement('option');
+                otherOption.value = '__new__';
+                otherOption.textContent = 'Autre (saisir...)';
+                structureSelect.appendChild(otherOption);
+                structureSelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                structureSelect.innerHTML = '<option value="">Aucune structure disponible</option>';
+                structureSelect.disabled = false;
+            });
+    } else {
+        structureSelect.innerHTML = '<option value="">Sélectionner d\'abord une préfecture</option>';
+    }
+});
+
+// Afficher le champ de saisie si "Autre (saisir...)" est choisi
+document.getElementById('structureSelect').addEventListener('change', function() {
+    const structureLocaleNew = document.getElementById('structureLocaleNew');
+    if (this.value === '__new__') {
+        structureLocaleNew.classList.remove('d-none');
+        structureLocaleNew.required = true;
+    } else {
+        structureLocaleNew.classList.add('d-none');
+        structureLocaleNew.required = false;
+        structureLocaleNew.value = '';
+    }
+});
+
+// Toggle password visibility
+function togglePassword() {
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    }
+}
+
+// Generate new password
+function generatePassword() {
+    const length = 12;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let password = '';
+    
+    for (let i = 0; i < length; i++) {
+        password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    
+    document.getElementById('password').value = password;
+    document.getElementById('passwordDisplay').textContent = password;
+}
+
+// Copy password
+function copyPassword() {
+    const password = document.getElementById('password').value;
+    navigator.clipboard.writeText(password).then(() => {
+        alert('Mot de passe copié !');
+    });
+}
+
+// Update password display when typing
+document.getElementById('password').addEventListener('input', function() {
+    document.getElementById('passwordDisplay').textContent = this.value;
+});
+</script>
+{% endblock %}

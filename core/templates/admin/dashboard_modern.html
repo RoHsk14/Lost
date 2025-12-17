@@ -1,0 +1,786 @@
+{% extends "admin/base_modern.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_heading %}Dashboard{% endblock %}
+{% block page_description %}Vue d'ensemble de la plateforme TogoRetrouvé{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Dashboard specific styles */
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    position: relative;
+    overflow: hidden;
+    color: white;
+}
+
+.stat-card.purple { 
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.stat-card.pink { 
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    color: #1e293b;
+}
+.stat-card.blue { 
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+.stat-card.green { 
+    background: linear-gradient(135deg, #10b981 0%, #84fab0 100%);
+}
+.stat-card.orange { 
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    color: #1e293b;
+}
+.stat-card.red { 
+    background: linear-gradient(135deg, #ef4444 0%, #f5576c 100%);
+}
+
+.stat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+}
+
+.chart-container {
+    position: relative;
+    height: 350px;
+    margin: 1.5rem 0;
+}
+
+.period-selector {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.period-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: white;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--admin-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.period-btn:hover {
+    color: var(--admin-primary);
+    transform: translateY(-2px);
+}
+
+.period-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.activity-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.activity-item:hover {
+    background: #f8fafc;
+    transform: translateX(4px);
+}
+
+.activity-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    flex-shrink: 0;
+}
+
+.activity-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: var(--admin-dark);
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.activity-meta {
+    font-size: 0.8125rem;
+    color: var(--admin-secondary);
+}
+
+.progress-bar-modern {
+    height: 8px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 1s ease-out;
+}
+
+.quick-action-card {
+    padding: 1.5rem;
+    border-radius: 12px;
+    background: white;
+    border: 2px solid #f1f5f9;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-align: center;
+}
+
+.quick-action-card:hover {
+    border-color: var(--admin-primary);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.quick-action-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin: 0 auto 1rem;
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+}
+
+.quick-action-title {
+    font-weight: 600;
+    color: var(--admin-dark);
+    margin-bottom: 0.5rem;
+}
+
+.quick-action-desc {
+    font-size: 0.8125rem;
+    color: var(--admin-secondary);
+}
+
+.top-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.top-list-item:last-child {
+    border-bottom: none;
+}
+
+.top-list-name {
+    font-weight: 500;
+    color: var(--admin-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.top-list-value {
+    font-weight: 700;
+    color: var(--admin-primary);
+}
+
+@keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+}
+
+.loading-shimmer {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out both;
+}
+
+.card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.card-header {
+    background: white;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+}
+
+:root {
+    --admin-primary: #667eea;
+    --admin-secondary: #64748b;
+    --admin-dark: #1e293b;
+    --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Period Selector -->
+<div class="period-selector">
+    <a href="?periode=7" class="period-btn {% if periode == '7' %}active{% endif %}">
+        <i class="fas fa-calendar-day me-1"></i> 7 jours
+    </a>
+    <a href="?periode=30" class="period-btn {% if periode == '30' or not periode %}active{% endif %}">
+        <i class="fas fa-calendar-week me-1"></i> 30 jours
+    </a>
+    <a href="?periode=90" class="period-btn {% if periode == '90' %}active{% endif %}">
+        <i class="fas fa-calendar-alt me-1"></i> 3 mois
+    </a>
+    <a href="?periode=365" class="period-btn {% if periode == '365' %}active{% endif %}">
+        <i class="fas fa-calendar me-1"></i> 1 an
+    </a>
+</div>
+
+<!-- Main Stats -->
+<div class="dashboard-stats">
+    <!-- Total Déclarations -->
+    <div class="stat-card purple fade-in-up" style="animation-delay: 0.1s">
+        <div class="stat-card-header">
+            <div class="stat-content">
+                <div class="stat-label">Total Signalements</div>
+                <div class="stat-value">{{ metriques.declarations_total|default:0 }}</div>
+                <div class="stat-badge bg-white bg-opacity-25 text-white">
+                    <i class="fas fa-arrow-up"></i> +{{ metriques.declarations_periode|default:0 }} {{ titre_periode|lower }}
+                </div>
+            </div>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="fas fa-inbox"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Objets Perdus -->
+    <div class="stat-card pink fade-in-up" style="animation-delay: 0.2s">
+        <div class="stat-card-header">
+            <div class="stat-content">
+                <div class="stat-label">Objets Perdus</div>
+                <div class="stat-value">{{ metriques.objets_perdus|default:0 }}</div>
+                <div class="stat-badge bg-white bg-opacity-25 text-white">
+                    <i class="fas fa-search"></i> En recherche
+                </div>
+            </div>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+                <i class="fas fa-question-circle"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Objets Trouvés -->
+    <div class="stat-card blue fade-in-up" style="animation-delay: 0.3s">
+        <div class="stat-card-header">
+            <div class="stat-content">
+                <div class="stat-label">Objets Trouvés</div>
+                <div class="stat-value">{{ metriques.objets_trouves|default:0 }}</div>
+                <div class="stat-badge bg-white bg-opacity-25 text-white">
+                    <i class="fas fa-check-circle"></i> Disponibles
+                </div>
+            </div>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <i class="fas fa-gift"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Objets Restitués -->
+    <div class="stat-card green fade-in-up" style="animation-delay: 0.4s">
+        <div class="stat-card-header">
+            <div class="stat-content">
+                <div class="stat-label">Objets Restitués</div>
+                <div class="stat-value">{{ metriques.objets_restitues|default:0 }}</div>
+                <div class="stat-badge bg-white bg-opacity-25 text-white">
+                    <i class="fas fa-trophy"></i> {{ metriques.taux_restitution|default:0 }}% taux
+                </div>
+            </div>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <i class="fas fa-handshake"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agents -->
+    <div class="stat-card orange fade-in-up" style="animation-delay: 0.5s">
+        <div class="stat-card-header">
+            <div class="stat-content">
+                <div class="stat-label">Agents Actifs</div>
+                <div class="stat-value">{{ metriques.agents_actifs|default:0 }}</div>
+                <div class="stat-badge bg-white bg-opacity-25 text-dark">
+                    <i class="fas fa-shield-alt"></i> {{ metriques.agents_total|default:0 }} total
+                </div>
+            </div>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+                <i class="fas fa-user-shield text-dark"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Citoyens -->
+    <div class="stat-card green fade-in-up" style="animation-delay: 0.6s">
+        <div class="stat-card-header">
+            <div class="stat-content">
+                <div class="stat-label">Citoyens</div>
+                <div class="stat-value">{{ metriques.citoyens_total|default:0 }}</div>
+                <div class="stat-badge bg-white bg-opacity-25 text-dark">
+                    <i class="fas fa-plus"></i> +{{ metriques.nouveaux_citoyens|default:0 }} nouveaux
+                </div>
+            </div>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                <i class="fas fa-users text-dark"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conversations -->
+    <div class="stat-card purple fade-in-up" style="animation-delay: 0.7s">
+        <div class="stat-card-header">
+            <div class="stat-content">
+                <div class="stat-label">Conversations</div>
+                <div class="stat-value">{{ metriques.conversations_total|default:0 }}</div>
+                <div class="stat-badge bg-white bg-opacity-25 text-white">
+                    <i class="fas fa-comments"></i> {{ metriques.conversations_actives|default:0 }} actives
+                </div>
+            </div>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="fas fa-comment-dots"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Taux de Croissance -->
+    <div class="stat-card blue fade-in-up" style="animation-delay: 0.8s">
+        <div class="stat-card-header">
+            <div class="stat-content">
+                <div class="stat-label">Croissance</div>
+                <div class="stat-value">+{{ metriques.croissance|default:0 }}%</div>
+                <div class="stat-badge bg-white bg-opacity-25 text-white">
+                    <i class="fas fa-chart-line"></i> Cette période
+                </div>
+            </div>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <i class="fas fa-arrow-trend-up"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Activity -->
+<div class="row g-4 mb-4">
+    <!-- Evolution Chart -->
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line text-primary me-2"></i>
+                        Évolution des Signalements
+                    </h5>
+                    <span class="badge badge-info">{{ titre_periode }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Répartition -->
+    <div class="col-xl-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie text-primary me-2"></i>
+                    Répartition par Statut
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for statut, count in statuts_data.items %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted fw-semibold">{{ statut|title }}</span>
+                        <span class="fw-bold">{{ count }}</span>
+                    </div>
+                    <div class="progress-bar-modern">
+                        <div class="progress-fill" style="width: {% widthratio count metriques.declarations_total 100 %}%"></div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5 text-muted">
+                    <i class="fas fa-chart-pie fa-3x mb-3 opacity-25"></i>
+                    <p>Aucune donnée disponible</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <h5 class="mb-3">
+            <i class="fas fa-bolt text-warning me-2"></i>
+            Actions Rapides
+        </h5>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="quick-action-card" onclick="location.href='{% url 'togo_admin:create_agent' %}'">
+            <div class="quick-action-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="quick-action-title">Nouvel Agent</div>
+            <div class="quick-action-desc">Créer un compte agent</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="quick-action-card" onclick="location.href='{% url 'togo_admin:declarations_list' %}'">
+            <div class="quick-action-icon">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div class="quick-action-title">Déclarations</div>
+            <div class="quick-action-desc">Gérer les signalements</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="quick-action-card" onclick="location.href='{% url 'togo_admin:reports' %}'">
+            <div class="quick-action-icon">
+                <i class="fas fa-file-chart-line"></i>
+            </div>
+            <div class="quick-action-title">Rapports</div>
+            <div class="quick-action-desc">Générer des rapports</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="quick-action-card" onclick="location.href='{% url 'togo_admin:settings' %}'">
+            <div class="quick-action-icon">
+                <i class="fas fa-cog"></i>
+            </div>
+            <div class="quick-action-title">Paramètres</div>
+            <div class="quick-action-desc">Configurer la plateforme</div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Feed and Top Lists -->
+<div class="row g-4">
+    <!-- Recent Activity -->
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock text-primary me-2"></i>
+                    Dernières Déclarations
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="activity-list">
+                    {% if dernieres_declarations %}
+                        {% for decl in dernieres_declarations %}
+                        <a href="{% url 'togo_admin:declaration_detail' decl.id %}" class="activity-item text-decoration-none">
+                            <div class="activity-icon" style="background: {% cycle 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' %};">
+                                <i class="fas fa-{% if decl.type_declaration == 'perdu' %}question-circle{% else %}gift{% endif %} text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">{{ decl.nom_objet|truncatechars:30 }}</div>
+                                <div class="activity-meta">
+                                    <i class="fas fa-user me-1"></i>{{ decl.declarant.get_full_name|default:decl.declarant.username }}
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-clock me-1"></i>{{ decl.date_declaration|timesince }}
+                                </div>
+                            </div>
+                            <span class="badge badge-{% if decl.type_declaration == 'perdu' %}warning{% else %}info{% endif %}">
+                                {{ decl.get_type_declaration_display }}
+                            </span>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox fa-3x mb-3 opacity-25"></i>
+                            <p>Aucune déclaration récente</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Categories -->
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tags text-primary me-2"></i>
+                    Top 5 Catégories
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if repartition_categories %}
+                    {% for cat in repartition_categories %}
+                    <div class="top-list-item">
+                        <div class="top-list-name">
+                            <i class="fas fa-tag text-primary"></i>
+                            {{ cat.categorie__nom|default:"Non catégorisé" }}
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="top-list-value">{{ cat.count }}</span>
+                            <span class="badge badge-secondary">{% widthratio cat.count metriques.declarations_total 100 %}%</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% elif top_categories %}
+                    {% for cat in top_categories %}
+                    <div class="top-list-item">
+                        <div class="top-list-name">
+                            <i class="fas fa-tag text-primary"></i>
+                            {{ cat.nom }}
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="top-list-value">{{ cat.count }}</span>
+                            <span class="badge badge-secondary">{{ cat.percentage }}%</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-layer-group fa-3x mb-3 opacity-25"></i>
+                        <p>Aucune donnée disponible</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Regions -->
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-map-marked-alt text-primary me-2"></i>
+                    Top 5 Régions
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if repartition_regions %}
+                    {% for reg in repartition_regions %}
+                    <div class="top-list-item">
+                        <div class="top-list-name">
+                            <i class="fas fa-map-marker-alt text-success"></i>
+                            {{ reg.region__nom|default:"Non définie" }}
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="top-list-value">{{ reg.count }}</span>
+                            <span class="badge badge-secondary">{% widthratio reg.count metriques.declarations_total 100 %}%</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% elif top_regions %}
+                    {% for reg in top_regions %}
+                    <div class="top-list-item">
+                        <div class="top-list-name">
+                            <i class="fas fa-map-marker-alt text-success"></i>
+                            {{ reg.nom }}
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="top-list-value">{{ reg.count }}</span>
+                            <span class="badge badge-secondary">{{ reg.percentage }}%</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-globe-africa fa-3x mb-3 opacity-25"></i>
+                        <p>Aucune donnée disponible</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Evolution Chart
+    const ctx = document.getElementById('evolutionChart');
+    if (ctx) {
+        const data = {{ evolution_declarations_json|safe }};
+        let labels, values;
+        
+        if (data.labels && data.values) {
+            labels = data.labels;
+            values = data.values;
+        } else if (Array.isArray(data)) {
+            labels = data.map(item => item.mois);
+            values = data.map(item => item.count);
+        } else {
+            labels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'];
+            values = [10, 15, 20, 25, 30, 35];
+        }
+        
+        const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(102, 126, 234, 0.4)');
+        gradient.addColorStop(1, 'rgba(118, 75, 162, 0.05)');
+        
+        const lineGradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+        lineGradient.addColorStop(0, '#667eea');
+        lineGradient.addColorStop(1, '#764ba2');
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Signalements',
+                    data: values,
+                    borderColor: lineGradient,
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#667eea',
+                    pointBorderWidth: 3,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    pointHoverBackgroundColor: '#667eea',
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(102, 126, 234, 0.95)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y + ' signalements';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            font: { size: 12 }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            font: { size: 12, weight: '600' }
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+
+    // Animate progress bars
+    setTimeout(() => {
+        document.querySelectorAll('.progress-fill').forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 100);
+        });
+    }, 500);
+});
+</script>
+{% endblock %}

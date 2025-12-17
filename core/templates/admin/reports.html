@@ -1,0 +1,307 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Rapports et analytics{% endblock %}
+{% block page_heading %}Rapports{% endblock %}
+{% block page_description %}Analytics et rapports détaillés du système{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Graphique principal -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Évolution des déclarations</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="declarationsChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Métriques clés -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Performance</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Taux de résolution</span>
+                        <span class="fw-bold text-success">{{ metrics.resolution_rate|floatformat:1 }}%</span>
+                    </div>
+                    <div class="progress mt-1">
+                        <div class="progress-bar bg-success" style="width: {{ metrics.resolution_rate }}%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Temps moyen validation</span>
+                        <span class="fw-bold text-info">{{ metrics.avg_validation_time|floatformat:0 }}h</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Satisfaction usagers</span>
+                        <span class="fw-bold text-warning">{{ metrics.user_satisfaction|floatformat:1 }}/5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-calendar me-2"></i>Actions rapides</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary btn-sm" onclick="generateMonthlyReport()">
+                        <i class="fas fa-file-pdf me-2"></i>Rapport mensuel
+                    </button>
+                    <button class="btn btn-success btn-sm" onclick="generateRegionReport()">
+                        <i class="fas fa-map-marked-alt me-2"></i>Rapport régional
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="exportData()">
+                        <i class="fas fa-download me-2"></i>Exporter données
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Répartition par type -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Répartition par catégorie</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="categoriesChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top agents -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-star me-2"></i>Top agents du mois</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Agent</th>
+                                <th>Validations</th>
+                                <th>Restitutions</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for agent in top_agents %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-2" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                            {{ agent.first_name|first }}{{ agent.last_name|first }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold" style="font-size: 0.9rem;">{{ agent.get_full_name }}</div>
+                                            <small class="text-muted">{{ agent.region.nom|default:"-" }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-primary">{{ agent.validations_count }}</span></td>
+                                <td><span class="badge bg-success">{{ agent.restitutions_count }}</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="fw-bold me-2">{{ agent.score|floatformat:0 }}</span>
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= agent.rating %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-muted"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Aucune donnée disponible</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tendances par région -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-map me-2"></i>Performance par région</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Région</th>
+                                <th>Total déclarations</th>
+                                <th>En attente</th>
+                                <th>Validées</th>
+                                <th>Publiées</th>
+                                <th>Restituées</th>
+                                <th>Taux résolution</th>
+                                <th>Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for region in region_stats %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ region.nom }}</div>
+                                    <small class="text-muted">{{ region.prefecture_count }} préfectures</small>
+                                </td>
+                                <td><span class="badge bg-light text-dark">{{ region.total_declarations }}</span></td>
+                                <td><span class="badge bg-warning">{{ region.pending_declarations }}</span></td>
+                                <td><span class="badge bg-info">{{ region.validated_declarations }}</span></td>
+                                <td><span class="badge bg-primary">{{ region.published_declarations }}</span></td>
+                                <td><span class="badge bg-success">{{ region.resolved_declarations }}</span></td>
+                                <td>
+                                    <div>{{ region.resolution_rate|floatformat:1 }}%</div>
+                                    <div class="progress mt-1" style="height: 4px;">
+                                        <div class="progress-bar bg-success" style="width: {{ region.resolution_rate }}%"></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if region.performance >= 80 %}
+                                        <span class="badge bg-success"><i class="fas fa-thumbs-up"></i> Excellent</span>
+                                    {% elif region.performance >= 60 %}
+                                        <span class="badge bg-primary"><i class="fas fa-check"></i> Bon</span>
+                                    {% elif region.performance >= 40 %}
+                                        <span class="badge bg-warning"><i class="fas fa-exclamation"></i> Moyen</span>
+                                    {% else %}
+                                        <span class="badge bg-danger"><i class="fas fa-times"></i> Faible</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                                    <div class="text-muted">Aucune donnée disponible</div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Configuration des graphiques
+const chartColors = {
+    primary: '#dc3545',
+    success: '#198754', 
+    warning: '#fd7e14',
+    info: '#0dcaf0',
+    light: '#f8f9fa'
+};
+
+// Graphique évolution des déclarations
+const declarationsCtx = document.getElementById('declarationsChart').getContext('2d');
+const declarationsChart = new Chart(declarationsCtx, {
+    type: 'line',
+    data: {
+        labels: {{ chart_data.labels|safe }},
+        datasets: [{
+            label: 'Déclarations créées',
+            data: {{ chart_data.created|safe }},
+            borderColor: chartColors.primary,
+            backgroundColor: chartColors.primary + '20',
+            tension: 0.4
+        }, {
+            label: 'Déclarations résolues',
+            data: {{ chart_data.resolved|safe }},
+            borderColor: chartColors.success,
+            backgroundColor: chartColors.success + '20',
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Graphique répartition par catégorie  
+const categoriesCtx = document.getElementById('categoriesChart').getContext('2d');
+const categoriesChart = new Chart(categoriesCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ categories_data.labels|safe }},
+        datasets: [{
+            data: {{ categories_data.values|safe }},
+            backgroundColor: [
+                chartColors.primary,
+                chartColors.success,
+                chartColors.warning,
+                chartColors.info,
+                '#6f42c1',
+                '#fd7e14',
+                '#20c997'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Functions pour les actions
+function generateMonthlyReport() {
+    window.open('/togoretrouve-admin/reports/monthly/', '_blank');
+}
+
+function generateRegionReport() {
+    const region = prompt('ID de la région (laisser vide pour toutes):');
+    const url = region ? `/togoretrouve-admin/reports/region/${region}/` : '/togoretrouve-admin/reports/region/';
+    window.open(url, '_blank');
+}
+
+function exportData() {
+    const format = confirm('Choisir le format:\nOK = Excel\nAnnuler = CSV') ? 'excel' : 'csv';
+    window.location.href = `/togoretrouve-admin/export/?format=${format}`;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,615 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Modifier le Signalement{% endblock %}
+
+{% block extra_head %}
+<style>
+    .edit-signalement-page {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+
+    .page-header {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 24px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        color: white;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-card {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 0;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 1.5rem 2rem;
+        border: none;
+    }
+
+    .card-body {
+        padding: 2rem;
+    }
+
+    .form-section {
+        margin-bottom: 2.5rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+        border-radius: 16px;
+        border-left: 4px solid #667eea;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #1f2937;
+    }
+
+    .section-title.readonly {
+        color: #6b7280;
+    }
+
+    .section-title.editable {
+        color: #059669;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .required-field::after {
+        content: "*";
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+
+    .form-control, .form-select {
+        padding: 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background-color: white;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .form-control[readonly] {
+        background-color: #f9fafb;
+        color: #6b7280;
+        border-color: #d1d5db;
+        cursor: not-allowed;
+    }
+
+    .form-text {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .btn-modern {
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        color: white;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+    }
+
+    .actions-section {
+        display: flex;
+        gap: 1rem;
+        justify-content: between;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 2rem 0;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 2rem;
+    }
+
+    .current-photo {
+        max-width: 200px;
+        height: auto;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+
+    .current-photo:hover {
+        transform: scale(1.05);
+    }
+
+    .photo-info {
+        background: #f3f4f6;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-top: 1rem;
+        border-left: 4px solid #6366f1;
+    }
+
+    .badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-secondary {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        color: white;
+    }
+
+    .badge-success {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+
+    .modal-content {
+        border: none;
+        border-radius: 16px;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 16px 16px 0 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-signalement-page">
+    <div class="container-fluid px-4">
+        <!-- En-tête -->
+        <div class="page-header">
+            <h1><i class="fas fa-edit me-3"></i>Modifier le Signalement</h1>
+            <p>Modifiez les informations du signalement #{{ signalement.id }}</p>
+        </div>
+
+        <!-- Formulaire principal -->
+        <div class="form-card">
+            <div class="card-header">
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-clipboard-list me-3"></i>
+                    Édition du Signalement #{{ signalement.id }}
+                </h4>
+            </div>
+            
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Section Informations du déclarant (lecture seule) -->
+                    <div class="form-section">
+                        <h3 class="section-title readonly">
+                            <i class="fas fa-user"></i>
+                            Informations du Déclarant
+                            <span class="badge badge-secondary ms-2">Lecture seule</span>
+                        </h3>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-user-circle text-primary"></i>
+                                    Nom complet
+                                </label>
+                                <input type="text" class="form-control" value="{{ signalement.utilisateur.get_full_name|default:signalement.utilisateur.username }}" readonly>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-envelope text-primary"></i>
+                                    Email
+                                </label>
+                                <input type="text" class="form-control" value="{{ signalement.utilisateur.email }}" readonly>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar text-primary"></i>
+                                    Date de signalement
+                                </label>
+                                <input type="text" class="form-control" value="{{ signalement.date_signalement|date:'d/m/Y à H:i' }}" readonly>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-tag text-primary"></i>
+                                    Rôle
+                                </label>
+                                <input type="text" class="form-control" value="{{ signalement.utilisateur.get_role_display }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section Informations modifiables -->
+                    <div class="form-section">
+                        <h3 class="section-title editable">
+                            <i class="fas fa-edit"></i>
+                            Informations Modifiables
+                        </h3>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label for="nom_objet" class="form-label required-field">
+                                    <i class="fas fa-box text-warning"></i>
+                                    Nom de l'objet
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="nom_objet" 
+                                       name="nom_objet" 
+                                       value="{{ signalement.objet.nom }}" 
+                                       required
+                                       placeholder="Ex: iPhone 14, Portefeuille en cuir...">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="statut" class="form-label required-field">
+                                    <i class="fas fa-flag text-info"></i>
+                                    Statut du signalement
+                                </label>
+                                <select class="form-select" id="statut" name="statut" required>
+                                    {% for value, label in status_choices %}
+                                    <option value="{{ value }}" {% if value == signalement.statut %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="description_objet" class="form-label">
+                                    <i class="fas fa-file-alt text-primary"></i>
+                                    Description détaillée de l'objet
+                                </label>
+                                <textarea class="form-control" 
+                                         id="description_objet" 
+                                         name="description_objet" 
+                                         rows="4"
+                                         placeholder="Description détaillée : couleur, marque, modèle, signes distinctifs...">{{ signalement.objet.description }}</textarea>
+                                <div class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Plus la description est précise, plus il sera facile d'identifier l'objet
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="lieu" class="form-label required-field">
+                                    <i class="fas fa-map-marker-alt text-danger"></i>
+                                    Lieu du signalement
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="lieu" 
+                                       name="lieu" 
+                                       value="{{ signalement.lieu }}" 
+                                       required
+                                       placeholder="Lieu précis où l'objet a été perdu ou trouvé...">
+                                <div class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Soyez le plus précis possible : adresse, point de repère, nom du bâtiment...
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="commentaire" class="form-label">
+                                    <i class="fas fa-comment text-success"></i>
+                                    Commentaires et circonstances
+                                </label>
+                                <textarea class="form-control" 
+                                         id="commentaire" 
+                                         name="commentaire" 
+                                         rows="4"
+                                         placeholder="Circonstances de la perte/découverte, détails supplémentaires...">{{ signalement.commentaire }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section Géolocalisation -->
+                    <div class="form-section">
+                        <h3 class="section-title editable">
+                            <i class="fas fa-globe"></i>
+                            Localisation Géographique
+                        </h3>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="region" class="form-label">
+                                    <i class="fas fa-map text-primary"></i>
+                                    Région
+                                </label>
+                                <select class="form-select" id="region" name="region">
+                                    <option value="">-- Sélectionner une région --</option>
+                                    {% for region in regions %}
+                                    <option value="{{ region.id }}" {% if signalement.region_id == region.id %}selected{% endif %}>
+                                        {{ region.nom }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="prefecture" class="form-label">
+                                    <i class="fas fa-building text-secondary"></i>
+                                    Préfecture
+                                </label>
+                                <select class="form-select" id="prefecture" name="prefecture">
+                                    <option value="">-- Sélectionner une préfecture --</option>
+                                    {% for prefecture in prefectures %}
+                                    <option value="{{ prefecture.id }}" {% if signalement.prefecture_id == prefecture.id %}selected{% endif %}>
+                                        {{ prefecture.nom }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section Photo -->
+                    <div class="form-section">
+                        <h3 class="section-title editable">
+                            <i class="fas fa-camera"></i>
+                            Photo du Signalement
+                        </h3>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label for="photo" class="form-label">
+                                    <i class="fas fa-upload text-success"></i>
+                                    Nouvelle photo (optionnelle)
+                                </label>
+                                <input type="file" 
+                                       class="form-control" 
+                                       id="photo" 
+                                       name="photo" 
+                                       accept="image/*">
+                                <div class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Formats acceptés : JPG, PNG, GIF (max 5MB)
+                                </div>
+                            </div>
+
+                            {% if signalement.photo %}
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-image text-info"></i>
+                                    Photo actuelle
+                                </label>
+                                <div class="photo-info">
+                                    <img src="{{ signalement.photo.url }}" 
+                                         alt="Photo actuelle" 
+                                         class="current-photo"
+                                         onclick="viewFullImage('{{ signalement.photo.url }}')">
+                                    <p class="mt-2 mb-0 text-muted">
+                                        <i class="fas fa-expand me-1"></i>
+                                        Cliquez pour agrandir
+                                    </p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="actions-section">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 w-100">
+                            <a href="{% url 'togo_admin:signalement_detail' signalement.id %}" class="btn-modern btn-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Annuler
+                            </a>
+                            
+                            <div class="d-flex gap-3 flex-wrap">
+                                <button type="submit" class="btn-modern btn-success">
+                                    <i class="fas fa-save"></i>
+                                    Sauvegarder les Modifications
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour l'aperçu de l'image -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Aperçu de l'Image</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="fullImage" src="" alt="Aperçu" class="img-fluid" style="border-radius: 12px;">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Vue d'image en plein écran
+    function viewFullImage(imageUrl) {
+        document.getElementById('fullImage').src = imageUrl;
+        var modal = new bootstrap.Modal(document.getElementById('imageModal'));
+        modal.show();
+    }
+
+    // Prévisualisation de l'image sélectionnée
+    document.getElementById('photo').addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                // Créer un conteneur de prévisualisation s'il n'existe pas
+                let previewContainer = document.getElementById('imagePreviewContainer');
+                if (!previewContainer) {
+                    previewContainer = document.createElement('div');
+                    previewContainer.id = 'imagePreviewContainer';
+                    previewContainer.className = 'mt-3 p-3 border rounded bg-light';
+                    previewContainer.innerHTML = `
+                        <div class="d-flex align-items-center justify-content-between">
+                            <small class="text-muted fw-bold">
+                                <i class="fas fa-eye me-1"></i>Aperçu de la nouvelle image
+                            </small>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearImagePreview()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="text-center mt-2">
+                            <img id="previewImage" src="" alt="Aperçu" class="img-fluid" style="max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                    `;
+                    
+                    // Insérer après le champ file
+                    e.target.parentNode.appendChild(previewContainer);
+                }
+                
+                document.getElementById('previewImage').src = e.result;
+                previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+
+    // Effacer l'aperçu
+    function clearImagePreview() {
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        const fileInput = document.getElementById('photo');
+        
+        if (previewContainer) {
+            previewContainer.style.display = 'none';
+        }
+        
+        fileInput.value = '';
+    }
+
+    // Gestion des sélections géographiques
+    document.getElementById('region').addEventListener('change', function() {
+        const regionId = this.value;
+        const prefectureSelect = document.getElementById('prefecture');
+        
+        // Réinitialiser les préfectures
+        prefectureSelect.innerHTML = '<option value="">Chargement...</option>';
+        prefectureSelect.disabled = true;
+        
+        if (regionId) {
+            fetch(`/api/prefectures/${regionId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    prefectureSelect.innerHTML = '<option value="">-- Sélectionner une préfecture --</option>';
+                    data.forEach(prefecture => {
+                        const option = document.createElement('option');
+                        option.value = prefecture.id;
+                        option.textContent = prefecture.nom;
+                        prefectureSelect.appendChild(option);
+                    });
+                    prefectureSelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    prefectureSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+                });
+        } else {
+            prefectureSelect.innerHTML = '<option value="">-- Sélectionner une région d\'abord --</option>';
+            prefectureSelect.disabled = true;
+        }
+    });
+
+    // Animation d'entrée
+    document.addEventListener('DOMContentLoaded', function() {
+        const formCard = document.querySelector('.form-card');
+        if (formCard) {
+            formCard.style.opacity = '0';
+            formCard.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                formCard.style.transition = 'all 0.6s ease';
+                formCard.style.opacity = '1';
+                formCard.style.transform = 'translateY(0)';
+            }, 100);
+        }
+
+        // Animation sur focus des champs
+        const formControls = document.querySelectorAll('.form-control, .form-select');
+        formControls.forEach(control => {
+            control.addEventListener('focus', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.transition = 'all 0.3s ease';
+            });
+            
+            control.addEventListener('blur', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+</script>
+{% endblock %}

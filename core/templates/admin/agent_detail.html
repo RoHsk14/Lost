@@ -1,0 +1,518 @@
+{% extends "admin/base_modern.html" %}
+
+{% block page_title %}Profil Agent - {{ agent.get_full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.agent-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    color: white;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.agent-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+}
+
+.agent-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.section-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+}
+
+.section-header {
+    padding: 1.5rem;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.section-body {
+    padding: 1.5rem;
+}
+
+.info-row {
+    display: flex;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #6b7280;
+    width: 140px;
+    flex-shrink: 0;
+}
+
+.info-value {
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.status-actif {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-inactif {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.declaration-item {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.2s ease;
+}
+
+.declaration-item:hover {
+    background: #f9fafb;
+}
+
+.declaration-item:last-child {
+    border-bottom: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Agent -->
+    <div class="agent-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="agent-avatar mb-3">
+                    {{ agent.first_name|first|upper|default:agent.username|first|upper }}
+                </div>
+                <h2 class="fw-bold mb-2">{{ agent.get_full_name|default:agent.username }}</h2>
+                <p class="mb-3 opacity-75">
+                    <i class="fas fa-user-shield me-2"></i>Agent {{ agent.region.nom|default:"Région non définie" }}
+                </p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="status-badge {% if agent.actif %}status-actif{% else %}status-inactif{% endif %}">
+                        {% if agent.actif %}<i class="fas fa-check-circle me-1"></i>Actif{% else %}<i class="fas fa-times-circle me-1"></i>Inactif{% endif %}
+                    </span>
+                    {% if agent.email_verified %}
+                    <span class="status-badge" style="background: #dbeafe; color: #1e40af;">
+                        <i class="fas fa-envelope-check me-1"></i>Email vérifié
+                    </span>
+                    {% endif %}
+                    <span class="status-badge" style="background: #fef3c7; color: #92400e;">
+                        <i class="fas fa-calendar me-1"></i>Membre depuis {{ agent.date_joined|date:"d/m/Y" }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="{% url 'togo_admin:edit_agent' agent.id %}" class="btn btn-light">
+                        <i class="fas fa-edit me-2"></i>Modifier
+                    </a>
+                    <a href="{% url 'togo_admin:agents_list' %}" class="btn btn-light">
+                        <i class="fas fa-arrow-left me-2"></i>Retour
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques Principales -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-1">Total Traités</div>
+                        <div class="stat-value">{{ total_declarations_traitees }}</div>
+                        <small class="text-muted">Déclarations</small>
+                    </div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-1">Validées</div>
+                        <div class="stat-value text-success">{{ declarations_validees }}</div>
+                        <small class="text-muted">{{ taux_validation }}% taux</small>
+                    </div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-1">Restitués</div>
+                        <div class="stat-value text-primary">{{ objets_restitues }}</div>
+                        <small class="text-muted">Objets rendus</small>
+                    </div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-1">30 Derniers Jours</div>
+                        <div class="stat-value text-warning">{{ activite_recente }}</div>
+                        <small class="text-muted">Activité récente</small>
+                    </div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Informations Personnelles -->
+        <div class="col-xl-4">
+            <div class="section-card">
+                <div class="section-header">
+                    <h5 class="section-title">
+                        <i class="fas fa-user text-primary me-2"></i>
+                        Informations Personnelles
+                    </h5>
+                </div>
+                <div class="section-body">
+                    <div class="info-row">
+                        <span class="info-label">Nom complet</span>
+                        <span class="info-value">{{ agent.get_full_name|default:"-" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Email</span>
+                        <span class="info-value">{{ agent.email|default:"-" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Téléphone</span>
+                        <span class="info-value">{{ agent.telephone|default:"-" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Nom d'utilisateur</span>
+                        <span class="info-value">{{ agent.username }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Date d'inscription</span>
+                        <span class="info-value">{{ agent.date_joined|date:"d/m/Y à H:i" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Dernière connexion</span>
+                        <span class="info-value">
+                            {% if agent.last_login %}
+                                {{ agent.last_login|date:"d/m/Y à H:i" }}
+                            {% else %}
+                                Jamais connecté
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Localisation -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h5 class="section-title">
+                        <i class="fas fa-map-marker-alt text-success me-2"></i>
+                        Localisation
+                    </h5>
+                </div>
+                <div class="section-body">
+                    <div class="info-row">
+                        <span class="info-label">Région</span>
+                        <span class="info-value">{{ agent.region.nom|default:"Non définie" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Préfecture</span>
+                        <span class="info-value">{{ agent.prefecture.nom|default:"Non définie" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Structure</span>
+                        <span class="info-value">{{ agent.structure_locale.nom|default:"Non définie" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphique & Activité -->
+        <div class="col-xl-8">
+            <!-- Graphique d'évolution -->
+            <div class="section-card mb-3">
+                <div class="section-header">
+                    <h5 class="section-title">
+                        <i class="fas fa-chart-area text-info me-2"></i>
+                        Évolution de l'Activité (6 derniers mois)
+                    </h5>
+                </div>
+                <div class="section-body">
+                    <canvas id="evolutionChart" height="80"></canvas>
+                </div>
+            </div>
+
+            <!-- Répartition par statut -->
+            <div class="section-card mb-3">
+                <div class="section-header">
+                    <h5 class="section-title">
+                        <i class="fas fa-chart-pie text-warning me-2"></i>
+                        Répartition par Statut
+                    </h5>
+                </div>
+                <div class="section-body">
+                    {% if repartition_statuts %}
+                    <div class="row g-3">
+                        {% for item in repartition_statuts %}
+                        <div class="col-md-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h3 class="fw-bold mb-1">{{ item.count }}</h3>
+                                <small class="text-muted text-uppercase">{{ item.statut }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted py-4">Aucune donnée disponible</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Top Catégories -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h5 class="section-title">
+                        <i class="fas fa-tags text-danger me-2"></i>
+                        Top 5 Catégories Traitées
+                    </h5>
+                </div>
+                <div class="section-body">
+                    {% if top_categories %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Catégorie</th>
+                                    <th class="text-end">Nombre</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cat in top_categories %}
+                                <tr>
+                                    <td><i class="fas fa-tag me-2 text-primary"></i>{{ cat.categorie__nom|default:"Non catégorisé" }}</td>
+                                    <td class="text-end"><span class="badge bg-primary">{{ cat.count }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted py-4">Aucune donnée disponible</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dernières Déclarations Traitées -->
+    <div class="section-card mt-3">
+        <div class="section-header">
+            <h5 class="section-title">
+                <i class="fas fa-history text-secondary me-2"></i>
+                Dernières Déclarations Traitées
+            </h5>
+        </div>
+        <div class="section-body p-0">
+            {% if dernieres_declarations %}
+            {% for declaration in dernieres_declarations %}
+            <div class="declaration-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="fw-bold mb-1">{{ declaration.nom_objet }}</h6>
+                        <p class="mb-1 text-muted small">
+                            <i class="fas fa-user me-1"></i>{{ declaration.declarant.get_full_name|default:declaration.declarant.username }}
+                            •
+                            <i class="fas fa-tag me-1"></i>{{ declaration.categorie.nom|default:"Non catégorisé" }}
+                        </p>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>{{ declaration.date_validation|date:"d/m/Y à H:i" }}
+                        </small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge 
+                            {% if declaration.statut == 'valide' or declaration.statut == 'publie' %}bg-success
+                            {% elif declaration.statut == 'rejete' %}bg-danger
+                            {% elif declaration.statut == 'restitue' %}bg-primary
+                            {% else %}bg-warning{% endif %}">
+                            {{ declaration.get_statut_display }}
+                        </span>
+                        <br>
+                        <a href="{% url 'togo_admin:declaration_detail' declaration.id %}" class="btn btn-sm btn-outline-primary mt-2">
+                            <i class="fas fa-eye me-1"></i>Voir
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-inbox fa-3x mb-3 opacity-25"></i>
+                <p>Aucune déclaration traitée</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('evolutionChart').getContext('2d');
+    
+    const data = {{ evolution_data|safe }};
+    
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(102, 126, 234, 0.4)');
+    gradient.addColorStop(1, 'rgba(118, 75, 162, 0.1)');
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Déclarations traitées',
+                data: data.data,
+                borderColor: '#667eea',
+                backgroundColor: gradient,
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#667eea',
+                pointBorderWidth: 3,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(102, 126, 234, 0.95)',
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mon Profil - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                        👤 Mon Profil
+                    </h1>
+                    <p class="text-gray-600">
+                        Gérez vos informations personnelles et préférences
+                    </p>
+                </div>
+                <a href="{% url 'utilisateur_dashboard' %}" 
+                   class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all shadow-lg">
+                    ← Retour au dashboard
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Sidebar Navigation -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg p-6 sticky top-8">
+                    <div class="text-center mb-6">
+                        <div class="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg mb-4">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800">{{ user.get_full_name|default:user.username }}</h3>
+                        <p class="text-gray-600">{{ user.email }}</p>
+                        <p class="text-sm text-gray-500 mt-2">Membre depuis {{ user.date_joined|date:"F Y" }}</p>
+                    </div>
+                    
+                    <nav class="space-y-2">
+                        <a href="#informations" onclick="showSection('informations')" 
+                           class="nav-link flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition active">
+                            <i class="fas fa-user mr-3 text-blue-500"></i>
+                            Informations personnelles
+                        </a>
+                        <a href="#securite" onclick="showSection('securite')" 
+                           class="nav-link flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                            <i class="fas fa-shield-alt mr-3 text-green-500"></i>
+                            Sécurité
+                        </a>
+                        <a href="#statistiques" onclick="showSection('statistiques')" 
+                           class="nav-link flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                            <i class="fas fa-chart-bar mr-3 text-purple-500"></i>
+                            Mes statistiques
+                        </a>
+                        <a href="#preferences" onclick="showSection('preferences')" 
+                           class="nav-link flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                            <i class="fas fa-cog mr-3 text-gray-500"></i>
+                            Préférences
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lg:col-span-2">
+                <!-- Section Informations personnelles -->
+                <div id="informations-section" class="content-section bg-white rounded-xl shadow-lg p-8 mb-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">📝 Informations personnelles</h2>
+                        <button onclick="toggleEdit('info')" 
+                                class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                            ✏️ Modifier
+                        </button>
+                    </div>
+
+                    <form id="info-form" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_profile">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Nom d'utilisateur</label>
+                                <input type="text" name="username" value="{{ user.username }}" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100" 
+                                       disabled id="username-field">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Email</label>
+                                <input type="email" name="email" value="{{ user.email }}" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100" 
+                                       disabled id="email-field">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Prénom</label>
+                                <input type="text" name="first_name" value="{{ user.first_name }}" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100" 
+                                       disabled id="first_name-field">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Nom de famille</label>
+                                <input type="text" name="last_name" value="{{ user.last_name }}" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100" 
+                                       disabled id="last_name-field">
+                            </div>
+                            {% if user.utilisateur.region %}
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Région</label>
+                                <input type="text" value="{{ user.utilisateur.region.nom }}" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100" 
+                                       disabled>
+                            </div>
+                            {% endif %}
+                            {% if user.utilisateur.prefecture %}
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Préfecture</label>
+                                <input type="text" value="{{ user.utilisateur.prefecture.nom }}" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100" 
+                                       disabled>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mt-6 hidden" id="info-actions">
+                            <div class="flex space-x-4">
+                                <button type="submit" 
+                                        class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition">
+                                    💾 Sauvegarder
+                                </button>
+                                <button type="button" onclick="cancelEdit('info')" 
+                                        class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition">
+                                    ❌ Annuler
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Section Sécurité -->
+                <div id="securite-section" class="content-section bg-white rounded-xl shadow-lg p-8 mb-8 hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">🔒 Sécurité</h2>
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="change_password">
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Mot de passe actuel</label>
+                                <input type="password" name="current_password" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                       required>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Nouveau mot de passe</label>
+                                <input type="password" name="new_password1" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                       required>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Confirmer le nouveau mot de passe</label>
+                                <input type="password" name="new_password2" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                       required>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <button type="submit" 
+                                    class="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition">
+                                🔑 Changer le mot de passe
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Section Statistiques -->
+                <div id="statistiques-section" class="content-section bg-white rounded-xl shadow-lg p-8 mb-8 hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 Mes statistiques</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-blue-100">Total signalements</p>
+                                    <p class="text-3xl font-bold">{{ stats.total }}</p>
+                                </div>
+                                <div class="text-4xl opacity-80">📊</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-xl p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-red-100">Objets perdus</p>
+                                    <p class="text-3xl font-bold">{{ stats.perdus }}</p>
+                                </div>
+                                <div class="text-4xl opacity-80">😞</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-green-100">Objets trouvés</p>
+                                    <p class="text-3xl font-bold">{{ stats.trouves }}</p>
+                                </div>
+                                <div class="text-4xl opacity-80">🎉</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <span class="font-medium text-gray-700">Taux de réussite</span>
+                            <span class="text-lg font-bold text-green-600">{{ stats.taux_reussite|default:"0" }}%</span>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <span class="font-medium text-gray-700">Objets retournés</span>
+                            <span class="text-lg font-bold text-purple-600">{{ stats.retournes }}</span>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <span class="font-medium text-gray-700">Membre depuis</span>
+                            <span class="text-lg font-bold text-blue-600">{{ user.date_joined|timesince }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Préférences -->
+                <div id="preferences-section" class="content-section bg-white rounded-xl shadow-lg p-8 mb-8 hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">⚙️ Préférences</h2>
+                    
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_preferences">
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-3">🔔 Notifications</h3>
+                                <div class="space-y-3">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="notifications_email" class="rounded text-blue-600 mr-3" checked>
+                                        <span class="text-gray-700">Recevoir des notifications par email</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="notifications_nouveaux_objets" class="rounded text-blue-600 mr-3" checked>
+                                        <span class="text-gray-700">Notifications pour nouveaux objets dans ma région</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="notifications_correspondances" class="rounded text-blue-600 mr-3" checked>
+                                        <span class="text-gray-700">Notifications pour correspondances potentielles</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-3">🌍 Géolocalisation</h3>
+                                <div class="space-y-3">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="auto_localisation" class="rounded text-blue-600 mr-3">
+                                        <span class="text-gray-700">Utiliser ma position automatiquement</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="recherche_etendue" class="rounded text-blue-600 mr-3" checked>
+                                        <span class="text-gray-700">Recherche étendue aux régions voisines</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-3">👤 Confidentialité</h3>
+                                <div class="space-y-3">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="profil_public" class="rounded text-blue-600 mr-3" checked>
+                                        <span class="text-gray-700">Profil public</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="afficher_email" class="rounded text-blue-600 mr-3">
+                                        <span class="text-gray-700">Afficher mon email dans mes signalements</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8">
+                            <button type="submit" 
+                                    class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition">
+                                💾 Sauvegarder les préférences
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showSection(sectionName) {
+    // Cacher toutes les sections
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    // Retirer la classe active de tous les liens
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active', 'bg-blue-100');
+    });
+    
+    // Afficher la section sélectionnée
+    document.getElementById(sectionName + '-section').classList.remove('hidden');
+    
+    // Ajouter la classe active au lien correspondant
+    event.target.closest('.nav-link').classList.add('active', 'bg-blue-100');
+}
+
+function toggleEdit(section) {
+    const fields = document.querySelectorAll(`#${section}-form input:not([type="hidden"])`);
+    const actions = document.getElementById(`${section}-actions`);
+    
+    fields.forEach(field => {
+        if (field.disabled) {
+            field.disabled = false;
+            field.classList.remove('disabled:bg-gray-100');
+        }
+    });
+    
+    actions.classList.remove('hidden');
+}
+
+function cancelEdit(section) {
+    location.reload(); // Simple way to reset form
+}
+
+// Initialiser la première section comme active
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelector('.nav-link').classList.add('active', 'bg-blue-100');
+});
+</script>
+
+<style>
+.nav-link.active {
+    background-color: #dbeafe;
+    border-left: 4px solid #3b82f6;
+}
+</style>
+{% endblock %}

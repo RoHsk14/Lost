@@ -1,0 +1,83 @@
+{% load static %}
+<nav class="bg-blue-600 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <!-- Logo + Titre -->
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-search-location text-2xl"></i>
+                <a href="{% url 'home' %}" class="text-xl sm:text-2xl font-bold hover:text-gray-100">
+                    Objets Perdus & Trouvés
+                </a>
+            </div>
+
+            <!-- Menu principal -->
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="{% url 'index' %}" class="hover:text-gray-200 font-medium transition">🏠 Accueil</a>
+                <a href="{% url 'objets_list' %}" class="hover:text-gray-200 font-medium transition">😊 Objets trouvés</a>
+                <a href="{% url 'objets_perdus_list' %}" class="hover:text-gray-200 font-medium transition">😔 Objets perdus</a>
+                <a href="{% url 'signalements_list' %}" class="hover:text-gray-200 font-medium transition">🌍 Signalements</a>
+                
+                {% if user.is_authenticated %}
+                    <!-- Menu utilisateur connecté -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-2 hover:text-gray-200 font-medium transition">
+                            <span>👤 {{ user.username }}</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden group-hover:block">
+                            <a href="{% url 'utilisateur_dashboard' %}" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">📊 Mon tableau de bord</a>
+                            <a href="{% url 'mes_signalements' %}" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">📋 Mes signalements</a>
+                            <a href="{% url 'signalement_add' %}" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">➕ Nouveau signalement</a>
+                            <hr class="my-2">
+                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-red-600 hover:bg-red-50">🚪 Déconnexion</a>
+                        </div>
+                    </div>
+                    <a href="{% url 'signalement_add' %}" class="px-4 py-2 bg-green-500 rounded-full hover:bg-green-600 transition">➕ Signaler</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="px-4 py-2 bg-white text-blue-600 rounded-full hover:bg-gray-200 transition">Connexion</a>
+                    <a href="{% url 'register' %}" class="px-4 py-2 bg-blue-800 rounded-full hover:bg-blue-900 transition">Inscription</a>
+                {% endif %}
+            </div>
+
+            <!-- Bouton menu mobile -->
+            <div class="md:hidden flex items-center">
+                <button id="menu-toggle" class="focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu mobile -->
+    <div id="mobile-menu" class="hidden md:hidden bg-blue-700">
+        <div class="space-y-2 px-4 py-3">
+            <a href="{% url 'index' %}" class="block py-2 px-3 rounded hover:bg-blue-800">🏠 Accueil</a>
+            <a href="{% url 'objets_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800">😊 Objets trouvés</a>
+            <a href="{% url 'objets_perdus_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800">😔 Objets perdus</a>
+            <a href="{% url 'signalements_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800">🌍 Signalements</a>
+
+            {% if user.is_authenticated %}
+                <div class="block py-2 px-3 text-sm bg-white/10 rounded">👋 {{ user.username }}</div>
+                <a href="{% url 'utilisateur_dashboard' %}" class="block py-2 px-3 rounded hover:bg-blue-800">📊 Mon tableau de bord</a>
+                <a href="{% url 'mes_signalements' %}" class="block py-2 px-3 rounded hover:bg-blue-800">📋 Mes signalements</a>
+                <a href="{% url 'signalement_add' %}" class="block py-2 px-3 bg-green-500 rounded hover:bg-green-600">➕ Signaler</a>
+                <a href="{% url 'logout' %}" class="block py-2 px-3 bg-red-500 rounded hover:bg-red-600">🚪 Déconnexion</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="block py-2 px-3 bg-white text-blue-600 rounded hover:bg-gray-200">Connexion</a>
+                <a href="{% url 'register' %}" class="block py-2 px-3 bg-blue-800 rounded hover:bg-blue-900">Inscription</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<script>
+    // Script pour le menu mobile
+    document.getElementById('menu-toggle').addEventListener('click', function() {
+        const menu = document.getElementById('mobile-menu');
+        menu.classList.toggle('hidden');
+    });
+</script>

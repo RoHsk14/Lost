@@ -1,0 +1,430 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Modifier l'Agent{% endblock %}
+{% block page_heading %}Modifier l'Agent : {{ agent.get_full_name }}{% endblock %}
+{% block page_description %}Modification des informations de l'agent{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.form-section-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-section-title i {
+    color: #667eea;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.btn-secondary {
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+}
+
+.required-mark {
+    color: #ef4444;
+}
+
+.info-box {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.current-info {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-10">
+        <!-- Info Box -->
+        <div class="info-box">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-info-circle fa-2x me-3 text-primary"></i>
+                <div>
+                    <h6 class="fw-bold mb-2">Modification de l'agent</h6>
+                    <p class="mb-0 small">
+                        Vous pouvez modifier les informations de l'agent. 
+                        Le nom d'utilisateur ne peut pas être modifié.
+                        Laissez le champ mot de passe vide si vous ne souhaitez pas le changer.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Info -->
+        <div class="current-info">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Nom d'utilisateur :</strong> {{ agent.username }}</p>
+                    <p class="mb-1"><strong>Date de création :</strong> {{ agent.date_joined|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Statut actuel :</strong> 
+                        {% if agent.is_active %}
+                            <span class="badge bg-success">Actif</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inactif</span>
+                        {% endif %}
+                    </p>
+                    <p class="mb-1"><strong>Dernière connexion :</strong> 
+                        {{ agent.last_login|date:"d/m/Y H:i"|default:"Jamais connecté" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .agent-edit-wrapper {
+                max-width: 700px;
+                margin: 2.5rem auto 2rem auto;
+                background: #fff;
+                border-radius: 18px;
+                box-shadow: 0 8px 32px rgba(60,72,100,0.10);
+                padding: 2.5rem 2rem 2rem 2rem;
+            }
+            .agent-edit-wrapper h2 {
+                font-size: 2rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+                text-align: center;
+            }
+            .agent-edit-wrapper p.text-muted {
+                text-align: center;
+                margin-bottom: 2rem;
+            }
+            .agent-edit-wrapper label.form-label {
+                font-weight: 600;
+                color: #374151;
+            }
+            .agent-edit-wrapper .form-section-title {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: #1f2937;
+                margin-bottom: 1.2rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 2px solid #e5e7eb;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            .agent-edit-wrapper .form-section {
+                margin-bottom: 2rem;
+            }
+            .agent-edit-wrapper .form-control, .agent-edit-wrapper .form-select {
+                border-radius: 8px;
+                border: 2px solid #e5e7eb;
+                padding: 0.75rem 1rem;
+                transition: all 0.2s ease;
+            }
+            .agent-edit-wrapper .form-control:focus, .agent-edit-wrapper .form-select:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+            .agent-edit-wrapper .btn-primary {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border: none;
+                padding: 0.75rem 2rem;
+                font-weight: 600;
+                border-radius: 8px;
+            }
+            .agent-edit-wrapper .btn-secondary {
+                border-radius: 8px;
+                padding: 0.75rem 2rem;
+                font-weight: 600;
+            }
+            @media (max-width: 900px) {
+                .agent-edit-wrapper { padding: 1.2rem 0.5rem; }
+            }
+        </style>
+        <div class="agent-edit-wrapper">
+            <h2>Modifier l'Agent : {{ agent.get_full_name }}</h2>
+            <p class="text-muted mb-4">Modification des informations de l'agent</p>
+            <form method="post" id="agentForm">
+            {% csrf_token %}
+            
+            <!-- Informations Personnelles -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-user"></i>
+                    Informations Personnelles
+                </h5>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Prénom <span class="required-mark">*</span></label>
+                        <input type="text" name="first_name" class="form-control" value="{{ agent.first_name }}" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Nom <span class="required-mark">*</span></label>
+                        <input type="text" name="last_name" class="form-control" value="{{ agent.last_name }}" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Email <span class="required-mark">*</span></label>
+                        <input type="email" name="email" class="form-control" value="{{ agent.email }}" required>
+                        <small class="text-muted">Email professionnel de l'agent</small>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Téléphone</label>
+                        <input type="tel" name="telephone" class="form-control" value="{{ agent.telephone|default:'' }}" placeholder="+228 XX XX XX XX">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Changement de Mot de Passe -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-key"></i>
+                    Changement de Mot de Passe (optionnel)
+                </h5>
+                
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Nouveau mot de passe</label>
+                        <div class="input-group">
+                            <input type="password" name="new_password" id="newPassword" class="form-control" placeholder="Laisser vide pour ne pas modifier">
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                <i class="fas fa-eye" id="toggleIcon"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" type="button" onclick="generatePassword()">
+                                <i class="fas fa-sync" title="Générer un mot de passe"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Minimum 8 caractères. Laissez vide si vous ne souhaitez pas changer le mot de passe.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignation Géographique -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Assignation Géographique
+                </h5>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Région <span class="required-mark">*</span></label>
+                        <select name="region" id="regionSelect" class="form-select" required>
+                            <option value="">Sélectionner une région</option>
+                            {% for region in regions %}
+                            <option value="{{ region.id }}" {% if agent.region and agent.region.id == region.id %}selected{% endif %}>
+                                {{ region.nom }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">Préfecture <span class="required-mark">*</span></label>
+                        <select name="prefecture" id="prefectureSelect" class="form-select" required>
+                            <option value="">Sélectionner une préfecture</option>
+                            {% for prefecture in prefectures %}
+                            <option value="{{ prefecture.id }}" {% if agent.prefecture and agent.prefecture.id == prefecture.id %}selected{% endif %}>
+                                {{ prefecture.nom }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted"><i class="fas fa-spinner fa-spin d-none" id="prefectureLoader"></i></small>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label">Structure Locale</label>
+                        <select name="structure_locale" id="structureSelect" class="form-select">
+                            <option value="">Aucune structure (optionnel)</option>
+                            {% for structure in structures %}
+                            <option value="{{ structure.id }}" {% if agent.structure_locale and agent.structure_locale.id == structure.id %}selected{% endif %}>
+                                {{ structure.nom }} ({{ structure.type_structure }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Commissariat, Mairie, Gendarmerie, etc.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statut -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-toggle-on"></i>
+                    Statut de l'Agent
+                </h5>
+                
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="actif" id="actifSwitch" {% if agent.is_active %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="actifSwitch">
+                        Agent Actif
+                    </label>
+                    <p class="text-muted small mb-0 mt-1">L'agent pourra se connecter et gérer les déclarations</p>
+                </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'togo_admin:agents_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Annuler
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                </button>
+            </div>
+        </form>
+    </div>
+    </div>
+</div>
+
+<script>
+// Chargement dynamique des préfectures
+document.getElementById('regionSelect').addEventListener('change', function() {
+    const regionId = this.value;
+    const prefectureSelect = document.getElementById('prefectureSelect');
+    const structureSelect = document.getElementById('structureSelect');
+    const loader = document.getElementById('prefectureLoader');
+    
+    // Reset préfecture et structure
+    prefectureSelect.innerHTML = '<option value="">Chargement...</option>';
+    prefectureSelect.disabled = true;
+    structureSelect.innerHTML = '<option value="">Sélectionner d\'abord une préfecture</option>';
+    structureSelect.disabled = true;
+    loader.classList.remove('d-none');
+    
+    if (regionId) {
+        fetch(`/api/prefectures/${regionId}/`)
+            .then(response => response.json())
+            .then(data => {
+                prefectureSelect.innerHTML = '<option value="">Sélectionner une préfecture</option>';
+                data.forEach(prefecture => {
+                    const option = document.createElement('option');
+                    option.value = prefecture.id;
+                    option.textContent = prefecture.nom;
+                    prefectureSelect.appendChild(option);
+                });
+                prefectureSelect.disabled = false;
+                loader.classList.add('d-none');
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                prefectureSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+                loader.classList.add('d-none');
+            });
+    } else {
+        prefectureSelect.innerHTML = '<option value="">Sélectionner d\'abord une région</option>';
+        loader.classList.add('d-none');
+    }
+});
+
+// Chargement dynamique des structures locales
+document.getElementById('prefectureSelect').addEventListener('change', function() {
+    const prefectureId = this.value;
+    const structureSelect = document.getElementById('structureSelect');
+    
+    structureSelect.innerHTML = '<option value="">Chargement...</option>';
+    structureSelect.disabled = true;
+    
+    if (prefectureId) {
+        fetch(`/api/structures/${prefectureId}/`)
+            .then(response => response.json())
+            .then(data => {
+                structureSelect.innerHTML = '<option value="">Aucune structure (optionnel)</option>';
+                data.forEach(structure => {
+                    const option = document.createElement('option');
+                    option.value = structure.id;
+                    option.textContent = `${structure.nom} (${structure.type_structure})`;
+                    structureSelect.appendChild(option);
+                });
+                structureSelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                structureSelect.innerHTML = '<option value="">Aucune structure disponible</option>';
+                structureSelect.disabled = false;
+            });
+    } else {
+        structureSelect.innerHTML = '<option value="">Aucune structure (optionnel)</option>';
+    }
+});
+
+// Toggle password visibility
+function togglePassword() {
+    const passwordInput = document.getElementById('newPassword');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    }
+}
+
+// Generate new password
+function generatePassword() {
+    const length = 12;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let password = '';
+    
+    for (let i = 0; i < length; i++) {
+        password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    
+    document.getElementById('newPassword').value = password;
+    document.getElementById('newPassword').type = 'text';
+    document.getElementById('toggleIcon').classList.remove('fa-eye');
+    document.getElementById('toggleIcon').classList.add('fa-eye-slash');
+}
+</script>
+{% endblock %}

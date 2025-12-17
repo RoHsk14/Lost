@@ -1,0 +1,860 @@
+{% extends 'agent/base.html' %}
+
+{% block title %}Messagerie citoyenne - TogoRetrouve{% endblock %}
+
+{% block page_title %}Messagerie citoyenne{% endblock %}
+{% block page_subtitle %}Communication directe avec les citoyens{% endblock %}
+
+{% block content %}
+<div class="h-[calc(100vh-10rem)] bg-white rounded-3xl shadow-sm border border-gray-200 flex overflow-hidden">
+    <!-- Sidebar des conversations -->
+    <div class="w-80 border-r border-gray-200 flex flex-col bg-gray-50">
+        <!-- Header de la messagerie -->
+        <div class="p-6 bg-white border-b border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900">Conversations</h3>
+                    <p class="text-sm text-gray-500">{{ conversations|length }} conversation{{ conversations|length|pluralize }}</p>
+                </div>
+                <button class="w-10 h-10 bg-primary-600 hover:bg-primary-700 rounded-xl text-white transition-colors flex items-center justify-center">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            
+            <!-- Filtres de recherche -->
+            <div class="space-y-3">
+                <div class="relative">
+                    <input type="text" 
+                           placeholder="Rechercher une conversation..." 
+                           class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button class="flex-1 px-3 py-2 text-sm font-medium text-primary-700 bg-primary-100 rounded-lg hover:bg-primary-200 transition-colors">
+                        Toutes
+                    </button>
+                    <button class="flex-1 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        Non lues
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Liste des conversations -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar">
+            {% for conversation in conversations %}
+                <div class="conversation-item p-4 hover:bg-white/80 cursor-pointer border-b border-gray-100 group transition-all duration-200
+                     {% if forloop.first %}bg-white shadow-sm{% endif %}" 
+                     data-conversation-id="{{ conversation.id }}" 
+                     onclick="ouvrirConversation({{ conversation.id }})">
+                    
+                    <div class="flex items-start space-x-3">
+                        <!-- Avatar utilisateur -->
+                        <div class="relative flex-shrink-0">
+                            <div class="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                {% if conversation.signalement and conversation.signalement.declarant %}
+                                    {{ conversation.signalement.declarant.first_name|first|default:conversation.signalement.declarant.username|first|upper }}
+                                {% elif conversation.declarant %}
+                                    {{ conversation.declarant.first_name|first|default:conversation.declarant.username|first|upper }}
+                                {% else %}
+                                    U
+                                {% endif %}
+                            </div>
+                            {% if conversation.messages_non_lus > 0 %}
+                                <div class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold animate-pulse">
+                                    {{ conversation.messages_non_lus|default:"!" }}
+                                </div>
+                            {% endif %}
+                            <!-- Statut en ligne (optionnel) -->
+                            <div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                            <!-- Nom et heure -->
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="text-sm font-semibold text-gray-900 truncate">
+                                    {% if conversation.signalement and conversation.signalement.declarant %}
+                                        {{ conversation.signalement.declarant.get_full_name|default:conversation.signalement.declarant.username }}
+                                    {% elif conversation.declarant %}
+                                        {{ conversation.declarant.get_full_name|default:conversation.declarant.username }}
+                                    {% else %}
+                                        Utilisateur inconnu
+                                    {% endif %}
+                                </h4>
+                                <span class="text-xs text-gray-500 flex-shrink-0 ml-2">
+                                    {{ conversation.updated_at|date:"H:i" }}
+                                </span>
+                            </div>
+                            
+                            <!-- Objet de la conversation -->
+                            <p class="text-xs font-medium text-primary-600 bg-primary-50 px-2 py-0.5 rounded-lg mb-2 inline-block">
+                                {% if conversation.signalement %}
+                                    {{ conversation.signalement.nom_objet|truncatechars:20 }}
+                                {% else %}
+                                    Conversation générale
+                                {% endif %}
+                            </p>
+                            
+                            <!-- Dernier message -->
+                            <div class="flex items-end justify-between">
+                                <p class="text-sm text-gray-600 truncate group-hover:text-gray-800 transition-colors">
+                                    {% if conversation.dernier_message %}
+                                        <span class="font-medium">
+                                            {% if conversation.dernier_message.sender == user %}Vous:{% else %}{{ conversation.dernier_message.sender.first_name }}:{% endif %}
+                                        </span>
+                                        {{ conversation.dernier_message.contenu|truncatechars:30 }}
+                                    {% else %}
+                                        <span class="text-gray-400 italic">Aucun message</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="p-8 text-center">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-comments text-gray-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune conversation</h3>
+                    <p class="text-gray-500 text-sm">Les conversations avec les citoyens apparaîtront ici.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Zone de conversation principale -->
+    <div class="flex-1 flex flex-col" id="zone-conversation">
+        {% if selected_conversation %}
+            <!-- Header de la conversation active -->
+            <div class="p-4 bg-white border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <div class="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold">
+                                {% if selected_conversation.signalement and selected_conversation.signalement.declarant %}
+                                    {{ selected_conversation.signalement.declarant.first_name|first|default:selected_conversation.signalement.declarant.username|first|upper }}
+                                {% elif selected_conversation.declarant %}
+                                    {{ selected_conversation.declarant.first_name|first|default:selected_conversation.declarant.username|first|upper }}
+                                {% else %}
+                                    U
+                                {% endif %}
+                            </div>
+                            <div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-900">
+                                {% if selected_conversation.signalement and selected_conversation.signalement.declarant %}
+                                    {{ selected_conversation.signalement.declarant.get_full_name|default:selected_conversation.signalement.declarant.username }}
+                                {% elif selected_conversation.declarant %}
+                                    {{ selected_conversation.declarant.get_full_name|default:selected_conversation.declarant.username }}
+                                {% else %}
+                                    Utilisateur inconnu
+                                {% endif %}
+                            </h4>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm text-gray-500">En ligne</span>
+                                <span class="text-gray-300">•</span>
+                                <span class="text-sm text-primary-600 font-medium">
+                                    {% if selected_conversation.signalement %}
+                                        {{ selected_conversation.signalement.nom_objet }}
+                                    {% else %}
+                                        Conversation générale
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <!-- Actions conversation -->
+                        <button class="w-10 h-10 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-colors flex items-center justify-center" title="Informations">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                        
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="w-10 h-10 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-colors flex items-center justify-center">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            
+                            <div x-show="open" @click.outside="open = false" 
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
+                                <div class="py-2">
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+                                        <i class="fas fa-check-circle mr-3 text-green-500"></i>
+                                        Marquer comme résolu
+                                    </button>
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+                                        <i class="fas fa-archive mr-3 text-blue-500"></i>
+                                        Archiver conversation
+                                    </button>
+                                    <button class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center">
+                                        <i class="fas fa-ban mr-3"></i>
+                                        Bloquer utilisateur
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Zone des messages (style WhatsApp) -->
+            <div class="flex-1 p-4 overflow-y-auto custom-scrollbar bg-gradient-to-b from-gray-50 to-white" id="messages-container">
+                <div class="space-y-4">
+                    {% for message in messages_conv %}
+                        <div class="flex {% if message.sender == user %}justify-end{% else %}justify-start{% endif %}">
+                            <div class="max-w-xs lg:max-w-md xl:max-w-lg">
+                                <div class="flex items-end space-x-2 {% if message.sender == user %}flex-row-reverse space-x-reverse{% endif %}">
+                                    <!-- Avatar (seulement pour les messages reçus) -->
+                                    {% if message.sender != user %}
+                                        <div class="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                                            {{ message.sender.first_name|first|default:message.sender.username|first|upper }}
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <!-- Bulle de message -->
+                                    <div class="{% if message.sender == user %}bg-primary-600 text-white{% else %}bg-white border border-gray-200 text-gray-900{% endif %} rounded-2xl px-4 py-3 shadow-sm">
+                                        <!-- Contenu du message -->
+                                        {% if message.contenu %}
+                                            <p class="text-sm leading-relaxed">{{ message.contenu }}</p>
+                                        {% endif %}
+                                        
+                                        <!-- Pièces jointes si existantes -->
+                                        {% if message.fichier %}
+                                            {% if message.is_image %}
+                                                <!-- Affichage image -->
+                                                <div class="mt-2">
+                                                    <a href="{{ message.fichier.url }}" target="_blank" class="block">
+                                                        <img src="{{ message.fichier.url }}" 
+                                                             alt="Image jointe" 
+                                                             class="max-w-full rounded-lg hover:opacity-90 transition-opacity"
+                                                             style="max-height: 300px; object-fit: contain;">
+                                                    </a>
+                                                    <p class="text-xs mt-1 {% if message.sender == user %}text-primary-100{% else %}text-gray-500{% endif %}">
+                                                        {{ message.file_name }}
+                                                    </p>
+                                                </div>
+                                            {% else %}
+                                                <!-- Affichage fichier non-image -->
+                                                <div class="mt-2 p-3 {% if message.sender == user %}bg-primary-700{% else %}bg-gray-50{% endif %} rounded-lg">
+                                                    <a href="{{ message.fichier.url }}" target="_blank" class="flex items-center space-x-2 hover:underline">
+                                                        <i class="fas fa-file text-lg"></i>
+                                                        <div class="flex-1 min-w-0">
+                                                            <p class="text-xs font-medium truncate">{{ message.file_name }}</p>
+                                                            {% if message.file_size %}
+                                                                <p class="text-xs opacity-75">{{ message.file_size|filesizeformat }}</p>
+                                                            {% endif %}
+                                                        </div>
+                                                        <i class="fas fa-download text-xs"></i>
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                        {% endif %}
+                                        
+                                        <!-- Heure et statut -->
+                                        <div class="flex items-center justify-end mt-1 space-x-1">
+                                            <span class="text-xs {% if message.sender == user %}text-primary-100{% else %}text-gray-400{% endif %}">
+                                                {{ message.created_at|date:"H:i" }}
+                                            </span>
+                                            {% if message.sender == user %}
+                                                <i class="fas fa-check text-xs {% if message.is_read %}text-primary-200{% else %}text-primary-300{% endif %}"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-8">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-comments text-gray-400 text-2xl"></i>
+                            </div>
+                            <p class="text-gray-500">Aucun message dans cette conversation.</p>
+                            <p class="text-sm text-gray-400 mt-1">Envoyez le premier message !</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Zone de saisie des messages -->
+            <div class="p-4 bg-white border-t border-gray-200">
+                <!-- Prévisualisation du fichier sélectionné -->
+                <div id="file-preview" class="mb-3 hidden">
+                    <div class="bg-gray-50 rounded-lg p-3 flex items-center justify-between border border-gray-200">
+                        <div class="flex items-center space-x-3">
+                            <div id="preview-content" class="flex items-center space-x-2">
+                                <i class="fas fa-file text-gray-400"></i>
+                                <span id="file-name" class="text-sm text-gray-700"></span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="supprimerFichier()" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <form id="form-message" class="flex items-end space-x-4">
+                    {% csrf_token %}
+                    <!-- Zone de texte -->
+                    <div class="flex-1 relative">
+                        <div class="flex items-end space-x-2">
+                            <!-- Bouton pièce jointe -->
+                            <button type="button" 
+                                    class="w-10 h-10 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-colors flex items-center justify-center"
+                                    onclick="document.getElementById('file-upload').click()"
+                                    title="Joindre un fichier">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <input type="file" id="file-upload" class="hidden" accept="image/*,application/pdf,.doc,.docx" onchange="previsualiserFichier(this)">
+                            
+                            <!-- Zone de texte expansible -->
+                            <div class="flex-1 relative">
+                                <textarea id="message-input"
+                                          placeholder="Tapez votre message..." 
+                                          rows="1"
+                                          class="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all placeholder-gray-500"
+                                          style="min-height: 46px; max-height: 120px;"></textarea>
+                                
+                                <!-- Bouton emoji -->
+                                <button type="button" 
+                                        class="absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 text-gray-500 hover:text-primary-600 rounded-full transition-colors flex items-center justify-center">
+                                    <i class="far fa-smile"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bouton d'envoi -->
+                    <button type="submit" 
+                            class="w-12 h-12 bg-primary-600 hover:bg-primary-700 text-white rounded-full transition-all duration-200 hover:scale-105 flex items-center justify-center shadow-lg"
+                            id="send-button">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+                
+                <!-- Indicateur de frappe -->
+                <div id="typing-indicator" class="mt-2 text-xs text-gray-500 hidden">
+                    <i class="fas fa-circle animate-pulse mr-1"></i>
+                    L'utilisateur est en train d'écrire...
+                </div>
+            </div>
+        {% else %}
+            <!-- État vide -->
+            <div class="flex-1 flex items-center justify-center">
+                <div class="text-center max-w-md">
+                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-comments text-gray-400 text-4xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Messagerie citoyenne</h3>
+                    <p class="text-gray-500 leading-relaxed">
+                        Communiquez directement avec les citoyens pour les aider à retrouver leurs objets perdus 
+                        ou pour récupérer des objets trouvés.
+                    </p>
+                    <div class="mt-6 grid grid-cols-2 gap-4 text-sm">
+                        <div class="flex items-center justify-center p-3 bg-blue-50 rounded-lg">
+                            <i class="fas fa-clock mr-2 text-blue-600"></i>
+                            <span class="text-blue-800">Temps réel</span>
+                        </div>
+                        <div class="flex items-center justify-center p-3 bg-green-50 rounded-lg">
+                            <i class="fas fa-shield-alt mr-2 text-green-600"></i>
+                            <span class="text-green-800">Sécurisé</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- JavaScript pour la messagerie -->
+<script>
+// Variables globales
+let currentConversationId = {% if selected_conversation %}{{ selected_conversation.id }}{% else %}null{% endif %};
+let messagePolling;
+
+// ========== FONCTION CSRF TOKEN ==========
+function getCsrfToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// ========== DÉFINITION DE TOUTES LES FONCTIONS ==========
+
+// Fonction pour ouvrir une conversation sans recharger la page
+function ouvrirConversation(conversationId) {
+    // Mettre à jour l'ID de conversation actuel
+    currentConversationId = conversationId;
+    
+    // Mettre à jour l'apparence des conversations
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('bg-white', 'shadow-sm');
+    });
+    const selectedItem = document.querySelector(`[data-conversation-id="${conversationId}"]`);
+    if (selectedItem) {
+        selectedItem.classList.add('bg-white', 'shadow-sm');
+    }
+    
+    // Charger les détails de la conversation via AJAX
+    fetch(`/agent/conversation/${conversationId}/messages/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Charger toute la zone de conversation
+                chargerZoneConversation(conversationId, data.messages, data.conversation);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors du chargement de la conversation:', error);
+            showToast('Erreur lors du chargement de la conversation', 'error');
+        });
+    
+    // Mettre à jour l'URL sans recharger la page
+    const newUrl = `/agent/messagerie/?conversation_id=${conversationId}`;
+    window.history.pushState({conversationId: conversationId}, '', newUrl);
+    
+    // Redémarrer le polling avec la nouvelle conversation
+    if (messagePolling) {
+        clearInterval(messagePolling);
+    }
+    messagePolling = setInterval(() => {
+        if (document.hasFocus()) {
+            checkForNewMessages();
+        }
+    }, 5000);
+}
+
+// Fonction pour envoyer un message
+function envoyerMessage(event) {
+    event.preventDefault();
+    
+    const messageInput = document.getElementById('message-input');
+    const messageContent = messageInput.value.trim();
+    
+    if (!messageContent || !currentConversationId) {
+        return;
+    }
+    
+    // Désactiver le bouton d'envoi
+    const sendButton = document.getElementById('send-button');
+    sendButton.disabled = true;
+    
+    // Récupérer le CSRF token depuis le formulaire
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Utiliser FormData pour une meilleure compatibilité avec Django
+    const formData = new FormData();
+    formData.append('content', messageContent);
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    // Ajouter le fichier s'il y en a un
+    const fileInput = document.getElementById('file-upload');
+    if (fileInput.files.length > 0) {
+        formData.append('fichier', fileInput.files[0]);
+    }
+    
+    // Envoyer le message via AJAX
+    fetch(`/agent/conversation/${currentConversationId}/send/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Vider le champ de saisie
+            messageInput.value = '';
+            ajusterTailleTextarea(messageInput);
+            
+            // Supprimer le fichier sélectionné
+            supprimerFichier();
+            
+            // Ajouter le message à l'interface
+            ajouterMessageInterface(data.message);
+            
+            // Défiler vers le bas
+            defilerVersBas();
+            showToast('Message envoye avec succes', 'success');
+        } else {
+            showToast(data.error || 'Erreur lors de l envoi du message', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showToast('Erreur: ' + error.message, 'error');
+    })
+    .finally(() => {
+        sendButton.disabled = false;
+    });
+}
+
+// Fonction pour ajuster la taille du textarea
+function ajusterTailleTextarea(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    
+    // Activer/désactiver le bouton d'envoi
+    const sendButton = document.getElementById('send-button');
+    sendButton.disabled = !textarea.value.trim();
+}
+
+// Fonction pour gérer la touche Entrée
+function gererEnterKey(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        envoyerMessage(event);
+    }
+}
+
+// Fonction pour afficher des notifications toast
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    const bgColor = type === 'error' ? 'bg-red-600' : 
+                    type === 'success' ? 'bg-green-600' : 
+                    type === 'warning' ? 'bg-yellow-600' : 'bg-blue-600';
+    
+    toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${bgColor} transform transition-all duration-300`;
+    toast.innerHTML = `
+        <div class="flex items-center space-x-2">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Fonction pour défiler vers le bas
+function defilerVersBas() {
+    const messagesContainer = document.getElementById('messages-container');
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+}
+
+// Fonction pour prévisualiser le fichier sélectionné
+function previsualiserFichier(input) {
+    const filePreview = document.getElementById('file-preview');
+    const previewContent = document.getElementById('preview-content');
+    const fileName = document.getElementById('file-name');
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        fileName.textContent = file.name;
+        
+        // Vérifier si c'est une image pour afficher une miniature
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewContent.innerHTML = `
+                    <img src="${e.target.result}" class="h-12 w-12 object-cover rounded" />
+                    <span class="text-sm text-gray-700">${file.name}</span>
+                `;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewContent.innerHTML = `
+                <i class="fas fa-file text-gray-400 text-xl"></i>
+                <span class="text-sm text-gray-700">${file.name}</span>
+            `;
+        }
+        
+        filePreview.classList.remove('hidden');
+    }
+}
+
+// Fonction pour supprimer le fichier sélectionné
+function supprimerFichier() {
+    const fileInput = document.getElementById('file-upload');
+    const filePreview = document.getElementById('file-preview');
+    
+    fileInput.value = '';
+    filePreview.classList.add('hidden');
+}
+
+// Fonction pour ajouter un message à l'interface
+function ajouterMessageInterface(message) {
+    const messagesContainer = document.getElementById('messages-list') || document.querySelector('#messages-container .space-y-4');
+    if (!messagesContainer) return;
+    
+    // Vérifier si le message existe déjà
+    if (message.id && document.querySelector(`[data-message-id="${message.id}"]`)) {
+        return; // Message déjà affiché
+    }
+    
+    // Construire le contenu du fichier si présent
+    let fichierHtml = '';
+    if (message.fichier_url) {
+        if (message.is_image) {
+            fichierHtml = `
+                <div class="mt-2">
+                    <a href="${message.fichier_url}" target="_blank" class="block">
+                        <img src="${message.fichier_url}" 
+                             alt="Image jointe" 
+                             class="max-w-full rounded-lg hover:opacity-90 transition-opacity"
+                             style="max-height: 300px; object-fit: contain;">
+                    </a>
+                    ${message.file_name ? `<p class="text-xs mt-1 ${message.is_from_agent ? 'text-primary-100' : 'text-gray-500'}">${message.file_name}</p>` : ''}
+                </div>
+            `;
+        } else if (message.file_name) {
+            fichierHtml = `
+                <div class="mt-2 p-3 ${message.is_from_agent ? 'bg-primary-700' : 'bg-gray-50'} rounded-lg">
+                    <a href="${message.fichier_url}" target="_blank" class="flex items-center space-x-2 hover:underline">
+                        <i class="fas fa-file text-lg"></i>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-medium truncate">${message.file_name}</p>
+                        </div>
+                        <i class="fas fa-download text-xs"></i>
+                    </a>
+                </div>
+            `;
+        }
+    }
+    
+    const messageElement = document.createElement('div');
+    messageElement.className = `flex ${message.is_from_agent ? 'justify-end' : 'justify-start'}`;
+    messageElement.setAttribute('data-message-id', message.id || 'temp-' + Date.now());
+    messageElement.innerHTML = `
+        <div class="max-w-xs lg:max-w-md xl:max-w-lg">
+            <div class="flex items-end space-x-2 ${message.is_from_agent ? 'flex-row-reverse space-x-reverse' : ''}">
+                ${!message.is_from_agent ? '<div class="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">C</div>' : ''}
+                
+                <div class="${message.is_from_agent ? 'bg-primary-600 text-white' : 'bg-white border border-gray-200 text-gray-900'} rounded-2xl px-4 py-3 shadow-sm">
+                    ${(message.content || message.contenu) ? `<p class="text-sm leading-relaxed">${message.content || message.contenu}</p>` : ''}
+                    ${fichierHtml}
+                    
+                    <div class="flex items-center justify-end mt-1 space-x-1">
+                        <span class="text-xs ${message.is_from_agent ? 'text-primary-100' : 'text-gray-400'}">
+                            ${message.created_at || new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
+                        </span>
+                        ${message.is_from_agent ? '<i class="fas fa-check text-xs text-primary-200"></i>' : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    messagesContainer.appendChild(messageElement);
+    defilerVersBas();
+}
+
+// Fonction pour charger la zone de conversation complète
+function chargerZoneConversation(conversationId, messages, conversation) {
+    const zoneConversation = document.getElementById('zone-conversation');
+    if (!zoneConversation) return;
+    
+    // Construire le HTML de la zone de conversation
+    const conversationHtml = `
+        <!-- Header de la conversation active -->
+        <div class="p-4 bg-white border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <div class="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold">
+                            ${conversation.declarant_initial}
+                        </div>
+                        <div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-gray-900">${conversation.declarant_name}</h4>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500">En ligne</span>
+                            <span class="text-gray-300">•</span>
+                            <span class="text-sm text-primary-600 font-medium">${conversation.sujet}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <button class="w-10 h-10 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-colors flex items-center justify-center" title="Informations">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Zone des messages -->
+        <div class="flex-1 p-4 overflow-y-auto custom-scrollbar bg-gradient-to-b from-gray-50 to-white" id="messages-container">
+            <div class="space-y-4" id="messages-list">
+                ${messages.map(msg => creerMessageHTML(msg)).join('')}
+            </div>
+        </div>
+        
+        <!-- Zone de saisie -->
+        ${document.querySelector('.p-4.bg-white.border-t').outerHTML}
+    `;
+    
+    zoneConversation.innerHTML = conversationHtml;
+    
+    // Réattacher les événements du formulaire
+    reattacherEvenementsFormulaire();
+    
+    // Défiler vers le bas
+    setTimeout(defilerVersBas, 100);
+}
+
+// Fonction pour créer le HTML d'un message
+function creerMessageHTML(message) {
+    const fichierHtml = message.fichier_url ? (
+        message.is_image ? 
+            `<div class="mt-2">
+                <a href="${message.fichier_url}" target="_blank" class="block">
+                    <img src="${message.fichier_url}" alt="Image jointe" class="max-w-full rounded-lg hover:opacity-90 transition-opacity" style="max-height: 300px; object-fit: contain;">
+                </a>
+                ${message.file_name ? `<p class="text-xs mt-1 ${message.is_from_agent ? 'text-primary-100' : 'text-gray-500'}">${message.file_name}</p>` : ''}
+            </div>` :
+            `<div class="mt-2 p-3 ${message.is_from_agent ? 'bg-primary-700' : 'bg-gray-50'} rounded-lg">
+                <a href="${message.fichier_url}" target="_blank" class="flex items-center space-x-2 hover:underline">
+                    <i class="fas fa-file text-lg"></i>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-medium truncate">${message.file_name}</p>
+                    </div>
+                    <i class="fas fa-download text-xs"></i>
+                </a>
+            </div>`
+    ) : '';
+    
+    return `
+        <div class="flex ${message.is_from_agent ? 'justify-end' : 'justify-start'}" data-message-id="${message.id}">
+            <div class="max-w-xs lg:max-w-md xl:max-w-lg">
+                <div class="flex items-end space-x-2 ${message.is_from_agent ? 'flex-row-reverse space-x-reverse' : ''}">
+                    ${!message.is_from_agent ? '<div class="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">C</div>' : ''}
+                    <div class="${message.is_from_agent ? 'bg-primary-600 text-white' : 'bg-white border border-gray-200 text-gray-900'} rounded-2xl px-4 py-3 shadow-sm">
+                        ${message.contenu ? `<p class="text-sm leading-relaxed">${message.contenu}</p>` : ''}
+                        ${fichierHtml}
+                        <div class="flex items-center justify-end mt-1 space-x-1">
+                            <span class="text-xs ${message.is_from_agent ? 'text-primary-100' : 'text-gray-400'}">${message.created_at}</span>
+                            ${message.is_from_agent ? '<i class="fas fa-check text-xs text-primary-200"></i>' : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Fonction pour réattacher les événements du formulaire
+function reattacherEvenementsFormulaire() {
+    const messageForm = document.getElementById('form-message');
+    const messageInput = document.getElementById('message-input');
+    
+    if (messageForm) {
+        messageForm.removeEventListener('submit', envoyerMessage);
+        messageForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            envoyerMessage(event);
+        });
+    }
+    
+    if (messageInput) {
+        messageInput.addEventListener('input', function() {
+            ajusterTailleTextarea(this);
+        });
+        messageInput.addEventListener('keydown', function(event) {
+            gererEnterKey(event);
+        });
+    }
+}
+
+// Fonction pour vérifier les nouveaux messages
+function checkForNewMessages() {
+    if (!currentConversationId) return;
+    
+    fetch(`/agent/conversation/${currentConversationId}/messages/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.messages) {
+                const messagesList = document.getElementById('messages-list');
+                if (!messagesList) return;
+                
+                const currentMessageIds = Array.from(document.querySelectorAll('[data-message-id]'))
+                    .map(el => el.getAttribute('data-message-id'));
+                
+                data.messages.forEach(message => {
+                    if (!currentMessageIds.includes(String(message.id))) {
+                        ajouterMessageInterface(message);
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.log('Erreur de vérification des messages:', error);
+        });
+}
+
+// ========== INITIALISATION ==========
+document.addEventListener('DOMContentLoaded', function() {
+    // Défiler vers le bas au chargement
+    setTimeout(defilerVersBas, 100);
+    
+    // Configuration du textarea de message
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        // Écouteur pour ajuster la taille au fur et à mesure de la saisie
+        messageInput.addEventListener('input', function() {
+            ajusterTailleTextarea(this);
+        });
+        
+        // Écouteur pour gérer la touche Entrée
+        messageInput.addEventListener('keydown', function(event) {
+            gererEnterKey(event);
+        });
+    }
+    
+    // Configuration du formulaire d'envoi
+    const messageForm = document.getElementById('form-message');
+    if (messageForm) {
+        messageForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            envoyerMessage(event);
+        });
+    }
+    
+    // Polling pour les nouveaux messages (toutes les 5 secondes)
+    if (currentConversationId) {
+        messagePolling = setInterval(() => {
+            // Vérifier seulement si la page est active
+            if (document.hasFocus()) {
+                checkForNewMessages();
+            }
+        }, 5000); // Toutes les 5 secondes
+    }
+});
+
+// Nettoyage lors de la fermeture de la page
+window.addEventListener('beforeunload', function() {
+    if (messagePolling) {
+        clearInterval(messagePolling);
+    }
+});
+</script>
+{% endblock %}

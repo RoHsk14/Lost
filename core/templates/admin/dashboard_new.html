@@ -1,0 +1,725 @@
+﻿{% extends "admin/base_modern.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_heading %}Tableau de Bord{% endblock %}
+{% block page_description %}Vue d'ensemble de la plateforme{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none;
+    height: 100%;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+}
+
+.stat-title {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.bg-purple { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.bg-blue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.bg-pink { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+.bg-orange { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+.bg-green { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+.bg-red { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+
+.text-purple { color: #667eea; }
+.text-blue { color: #4facfe; }
+.text-pink { color: #ff9a9e; }
+.text-orange { color: #fcb69f; }
+.text-green { color: #a8edea; }
+.text-red { color: #f5576c; }
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+}
+
+.activity-item {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.2s;
+}
+
+.activity-item:hover {
+    background: #f8fafc;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.badge-custom {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+}
+
+.table-modern {
+    margin: 0;
+}
+
+.table-modern thead th {
+    background: #f8fafc;
+    border: none;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 1rem;
+}
+
+.table-modern tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.table-modern tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+}
+
+.modern-table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+/* Badge personnalisés */
+.badge-gradient-purple { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.badge-gradient-blue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.badge-gradient-pink { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+
+/* Animation de chargement */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.loading-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Section title */
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title::before {
+    content: '';
+    width: 4px;
+    height: 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 2px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Sélecteur de période -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h6 class="mb-0 fw-bold"><i class="fas fa-calendar-alt me-2 text-primary"></i>Période d'analyse: {{ titre_periode }}</h6>
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <a href="?periode=7" class="btn {% if periode == '7' %}btn-primary{% else %}btn-outline-secondary{% endif %}">7 jours</a>
+                        <a href="?periode=30" class="btn {% if periode == '30' %}btn-primary{% else %}btn-outline-secondary{% endif %}">30 jours</a>
+                        <a href="?periode=90" class="btn {% if periode == '90' %}btn-primary{% else %}btn-outline-secondary{% endif %}">3 mois</a>
+                        <a href="?periode=365" class="btn {% if periode == '365' %}btn-primary{% else %}btn-outline-secondary{% endif %}">1 an</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Métriques principales -->
+<div class="row g-3 mb-4">
+    <!-- Total Objets Signalés -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card gradient-purple text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-2">Total Objets Signalés</div>
+                        <div class="stat-value mb-2">{{ metriques.declarations_total }}</div>
+                        <span class="stat-badge bg-white bg-opacity-25">
+                            <i class="fas fa-arrow-up me-1"></i>+{{ metriques.declarations_periode }} cette période
+                        </span>
+                    </div>
+                    <div class="stat-icon bg-white bg-opacity-25">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Objets Perdus -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card gradient-pink text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-2">Objets Perdus</div>
+                        <div class="stat-value mb-2">{{ metriques.objets_perdus }}</div>
+                        <span class="stat-badge bg-white bg-opacity-25">
+                            <i class="fas fa-search me-1"></i>En recherche
+                        </span>
+                    </div>
+                    <div class="stat-icon bg-white bg-opacity-25">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Objets Trouvés -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card gradient-blue text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-2">Objets Trouvés</div>
+                        <div class="stat-value mb-2">{{ metriques.objets_trouves }}</div>
+                        <span class="stat-badge bg-white bg-opacity-25">
+                            <i class="fas fa-check-circle me-1"></i>Disponibles
+                        </span>
+                    </div>
+                    <div class="stat-icon bg-white bg-opacity-25">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Objets Restitués -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card gradient-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-2">Objets Restitués</div>
+                        <div class="stat-value mb-2">{{ metriques.objets_restitues }}</div>
+                        <span class="stat-badge bg-white bg-opacity-25">
+                            <i class="fas fa-trophy me-1"></i>{{ metriques.taux_restitution }}% taux
+                        </span>
+                    </div>
+                    <div class="stat-icon bg-white bg-opacity-25">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques Utilisateurs -->
+<div class="row g-3 mb-4">
+    <!-- Agents Enregistrés -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card gradient-orange">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-2 text-dark">Agents Enregistrés</div>
+                        <div class="stat-value mb-2 text-dark">{{ metriques.agents_total }}</div>
+                        <span class="stat-badge bg-dark text-white">
+                            <i class="fas fa-shield-alt me-1"></i>{{ metriques.agents_actifs }} actifs
+                        </span>
+                    </div>
+                    <div class="stat-icon bg-white">
+                        <i class="fas fa-user-shield text-dark"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Utilisateurs (Citoyens) -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card gradient-green">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-2 text-dark">Citoyens</div>
+                        <div class="stat-value mb-2 text-dark">{{ metriques.citoyens_total }}</div>
+                        <span class="stat-badge bg-dark text-white">
+                            <i class="fas fa-plus me-1"></i>+{{ metriques.nouveaux_citoyens }} nouveaux
+                        </span>
+                    </div>
+                    <div class="stat-icon bg-white">
+                        <i class="fas fa-users text-dark"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conversations Actives -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card border bg-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-2 text-muted">Conversations</div>
+                        <div class="stat-value mb-2 text-dark">{{ metriques.conversations_total }}</div>
+                        <span class="stat-badge badge-gradient-blue text-white">
+                            <i class="fas fa-comments me-1"></i>{{ metriques.conversations_actives }} actives
+                        </span>
+                    </div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-comment-dots text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Taux de Croissance -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card border bg-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-2 text-muted">Croissance</div>
+                        <div class="stat-value mb-2 text-dark">+{{ metriques.croissance_declarations }}%</div>
+                        <span class="stat-badge badge-gradient-purple text-white">
+                            <i class="fas fa-chart-line me-1"></i>Cette période
+                        </span>
+                    </div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                        <i class="fas fa-arrow-trend-up text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Graphique et Statistiques -->
+<div class="row g-3 mb-4">
+    <!-- Graphique d'évolution -->
+    <div class="col-xl-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="section-title mb-0">
+                    📈 Évolution des Signalements
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques complémentaires -->
+    <div class="col-xl-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="section-title mb-0">
+                    📊 Répartition par Statut
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for statut, count in statuts_data.items %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">{{ statut|title }}</span>
+                        <span class="fw-bold">{{ count }}</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar" 
+                             style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: {% widthratio count metriques.declarations_total 100 %}%">
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-chart-pie fa-3x mb-3 opacity-25"></i>
+                    <p>Aucune donnée disponible</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activité Récente -->
+<div class="row g-3 mb-4">
+    <!-- Dernières Déclarations -->
+    <div class="col-xl-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="section-title mb-0">
+                    🆕 Dernières Déclarations
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if dernieres_declarations %}
+                <div class="list-group list-group-flush">
+                    {% for declaration in dernieres_declarations %}
+                    <a href="{% url 'togo_admin:declaration_detail' declaration.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 fw-bold">{{ declaration.nom_objet|truncatechars:30 }}</h6>
+                                <p class="mb-1 text-muted small">
+                                    <i class="fas fa-user me-1"></i>{{ declaration.declarant.get_full_name|default:declaration.declarant.username }}
+                                </p>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>{{ declaration.date_declaration|timesince }}
+                                </small>
+                            </div>
+                            <span class="badge badge-gradient-{% if declaration.type_declaration == 'perdu' %}pink{% else %}blue{% endif %}">
+                                {{ declaration.get_type_declaration_display }}
+                            </span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-inbox fa-3x mb-3 opacity-25"></i>
+                    <p>Aucune déclaration récente</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Derniers Agents Créés -->
+    <div class="col-xl-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="section-title mb-0">
+                    👮 Derniers Agents Créés
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if derniers_agents %}
+                <div class="list-group list-group-flush">
+                    {% for agent in derniers_agents %}
+                    <div class="list-group-item">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" 
+                                     style="width: 45px; height: 45px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                    {{ agent.first_name|first|upper|default:agent.username|first|upper }}
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 fw-bold">{{ agent.get_full_name|default:agent.username }}</h6>
+                                <p class="mb-0 text-muted small">
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ agent.region.nom|default:"Région non définie" }}
+                                </p>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>{{ agent.date_joined|date:"d/m/Y" }}
+                                </small>
+                            </div>
+                            <span class="badge bg-{% if agent.actif %}success{% else %}secondary{% endif %}">
+                                {% if agent.actif %}Actif{% else %}Inactif{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-user-plus fa-3x mb-3 opacity-25"></i>
+                    <p>Aucun agent récent</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Dernières Restitutions -->
+    <div class="col-xl-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="section-title mb-0">
+                    🎉 Dernières Restitutions
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if dernieres_restitutions %}
+                <div class="list-group list-group-flush">
+                    {% for restitution in dernieres_restitutions %}
+                    <a href="{% url 'togo_admin:declaration_detail' restitution.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 fw-bold">{{ restitution.nom_objet|truncatechars:30 }}</h6>
+                                <p class="mb-1 text-muted small">
+                                    <i class="fas fa-user me-1"></i>{{ restitution.declarant.get_full_name|default:restitution.declarant.username }}
+                                </p>
+                                <small class="text-success">
+                                    <i class="fas fa-check-circle me-1"></i>{{ restitution.date_restitution|date:"d/m/Y" }}
+                                </small>
+                            </div>
+                            <span class="badge bg-success">
+                                <i class="fas fa-trophy me-1"></i>Restitué
+                            </span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-handshake fa-3x mb-3 opacity-25"></i>
+                    <p>Aucune restitution récente</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Catégories et Régions -->
+<div class="row g-3 mb-4">
+    <!-- Top Catégories -->
+    <div class="col-xl-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="section-title mb-0">
+                    🏷️ Top 5 Catégories
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if repartition_categories %}
+                <div class="table-responsive">
+                    <table class="table table-hover modern-table">
+                        <thead>
+                            <tr>
+                                <th>Catégorie</th>
+                                <th class="text-end">Nombre</th>
+                                <th class="text-end">Pourcentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cat in repartition_categories %}
+                            <tr>
+                                <td><i class="fas fa-tag me-2 text-primary"></i>{{ cat.categorie__nom|default:"Non catégorisé" }}</td>
+                                <td class="text-end fw-bold">{{ cat.count }}</td>
+                                <td class="text-end">
+                                    <span class="badge badge-gradient-purple">{% widthratio cat.count metriques.declarations_total 100 %}%</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-layer-group fa-3x mb-3 opacity-25"></i>
+                    <p>Aucune donnée de catégorie</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Régions -->
+    <div class="col-xl-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="section-title mb-0">
+                    🗺️ Top 5 Régions
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if repartition_regions %}
+                <div class="table-responsive">
+                    <table class="table table-hover modern-table">
+                        <thead>
+                            <tr>
+                                <th>Région</th>
+                                <th class="text-end">Nombre</th>
+                                <th class="text-end">Pourcentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reg in repartition_regions %}
+                            <tr>
+                                <td><i class="fas fa-map-marker-alt me-2 text-success"></i>{{ reg.region__nom|default:"Non définie" }}</td>
+                                <td class="text-end fw-bold">{{ reg.count }}</td>
+                                <td class="text-end">
+                                    <span class="badge badge-gradient-blue">{% widthratio reg.count metriques.declarations_total 100 %}%</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-globe-africa fa-3x mb-3 opacity-25"></i>
+                    <p>Aucune donnée régionale</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('evolutionChart').getContext('2d');
+    
+    const data = {{ evolution_declarations_json|safe }};
+    const labels = data.map(item => item.mois);
+    const values = data.map(item => item.count);
+    
+    // Gradient pour le graphique
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(102, 126, 234, 0.4)');
+    gradient.addColorStop(1, 'rgba(118, 75, 162, 0.1)');
+    
+    const lineGradient = ctx.createLinearGradient(0, 0, 0, 300);
+    lineGradient.addColorStop(0, '#667eea');
+    lineGradient.addColorStop(1, '#764ba2');
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Signalements',
+                data: values,
+                borderColor: lineGradient,
+                backgroundColor: gradient,
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#667eea',
+                pointBorderWidth: 3,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointHoverBackgroundColor: '#667eea',
+                pointHoverBorderColor: '#ffffff',
+                pointHoverBorderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(102, 126, 234, 0.95)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + ' signalements';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        font: {
+                            size: 12,
+                            weight: '600'
+                        }
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

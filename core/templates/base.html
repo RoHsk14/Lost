@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TogoRetrouve{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://kit.fontawesome.com/a2e0f1c6b9.js" crossorigin="anonymous"></script>
+</head>
+
+<!-- <body class="bg-gray-100 flex flex-col min-h-screen"> -->
+    <body class="flex flex-col min-h-screen bg-gray-100">
+
+    <!-- ✅ HEADER GLOBAL -->
+    <header class="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+
+                <!-- Logo -->
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-search-location text-2xl sm:text-3xl"></i>
+                    <a href="{% url 'home' %}" class="text-xl sm:text-2xl font-bold tracking-wide hover:text-blue-200 transition">
+                        TogoRetrouve
+                    </a>
+                </div>
+
+                <!-- Menu principal (Desktop) -->
+                <nav class="hidden md:flex space-x-4 lg:space-x-8">
+                    <a href="{% url 'index' %}" class="hover:text-blue-200 font-medium transition text-sm lg:text-base">Accueil</a>
+                    <a href="{% url 'objets_list' %}" class="hover:text-blue-200 font-medium transition text-sm lg:text-base">Objets trouvés</a>
+                    <a href="{% url 'objets_perdus_list' %}" class="hover:text-blue-200 font-medium transition text-sm lg:text-base">Objets perdus</a>
+                    <a href="{% url 'signalements_list' %}" class="hover:text-blue-200 font-medium transition text-sm lg:text-base">Signalements</a>
+                    <a href="{% url 'signalement_add' %}" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full font-medium transition text-sm lg:text-base">Signaler</a>
+                </nav>
+
+                <!-- Espace utilisateur -->
+                <div class="relative flex items-center gap-2 sm:gap-4">
+                    {% if user.is_authenticated %}
+                        <div class="relative">
+                            <button id="userMenuButton" class="flex items-center gap-1 sm:gap-2 bg-blue-800 text-white px-3 sm:px-4 py-2 rounded-full hover:bg-blue-900 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                <div class="w-6 h-6 sm:w-8 sm:h-8 bg-white text-blue-800 font-bold flex items-center justify-center rounded-full text-xs sm:text-base">
+                                    {{ user.username|first|upper }}
+                                </div>
+                                <span class="hidden sm:inline font-medium text-sm lg:text-base">{{ user.username }}</span>
+                                <svg id="userMenuArrow" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <!-- Menu déroulant -->
+                            <div id="userMenuDropdown" class="absolute right-0 mt-2 w-56 sm:w-64 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 invisible transform scale-95 transition-all duration-200 origin-top-right z-50">
+                                <div class="py-2">
+                                    <div class="px-4 py-2 border-b border-gray-100">
+                                        <p class="text-sm font-medium text-gray-700">{{ user.get_full_name|default:user.username }}</p>
+                                        <p class="text-xs text-gray-500">{{ user.email }}</p>
+                                    </div>
+                                    <a href="{% url 'utilisateur_dashboard' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                        <i class="fas fa-tachometer-alt mr-3 text-blue-500"></i>
+                                        Tableau de bord
+                                    </a>
+                                    <a href="{% url 'utilisateur_profil' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                        <i class="fas fa-user mr-3 text-green-500"></i>
+                                        Mon profil
+                                    </a>
+                                    <a href="{% url 'mes_signalements' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                        <i class="fas fa-list-alt mr-3 text-purple-500"></i>
+                                        Mes signalements
+                                    </a>
+                                    <a href="{% url 'utilisateur_parametres' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                        <i class="fas fa-cog mr-3 text-gray-500"></i>
+                                        Paramètres
+                                    </a>
+                                    <div class="border-t border-gray-100 mt-1">
+                                        <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100 transition text-sm">
+                                            <i class="fas fa-sign-out-alt mr-3"></i>
+                                            Déconnexion
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="bg-white text-blue-600 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-200 transition text-sm">
+                            Connexion
+                        </a>
+                        <a href="{% url 'register' %}" class="px-3 sm:px-5 py-2 rounded-full font-medium bg-blue-800 text-white hover:bg-blue-900 transition text-sm">
+                            Inscription
+                        </a>
+                    {% endif %}
+                
+                    <!-- Menu mobile hamburger -->
+                    <button class="md:hidden p-2 rounded-lg hover:bg-blue-800 transition" onclick="toggleMobileMenu()">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Menu mobile -->
+            <div id="mobileMenu" class="hidden md:hidden mt-4 pb-4 border-t border-blue-600">
+                <div class="space-y-2 pt-4">
+                    <a href="{% url 'index' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Accueil</a>
+                    <a href="{% url 'objets_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Objets trouvés</a>
+                    <a href="{% url 'objets_perdus_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Objets perdus</a>
+                    <a href="{% url 'signalements_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Signalements</a>
+                    <a href="{% url 'signalement_add' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Signaler</a>
+                    {% if user.is_authenticated %}
+                        <div class="border-t border-blue-600 pt-2 mt-2">
+                            <a href="{% url 'utilisateur_dashboard' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Dashboard</a>
+                            <a href="{% url 'mes_signalements' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Mes signalements</a>
+                            <a href="{% url 'utilisateur_profil' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Profil</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Gestion du menu utilisateur
+        document.addEventListener('DOMContentLoaded', function() {
+            const userMenuButton = document.getElementById('userMenuButton');
+            const userMenuDropdown = document.getElementById('userMenuDropdown');
+            const userMenuArrow = document.getElementById('userMenuArrow');
+
+            if (userMenuButton && userMenuDropdown) {
+                let isMenuOpen = false;
+
+                // Toggle du menu au clic
+                userMenuButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    isMenuOpen = !isMenuOpen;
+                    
+                    if (isMenuOpen) {
+                        // Ouvrir le menu
+                        userMenuDropdown.classList.remove('opacity-0', 'invisible', 'scale-95');
+                        userMenuDropdown.classList.add('opacity-100', 'visible', 'scale-100');
+                        if (userMenuArrow) {
+                            userMenuArrow.style.transform = 'rotate(180deg)';
+                        }
+                    } else {
+                        // Fermer le menu
+                        userMenuDropdown.classList.add('opacity-0', 'invisible', 'scale-95');
+                        userMenuDropdown.classList.remove('opacity-100', 'visible', 'scale-100');
+                        if (userMenuArrow) {
+                            userMenuArrow.style.transform = 'rotate(0deg)';
+                        }
+                    }
+                });
+
+                // Fermer le menu si on clique ailleurs
+                document.addEventListener('click', function(e) {
+                    if (!userMenuButton.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+                        isMenuOpen = false;
+                        userMenuDropdown.classList.add('opacity-0', 'invisible', 'scale-95');
+                        userMenuDropdown.classList.remove('opacity-100', 'visible', 'scale-100');
+                        if (userMenuArrow) {
+                            userMenuArrow.style.transform = 'rotate(0deg)';
+                        }
+                    }
+                });
+
+                // Fermer le menu avec la touche Escape
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && isMenuOpen) {
+                        isMenuOpen = false;
+                        userMenuDropdown.classList.add('opacity-0', 'invisible', 'scale-95');
+                        userMenuDropdown.classList.remove('opacity-100', 'visible', 'scale-100');
+                        if (userMenuArrow) {
+                            userMenuArrow.style.transform = 'rotate(0deg)';
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- ✅ MESSAGES FLASH -->
+    {% if messages %}
+    <div class="max-w-4xl mx-auto mt-4 px-4">
+        {% for message in messages %}
+        <div class="
+            {% if message.tags == 'success' %}bg-green-100 text-green-800 border-green-300
+            {% elif message.tags == 'error' %}bg-red-100 text-red-800 border-red-300
+            {% else %}bg-blue-100 text-blue-800 border-blue-300{% endif %}
+            border rounded-lg px-4 py-3 mb-3 shadow-sm">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ✅ CONTENU DYNAMIQUE -->
+    <main class="flex-grow flex items-center justify-center">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- ✅ FOOTER FIXÉ EN BAS -->
+    <footer class="bg-blue-900 text-white text-center py-4 mt-auto">
+        <p>&copy; 2025 <strong>TogoRetrouve</strong> — Tous droits réservés.</p>
+        <p class="text-sm text-blue-200 mt-1">Une initiative pour aider à retrouver vos objets perdus au Togo 🇹🇬</p>
+    </footer>
+</body>
+</html>
