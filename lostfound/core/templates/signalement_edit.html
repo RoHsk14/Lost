@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier un signalement</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+{% if messages %}
+<div class="fixed top-4 right-4 space-y-2 z-50">
+    {% for message in messages %}
+    <div
+        class="px-4 py-3 rounded shadow-md text-white 
+        {% if message.tags == 'success' %} bg-green-500 
+        {% elif message.tags == 'error' %} bg-red-500 
+        {% elif message.tags == 'warning' %} bg-yellow-500 
+        {% else %} bg-blue-500 {% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<nav class="bg-blue-600 text-white py-3 px-6 flex justify-between items-center">
+    <h1 class="font-bold text-xl">Modifier un signalement</h1>
+    <a href="{% url 'signalement_detail' signalement.pk %}" class="hover:underline">Retour</a>
+</nav>
+
+<div class="container mx-auto px-4 py-8">
+    <form method="post" enctype="multipart/form-data" class="bg-white p-6 rounded-lg shadow-md space-y-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Mettre à jour</button>
+    </form>
+</div>
+
+<script>
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.fixed.top-4.right-4 div');
+        alerts.forEach(a => a.remove());
+    }, 3000);
+</script>
+</body>
+</html>

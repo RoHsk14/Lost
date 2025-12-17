@@ -1,0 +1,547 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Paramètres - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                        ⚙️ Paramètres
+                    </h1>
+                    <p class="text-gray-600">
+                        Configurez votre expérience sur TogoRetrouve
+                    </p>
+                </div>
+                <a href="{% url 'utilisateur_dashboard' %}" 
+                   class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all shadow-lg">
+                    ← Retour au dashboard
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Sidebar Navigation -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg p-6 sticky top-8">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Catégories</h3>
+                    <nav class="space-y-2">
+                        <a href="#notifications" onclick="showSection('notifications')" 
+                           class="settings-nav-link flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition active">
+                            <i class="fas fa-bell mr-3 text-blue-500"></i>
+                            Notifications
+                        </a>
+                        <a href="#compte" onclick="showSection('compte')" 
+                           class="settings-nav-link flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                            <i class="fas fa-user-cog mr-3 text-green-500"></i>
+                            Compte
+                        </a>
+                        <a href="#confidentialite" onclick="showSection('confidentialite')" 
+                           class="settings-nav-link flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                            <i class="fas fa-shield-alt mr-3 text-purple-500"></i>
+                            Confidentialité
+                        </a>
+                        <a href="#localisation" onclick="showSection('localisation')" 
+                           class="settings-nav-link flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                            <i class="fas fa-map-marker-alt mr-3 text-red-500"></i>
+                            Localisation
+                        </a>
+                        <a href="#interface" onclick="showSection('interface')" 
+                           class="settings-nav-link flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                            <i class="fas fa-palette mr-3 text-orange-500"></i>
+                            Interface
+                        </a>
+                        <a href="#danger" onclick="showSection('danger')" 
+                           class="settings-nav-link flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                            <i class="fas fa-exclamation-triangle mr-3 text-red-500"></i>
+                            Zone dangereuse
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lg:col-span-3">
+                <!-- Section Notifications -->
+                <div id="notifications-section" class="settings-section bg-white rounded-xl shadow-lg p-8 mb-8">
+                    <div class="flex items-center mb-6">
+                        <i class="fas fa-bell text-2xl text-blue-500 mr-3"></i>
+                        <h2 class="text-2xl font-bold text-gray-800">Notifications</h2>
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_notifications">
+                        
+                        <div class="space-y-6">
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">📧 Notifications par email</h3>
+                                <div class="space-y-4">
+                                    <label class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="email_nouveaux_signalements" class="rounded text-blue-600 mr-3" checked>
+                                            <div>
+                                                <span class="font-medium text-gray-700">Nouveaux signalements</span>
+                                                <p class="text-sm text-gray-500">Quand de nouveaux signalements sont postés dans votre région</p>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="email_correspondances" class="rounded text-blue-600 mr-3" checked>
+                                            <div>
+                                                <span class="font-medium text-gray-700">Correspondances potentielles</span>
+                                                <p class="text-sm text-gray-500">Quand un objet correspond à votre recherche</p>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="email_messages" class="rounded text-blue-600 mr-3">
+                                            <div>
+                                                <span class="font-medium text-gray-700">Messages et commentaires</span>
+                                                <p class="text-sm text-gray-500">Quand quelqu'un répond à vos signalements</p>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">🔔 Notifications push</h3>
+                                <div class="space-y-4">
+                                    <label class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="push_urgence" class="rounded text-blue-600 mr-3" checked>
+                                            <div>
+                                                <span class="font-medium text-gray-700">Alertes urgentes</span>
+                                                <p class="text-sm text-gray-500">Pour les correspondances exactes ou objets de valeur</p>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">📱 Fréquence</h3>
+                                <select name="frequence_email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="immediate">Immédiate</option>
+                                    <option value="daily" selected>Quotidienne (résumé)</option>
+                                    <option value="weekly">Hebdomadaire</option>
+                                    <option value="never">Jamais</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <button type="submit" 
+                                    class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition">
+                                💾 Sauvegarder
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Section Compte -->
+                <div id="compte-section" class="settings-section bg-white rounded-xl shadow-lg p-8 mb-8 hidden">
+                    <div class="flex items-center mb-6">
+                        <i class="fas fa-user-cog text-2xl text-green-500 mr-3"></i>
+                        <h2 class="text-2xl font-bold text-gray-800">Paramètres du compte</h2>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="border border-gray-200 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">👤 Informations de base</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <span class="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur</span>
+                                    <p class="text-gray-900">{{ user.username }}</p>
+                                </div>
+                                <div>
+                                    <span class="block text-sm font-medium text-gray-700 mb-1">Email</span>
+                                    <p class="text-gray-900">{{ user.email }}</p>
+                                </div>
+                                <div>
+                                    <span class="block text-sm font-medium text-gray-700 mb-1">Nom complet</span>
+                                    <p class="text-gray-900">{{ user.get_full_name|default:"Non renseigné" }}</p>
+                                </div>
+                                <div>
+                                    <span class="block text-sm font-medium text-gray-700 mb-1">Membre depuis</span>
+                                    <p class="text-gray-900">{{ user.date_joined|date:"d F Y" }}</p>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <a href="{% url 'utilisateur_profil' %}" 
+                                   class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                                    ✏️ Modifier mes informations
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">🔒 Sécurité</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <span class="font-medium text-gray-700">Mot de passe</span>
+                                        <p class="text-sm text-gray-500">Dernière modification: {{ user.last_login|date:"d F Y"|default:"Jamais" }}</p>
+                                    </div>
+                                    <a href="{% url 'utilisateur_profil' %}#securite" 
+                                       class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition text-sm">
+                                        Changer
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Confidentialité -->
+                <div id="confidentialite-section" class="settings-section bg-white rounded-xl shadow-lg p-8 mb-8 hidden">
+                    <div class="flex items-center mb-6">
+                        <i class="fas fa-shield-alt text-2xl text-purple-500 mr-3"></i>
+                        <h2 class="text-2xl font-bold text-gray-800">Confidentialité</h2>
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_privacy">
+                        
+                        <div class="space-y-6">
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">👁️ Visibilité du profil</h3>
+                                <div class="space-y-4">
+                                    <label class="flex items-center">
+                                        <input type="radio" name="profil_visibility" value="public" class="text-blue-600 mr-3" checked>
+                                        <div>
+                                            <span class="font-medium text-gray-700">Profil public</span>
+                                            <p class="text-sm text-gray-500">Votre nom d'utilisateur est visible dans vos signalements</p>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="radio" name="profil_visibility" value="semi-private" class="text-blue-600 mr-3">
+                                        <div>
+                                            <span class="font-medium text-gray-700">Semi-privé</span>
+                                            <p class="text-sm text-gray-500">Seules les initiales sont visibles</p>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="radio" name="profil_visibility" value="anonymous" class="text-blue-600 mr-3">
+                                        <div>
+                                            <span class="font-medium text-gray-700">Anonyme</span>
+                                            <p class="text-sm text-gray-500">Apparaître comme "Utilisateur anonyme"</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">📞 Informations de contact</h3>
+                                <div class="space-y-4">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="show_email" class="rounded text-blue-600 mr-3">
+                                        <div>
+                                            <span class="font-medium text-gray-700">Afficher mon email</span>
+                                            <p class="text-sm text-gray-500">Permettre aux autres utilisateurs de me contacter directement</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">📊 Données d'utilisation</h3>
+                                <div class="space-y-4">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="analytics" class="rounded text-blue-600 mr-3" checked>
+                                        <div>
+                                            <span class="font-medium text-gray-700">Amélioration du service</span>
+                                            <p class="text-sm text-gray-500">Autoriser la collecte de données anonymes pour améliorer TogoRetrouve</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <button type="submit" 
+                                    class="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition">
+                                💾 Sauvegarder
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Section Localisation -->
+                <div id="localisation-section" class="settings-section bg-white rounded-xl shadow-lg p-8 mb-8 hidden">
+                    <div class="flex items-center mb-6">
+                        <i class="fas fa-map-marker-alt text-2xl text-red-500 mr-3"></i>
+                        <h2 class="text-2xl font-bold text-gray-800">Paramètres de localisation</h2>
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_location">
+                        
+                        <div class="space-y-6">
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">🗺️ Zone de recherche</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-gray-700 font-medium mb-2">Région par défaut</label>
+                                        <select name="default_region" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                            <option value="">Sélectionner une région...</option>
+                                            <option value="1">Région Maritime</option>
+                                            <option value="2">Région des Plateaux</option>
+                                            <option value="3">Région Centrale</option>
+                                            <option value="4">Région de la Kara</option>
+                                            <option value="5">Région des Savanes</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="auto_location" class="rounded text-blue-600 mr-3">
+                                        <div>
+                                            <span class="font-medium text-gray-700">Géolocalisation automatique</span>
+                                            <p class="text-sm text-gray-500">Utiliser ma position pour suggérer automatiquement la zone</p>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="extended_search" class="rounded text-blue-600 mr-3" checked>
+                                        <div>
+                                            <span class="font-medium text-gray-700">Recherche étendue</span>
+                                            <p class="text-sm text-gray-500">Inclure les régions voisines dans les résultats</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">📍 Rayons de recherche</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-gray-700 font-medium mb-2">Rayon par défaut (km)</label>
+                                        <input type="range" name="search_radius" min="5" max="100" value="25" 
+                                               class="w-full" oninput="updateRadiusValue(this.value)">
+                                        <div class="flex justify-between text-sm text-gray-500 mt-1">
+                                            <span>5 km</span>
+                                            <span id="radius-value">25 km</span>
+                                            <span>100 km</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <button type="submit" 
+                                    class="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition">
+                                💾 Sauvegarder
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Section Interface -->
+                <div id="interface-section" class="settings-section bg-white rounded-xl shadow-lg p-8 mb-8 hidden">
+                    <div class="flex items-center mb-6">
+                        <i class="fas fa-palette text-2xl text-orange-500 mr-3"></i>
+                        <h2 class="text-2xl font-bold text-gray-800">Interface</h2>
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_interface">
+                        
+                        <div class="space-y-6">
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">🎨 Apparence</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-gray-700 font-medium mb-2">Thème</label>
+                                        <select name="theme" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                            <option value="auto">Automatique (système)</option>
+                                            <option value="light" selected>Clair</option>
+                                            <option value="dark">Sombre</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-gray-700 font-medium mb-2">Taille de police</label>
+                                        <select name="font_size" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                            <option value="small">Petite</option>
+                                            <option value="medium" selected>Normale</option>
+                                            <option value="large">Grande</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">📱 Navigation</h3>
+                                <div class="space-y-4">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="compact_mode" class="rounded text-blue-600 mr-3">
+                                        <div>
+                                            <span class="font-medium text-gray-700">Mode compact</span>
+                                            <p class="text-sm text-gray-500">Réduire l'espacement pour afficher plus de contenu</p>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="show_animations" class="rounded text-blue-600 mr-3" checked>
+                                        <div>
+                                            <span class="font-medium text-gray-700">Animations</span>
+                                            <p class="text-sm text-gray-500">Activer les effets de transition et animations</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <button type="submit" 
+                                    class="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition">
+                                💾 Sauvegarder
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Section Zone dangereuse -->
+                <div id="danger-section" class="settings-section bg-white rounded-xl shadow-lg p-8 mb-8 hidden">
+                    <div class="flex items-center mb-6">
+                        <i class="fas fa-exclamation-triangle text-2xl text-red-500 mr-3"></i>
+                        <h2 class="text-2xl font-bold text-red-600">Zone dangereuse</h2>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="border border-red-200 rounded-lg p-6 bg-red-50">
+                            <h3 class="text-lg font-semibold text-red-800 mb-4">⚠️ Actions irreversibles</h3>
+                            
+                            <div class="space-y-4">
+                                <div class="border border-red-300 rounded-lg p-4 bg-white">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <span class="font-medium text-gray-700">Supprimer tous mes signalements</span>
+                                            <p class="text-sm text-gray-500">Cette action supprimera définitivement tous vos signalements</p>
+                                        </div>
+                                        <button onclick="confirmDeleteAllSignalements()" 
+                                                class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition text-sm">
+                                            Supprimer tout
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="border border-red-300 rounded-lg p-4 bg-white">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <span class="font-medium text-gray-700">Désactiver mon compte</span>
+                                            <p class="text-sm text-gray-500">Votre compte sera désactivé mais vos données seront conservées</p>
+                                        </div>
+                                        <button onclick="confirmDeactivateAccount()" 
+                                                class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition text-sm">
+                                            Désactiver
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="border border-red-300 rounded-lg p-4 bg-white">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <span class="font-medium text-red-700">Supprimer mon compte</span>
+                                            <p class="text-sm text-red-500">Cette action est définitive et supprimera toutes vos données</p>
+                                        </div>
+                                        <button onclick="confirmDeleteAccount()" 
+                                                class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm">
+                                            Supprimer le compte
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">📥 Exporter mes données</h3>
+                            <p class="text-gray-600 mb-4">
+                                Téléchargez une copie de toutes vos données personnelles et signalements.
+                            </p>
+                            <button onclick="exportData()" 
+                                    class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition">
+                                📥 Télécharger mes données
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showSection(sectionName) {
+    // Cacher toutes les sections
+    document.querySelectorAll('.settings-section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    // Retirer la classe active de tous les liens
+    document.querySelectorAll('.settings-nav-link').forEach(link => {
+        link.classList.remove('active', 'bg-blue-100');
+    });
+    
+    // Afficher la section sélectionnée
+    document.getElementById(sectionName + '-section').classList.remove('hidden');
+    
+    // Ajouter la classe active au lien correspondant
+    event.target.closest('.settings-nav-link').classList.add('active', 'bg-blue-100');
+}
+
+function updateRadiusValue(value) {
+    document.getElementById('radius-value').textContent = value + ' km';
+}
+
+function confirmDeleteAllSignalements() {
+    if (confirm('⚠️ Êtes-vous sûr de vouloir supprimer TOUS vos signalements ? Cette action est définitive !')) {
+        // Ici, faire l'appel AJAX pour supprimer
+        alert('Fonctionnalité en développement');
+    }
+}
+
+function confirmDeactivateAccount() {
+    if (confirm('⚠️ Êtes-vous sûr de vouloir désactiver votre compte ? Vous pourrez le réactiver plus tard.')) {
+        // Ici, faire l'appel pour désactiver
+        alert('Fonctionnalité en développement');
+    }
+}
+
+function confirmDeleteAccount() {
+    const confirmation = prompt('⚠️ ATTENTION ! Cette action est DÉFINITIVE.\n\nTapez "SUPPRIMER" pour confirmer la suppression de votre compte:');
+    if (confirmation === 'SUPPRIMER') {
+        alert('Fonctionnalité en développement');
+    } else if (confirmation !== null) {
+        alert('Suppression annulée - le texte de confirmation était incorrect.');
+    }
+}
+
+function exportData() {
+    alert('📥 Votre demande d\'export a été enregistrée. Vous recevrez un email avec vos données dans les prochaines 24h.');
+}
+
+// Initialiser la première section comme active
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelector('.settings-nav-link').classList.add('active', 'bg-blue-100');
+});
+</script>
+
+<style>
+.settings-nav-link.active {
+    background-color: #dbeafe;
+    border-left: 4px solid #3b82f6;
+}
+</style>
+{% endblock %}

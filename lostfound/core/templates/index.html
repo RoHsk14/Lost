@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TogoRetrouve - Retrouvez vos objets perdus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .search-shadow {
+            box-shadow: 0 10px 30px rgba(0, 13, 255, 0.2);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body class="font-sans antialiased text-gray-800">
+    {% if messages %}
+    <div class="fixed top-4 right-4 space-y-2 z-50">
+        {% for message in messages %}
+        <div
+            class="px-4 py-3 rounded shadow-md text-white 
+            {% if message.tags == 'success' %} bg-green-500 
+            {% elif message.tags == 'error' %} bg-red-500 
+            {% elif message.tags == 'warning' %} bg-yellow-500 
+            {% else %} bg-blue-500 {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <!-- Logo -->
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-search-location text-2xl sm:text-3xl"></i>
+                    <a href="{% url 'index' %}" class="text-xl sm:text-2xl font-bold tracking-wide hover:text-blue-200 transition">
+                        TogoRetrouve
+                    </a>
+                </div>
+                
+                <!-- Menu principal (Desktop) -->
+                <nav class="hidden md:flex space-x-4 lg:space-x-8">
+                    <a href="{% url 'index' %}" class="hover:text-blue-200 font-medium transition text-sm lg:text-base">Accueil</a>
+                    <a href="{% url 'objets_list' %}" class="hover:text-blue-200 font-medium transition text-sm lg:text-base">Objets trouvés</a>
+                    <a href="{% url 'objets_perdus_list' %}" class="hover:text-blue-200 font-medium transition text-sm lg:text-base">Objets perdus</a>
+                    <a href="{% url 'signalements_list' %}" class="hover:text-blue-200 font-medium transition text-sm lg:text-base">Signalements</a>
+                    <a href="{% url 'signalement_add' %}" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full font-medium transition text-sm lg:text-base">Signaler</a>
+                </nav>
+                
+                <!-- Espace utilisateur -->
+                <div class="relative flex items-center gap-2 sm:gap-4">
+                    {% if user.is_authenticated %}
+                        <div class="relative">
+                            <button id="userMenuButton" class="flex items-center gap-1 sm:gap-2 bg-blue-800 text-white px-3 sm:px-4 py-2 rounded-full hover:bg-blue-900 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                <div class="w-6 h-6 sm:w-8 sm:h-8 bg-white text-blue-800 font-bold flex items-center justify-center rounded-full text-xs sm:text-base">
+                                    {{ user.username|first|upper }}
+                                </div>
+                                <span class="hidden sm:inline font-medium text-sm lg:text-base">{{ user.username }}</span>
+                                <svg id="userMenuArrow" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <!-- Menu déroulant -->
+                            <div id="userMenuDropdown" class="absolute right-0 mt-2 w-56 sm:w-64 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 invisible transform scale-95 transition-all duration-200 origin-top-right z-50">
+                                <div class="py-2">
+                                    <div class="px-4 py-2 border-b border-gray-100">
+                                        <p class="text-sm font-medium text-gray-700">{{ user.get_full_name|default:user.username }}</p>
+                                        <p class="text-xs text-gray-500">{{ user.email }}</p>
+                                    </div>
+                                    <a href="{% url 'utilisateur_dashboard' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                        <i class="fas fa-tachometer-alt mr-3 text-blue-500"></i>
+                                        Tableau de bord
+                                    </a>
+                                    <a href="{% url 'utilisateur_profil' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                        <i class="fas fa-user mr-3 text-green-500"></i>
+                                        Mon profil
+                                    </a>
+                                    <a href="{% url 'mes_signalements' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                        <i class="fas fa-list-alt mr-3 text-purple-500"></i>
+                                        Mes signalements
+                                    </a>
+                                    <a href="{% url 'utilisateur_parametres' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                        <i class="fas fa-cog mr-3 text-gray-500"></i>
+                                        Paramètres
+                                    </a>
+                                    <div class="border-t border-gray-100 mt-1">
+                                        <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100 transition text-sm">
+                                            <i class="fas fa-sign-out-alt mr-3"></i>
+                                            Déconnexion
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="bg-white text-blue-600 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-200 transition text-sm">
+                            Connexion
+                        </a>
+                        <a href="{% url 'register' %}" class="px-3 sm:px-5 py-2 rounded-full font-medium bg-blue-800 text-white hover:bg-blue-900 transition text-sm">
+                            Inscription
+                        </a>
+                    {% endif %}
+                
+                    <!-- Menu mobile hamburger -->
+                    <button class="md:hidden p-2 rounded-lg hover:bg-blue-800 transition" onclick="toggleMobileMenu()">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Menu mobile -->
+            <div id="mobileMenu" class="hidden md:hidden mt-4 pb-4 border-t border-blue-600">
+                <div class="space-y-2 pt-4">
+                    <a href="{% url 'index' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Accueil</a>
+                    <a href="{% url 'objets_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Objets trouvés</a>
+                    <a href="{% url 'objets_perdus_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Objets perdus</a>
+                    <a href="{% url 'signalements_list' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Signalements</a>
+                    <a href="{% url 'signalement_add' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Signaler</a>
+                    {% if user.is_authenticated %}
+                        <div class="border-t border-blue-600 pt-2 mt-2">
+                            <a href="{% url 'utilisateur_dashboard' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Dashboard</a>
+                            <a href="{% url 'mes_signalements' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Mes signalements</a>
+                            <a href="{% url 'utilisateur_profil' %}" class="block py-2 px-3 rounded hover:bg-blue-800 text-sm">Profil</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Gestion du menu utilisateur
+        document.addEventListener('DOMContentLoaded', function() {
+            const userMenuButton = document.getElementById('userMenuButton');
+            const userMenuDropdown = document.getElementById('userMenuDropdown');
+            const userMenuArrow = document.getElementById('userMenuArrow');
+
+            if (userMenuButton && userMenuDropdown) {
+                let isMenuOpen = false;
+
+                // Toggle du menu au clic
+                userMenuButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    isMenuOpen = !isMenuOpen;
+                    
+                    if (isMenuOpen) {
+                        // Ouvrir le menu
+                        userMenuDropdown.classList.remove('opacity-0', 'invisible', 'scale-95');
+                        userMenuDropdown.classList.add('opacity-100', 'visible', 'scale-100');
+                        if (userMenuArrow) {
+                            userMenuArrow.style.transform = 'rotate(180deg)';
+                        }
+                    } else {
+                        // Fermer le menu
+                        userMenuDropdown.classList.add('opacity-0', 'invisible', 'scale-95');
+                        userMenuDropdown.classList.remove('opacity-100', 'visible', 'scale-100');
+                        if (userMenuArrow) {
+                            userMenuArrow.style.transform = 'rotate(0deg)';
+                        }
+                    }
+                });
+
+                // Fermer le menu si on clique ailleurs
+                document.addEventListener('click', function(e) {
+                    if (!userMenuButton.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+                        isMenuOpen = false;
+                        userMenuDropdown.classList.add('opacity-0', 'invisible', 'scale-95');
+                        userMenuDropdown.classList.remove('opacity-100', 'visible', 'scale-100');
+                        if (userMenuArrow) {
+                            userMenuArrow.style.transform = 'rotate(0deg)';
+                        }
+                    }
+                });
+
+                // Fermer le menu avec la touche Escape
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && isMenuOpen) {
+                        isMenuOpen = false;
+                        userMenuDropdown.classList.add('opacity-0', 'invisible', 'scale-95');
+                        userMenuDropdown.classList.remove('opacity-100', 'visible', 'scale-100');
+                        if (userMenuArrow) {
+                            userMenuArrow.style.transform = 'rotate(0deg)';
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 md:py-24">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 mb-8 md:mb-0 text-center md:text-left">
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">Retrouvez vos objets perdus facilement</h2>
+                <p class="text-lg sm:text-xl mb-6 sm:mb-8 text-blue-100">Notre plateforme connecte les personnes qui ont perdu des objets avec celles qui les ont trouvés.</p>
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center md:justify-start">
+                    <a href="#search" class="bg-white text-blue-600 px-4 sm:px-6 py-2 sm:py-3 rounded-full font-bold hover:bg-blue-50 transition flex items-center justify-center text-sm sm:text-base">
+                        <i class="fas fa-search mr-2"></i> Rechercher un objet
+                    </a>
+                    <a href="{% url 'signalement_add' %}" class="border-2 border-white text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full font-bold hover:bg-white hover:text-blue-600 transition flex items-center justify-center text-sm sm:text-base">
+                        <i class="fas fa-plus mr-2"></i> Signaler une perte
+                    </a>
+                </div>
+            </div>
+            <div class="md:w-1/2 flex justify-center">
+                <img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" alt="Objet perdu" class="w-48 sm:w-64 md:w-80 animate-float">
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Section -->
+    <section class="container mx-auto px-4 -mt-10 mb-20" id="search">
+        <div class="bg-white rounded-xl p-6 shadow-xl search-shadow">
+          <h3 class="text-2xl font-bold mb-6 text-center">Rechercher un objet </h3>
+      
+          <form class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" method="get" action="{% url 'index' %}">
+            <div class="sm:col-span-2">
+              <label class="block text-gray-700 mb-2 text-sm sm:text-base">Qu'avez-vous perdu ?</label>
+              <input type="text" name="nom" value="{{ request.GET.nom }}" placeholder="Ex: Portefeuille, téléphone, clés..." class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
+            </div>
+            <div>
+              <label class="block text-gray-700 mb-2 text-sm sm:text-base">Lieu</label>
+              <input type="text" name="lieu" value="{{ request.GET.lieu }}" placeholder="Ville ou quartier" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
+            </div>
+            <div>
+              <label class="block text-gray-700 mb-2 text-sm sm:text-base">Date</label>
+              <input type="date" name="date_perte" value="{{ request.GET.date_perte }}" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
+            </div>
+            <div class="sm:col-span-2 lg:col-span-4 flex justify-center">
+              <button type="submit" class="bg-blue-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-bold hover:bg-blue-700 transition flex items-center text-sm sm:text-base">
+                <i class="fas fa-search mr-2"></i> Rechercher
+              </button>
+            </div>
+          </form>
+      
+          <div class="mt-10">
+            {% if recherche_effectuee %}
+              {% if objets_resultats %}
+                <h4 class="text-lg font-semibold mb-4 flex items-center">
+                  <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                  Résultats de votre recherche ({{ objets_resultats.count }}) :
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {% for objet in objets_resultats %}
+                    <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-6 border border-gray-100">
+                      {% if objet.photo_principale %}
+                        <img src="{{ objet.photo_principale.url }}" alt="{{ objet.nom_objet }}" class="w-full h-40 object-cover rounded-lg mb-4">
+                      {% else %}
+                        <div class="w-full h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-4 flex items-center justify-center">
+                          <div class="text-4xl">📦</div>
+                        </div>
+                      {% endif %}
+                      
+                      <div class="mb-2">
+                        {% if objet.type_declaration == 'trouve' %}
+                          <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">
+                            ✓ Objet trouvé
+                          </span>
+                        {% else %}
+                          <span class="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-semibold">
+                            ✗ Objet perdu
+                          </span>
+                        {% endif %}
+                      </div>
+                      
+                      <h3 class="text-lg font-bold text-gray-800 mb-2">{{ objet.nom_objet }}</h3>
+                      
+                      {% if objet.description %}
+                      <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ objet.description|truncatewords:15 }}</p>
+                      {% endif %}
+                      
+                      <div class="space-y-2 mb-4">
+                        {% if objet.lieu_precis %}
+                        <p class="text-gray-600 text-sm flex items-center">
+                          <i class="fas fa-map-marker-alt mr-2 text-red-500"></i> 
+                          {{ objet.lieu_precis }}
+                        </p>
+                        {% elif objet.prefecture %}
+                        <p class="text-gray-600 text-sm flex items-center">
+                          <i class="fas fa-map-marker-alt mr-2 text-red-500"></i> 
+                          {{ objet.prefecture.nom }}
+                        </p>
+                        {% endif %}
+                        
+                        {% if objet.date_incident %}
+                        <p class="text-gray-600 text-sm flex items-center">
+                          <i class="far fa-calendar-alt mr-2 text-blue-500"></i> 
+                          {{ objet.date_incident|date:"d/m/Y" }}
+                        </p>
+                        {% endif %}
+                        
+                        {% if objet.categorie %}
+                        <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                          📦 {{ objet.categorie.nom }}
+                        </span>
+                        {% endif %}
+                      </div>
+                      
+                      <div class="flex justify-between items-center">
+                        <a href="{% url 'declaration_detail' objet.id %}" class="text-blue-600 hover:underline text-sm font-medium">
+                          👁️ Voir détails
+                        </a>
+                        <a href="{% url 'signalement_add' %}" class="bg-green-500 text-white text-xs px-3 py-2 rounded-full hover:bg-green-600 transition-colors">
+                          🔔 C'est le mien !
+                        </a>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="text-center py-12 bg-gray-50 rounded-2xl">
+                  <div class="text-6xl mb-4">😔</div>
+                  <h4 class="text-xl font-semibold text-gray-800 mb-2">Aucun résultat trouvé</h4>
+                  <p class="text-gray-600 mb-6">Aucun objet ne correspond à vos critères de recherche.</p>
+                  <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="{% url 'index' %}" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+                      🔄 Nouvelle recherche
+                    </a>
+                    <a href="{% url 'signalement_add' %}" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+                      📝 Signaler mon objet perdu
+                    </a>
+                  </div>
+                </div>
+              {% endif %}
+            {% else %}
+              <div class="text-center mb-6">
+                <h4 class="text-lg font-semibold mb-2 text-gray-700 flex items-center justify-center">
+                  <i class="fas fa-clock text-blue-500 mr-2"></i>
+                  Objets récemment déclarés
+                </h4>
+                <p class="text-gray-600">Voici les derniers objets ajoutés à notre base de données</p>
+              </div>
+              
+              {% if objets %}
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {% for objet in objets|slice:":4" %}
+                  <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 p-4 border border-gray-100">
+                    {% if objet.photo %}
+                      <img src="{{ objet.photo.url }}" alt="{{ objet.nom }}" class="w-full h-32 object-cover rounded-lg mb-3">
+                    {% else %}
+                      <div class="w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center">
+                        {% if objet.categorie == 'electronique' %}
+                          <div class="text-3xl">📱</div>
+                        {% elif objet.categorie == 'accessoire' %}
+                          <div class="text-3xl">👜</div>
+                        {% elif objet.categorie == 'cles' %}
+                          <div class="text-3xl">🔑</div>
+                        {% elif objet.categorie == 'vetement' %}
+                          <div class="text-3xl">👕</div>
+                        {% elif objet.categorie == 'document' %}
+                          <div class="text-3xl">📄</div>
+                        {% elif objet.categorie == 'sport' %}
+                          <div class="text-3xl">⚽</div>
+                        {% else %}
+                          <div class="text-3xl">📦</div>
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                    
+                    <h5 class="font-bold text-sm text-gray-800 mb-2 line-clamp-1">{{ objet.nom }}</h5>
+                    
+                    <div class="space-y-1 mb-3">
+                      {% if objet.lieu_trouve %}
+                      <p class="text-gray-600 text-xs flex items-center">
+                        <i class="fas fa-map-marker-alt mr-1 text-red-500"></i> 
+                        {{ objet.lieu_trouve|truncatechars:20 }}
+                      </p>
+                      {% endif %}
+                      
+                      <p class="text-gray-600 text-xs flex items-center">
+                        <i class="far fa-calendar-alt mr-1 text-blue-500"></i> 
+                        {{ objet.date_creation|date:"d/m" }}
+                      </p>
+                    </div>
+                    
+                    <a href="{% url 'objet_detail' objet.id %}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                      Voir → 
+                    </a>
+                  </div>
+                {% endfor %}
+              </div>
+              {% else %}
+              <div class="text-center py-8 bg-gray-50 rounded-2xl">
+                <div class="text-4xl mb-3">📦</div>
+                <p class="text-gray-600">Aucun objet récent à afficher</p>
+              </div>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </section>
+      
+    <!-- How it Works -->
+    <section class="bg-gray-50 py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Comment ça marche ?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md text-center card-hover">
+                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-search text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">1. Recherchez</h3>
+                    <p class="text-gray-600">Utilisez notre moteur de recherche pour trouver votre objet perdu parmi les annonces.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md text-center card-hover">
+                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-bell text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">2. Créez une alerte</h3>
+                    <p class="text-gray-600">Si vous ne trouvez pas immédiatement, créez une alerte pour être notifié si votre objet apparaît.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md text-center card-hover">
+                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-handshake text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">3. Récupérez</h3>
+                    <p class="text-gray-600">Contactez la personne qui a trouvé votre objet et organisez la restitution.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+
+
+    <!-- Stats avec données réelles -->
+    <section class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white py-16">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-4">📊 Statistiques en temps réel</h2>
+                <p class="text-blue-200">Notre impact dans la communauté</p>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/20 transition-all">
+                    <div class="text-4xl font-bold mb-2">{{ stats.total_objets|default:0 }}</div>
+                    <div class="text-blue-100">📦 Objets déclarés</div>
+                </div>
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/20 transition-all">
+                    <div class="text-4xl font-bold mb-2">{{ stats.total_signalements|default:0 }}</div>
+                    <div class="text-blue-100">📋 Signalements</div>
+                </div>
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/20 transition-all">
+                    <div class="text-4xl font-bold mb-2">{{ stats.signalements_perdus|default:0 }}</div>
+                    <div class="text-blue-100">😞 Objets perdus</div>
+                </div>
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/20 transition-all">
+                    <div class="text-4xl font-bold mb-2">{{ stats.signalements_trouves|default:0 }}</div>
+                    <div class="text-blue-100">😊 Objets trouvés</div>
+                </div>
+            </div>
+            
+            <!-- Statistiques supplémentaires -->
+            <div class="mt-12 text-center">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                        <div class="text-2xl font-bold text-yellow-300">
+                            {% widthratio stats.signalements_trouves stats.total_signalements 100 %}%
+                        </div>
+                        <div class="text-blue-100 text-sm">Taux de récupération</div>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                        <div class="text-2xl font-bold text-green-300">🇹🇬 Togo</div>
+                        <div class="text-blue-100 text-sm">Couverture nationale</div>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                        <div class="text-2xl font-bold text-pink-300">24h</div>
+                        <div class="text-blue-100 text-sm">Disponible 7j/7</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Témoignages</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-gray-300 mr-4 overflow-hidden">
+                            <img src="https://randomuser.me/api/portraits/women/43.jpg" alt="Person" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Sophie Martin</h4>
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">"J'ai retrouvé mon portefeuille en moins de 24h grâce à TogoRetrouve. La personne qui l'avait trouvé m'a contactée directement. Un service incroyable !"</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-gray-300 mr-4 overflow-hidden">
+                            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Person" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Thomas Leroy</h4>
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">"Après avoir perdu mes clés de voiture, j'ai créé une alerte sur le site. Une semaine plus tard, quelqu'un les avait déposées à la mairie. Merci !"</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-gray-300 mr-4 overflow-hidden">
+                            <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Person" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Élodie Dupont</h4>
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">"J'ai trouvé un sac à main dans le métro. Grâce à TogoRetrouve, j'ai pu contacter la propriétaire le jour même. Elle était tellement heureuse !"</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-16 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold mb-6">Vous avez perdu ou trouvé un objet ?</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">Rejoignez notre communauté et augmentez vos chances de retrouver vos objets perdus ou de rendre service à quelqu'un.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#search" class="bg-white text-blue-600 px-8 py-3 rounded-full font-bold hover:bg-blue-50 transition">
+                    <i class="fas fa-search mr-2"></i> Rechercher un objet
+                </a>
+                <a href="{% url 'signalement_add' %}" class="border-2 border-white text-white px-8 py-3 rounded-full font-bold hover:bg-white hover:text-blue-600 transition">
+                    <i class="fas fa-plus mr-2"></i> Signaler un objet trouvé
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fas fa-search-location text-2xl"></i>
+                        <h3 class="text-xl font-bold">TogoRetrouve</h3>
+                    </div>
+                    <p class="text-gray-400">La plateforme qui vous aide à retrouver vos objets perdus et à rendre service à la communauté.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-4">Navigation</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Accueil</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Objets trouvés</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Signaler une perte</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Conseils</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-4">Légal</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Conditions d'utilisation</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Politique de confidentialité</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Mentions légales</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">FAQ</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-4">Contact</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-2 text-gray-400"></i>
+                            <span class="text-gray-400">contact@lostandfound.com</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone mr-2 text-gray-400"></i>
+                            <span class="text-gray-400">01 23 45 67 89</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>
+                            <span class="text-gray-400">Lomé, Togo</span>
+                        </li>
+                    </ul>
+                    <div class="flex space-x-4 mt-4">
+                        <a href="#" class="text-gray-400 hover:text-white text-xl"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white text-xl"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white text-xl"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>© 2023 TogoRetrouve. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Menu mobile toggle function
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Masquer automatiquement les messages après 3 secondes
+            setTimeout(() => {
+                const alerts = document.querySelectorAll('.fixed.top-4.right-4 div');
+                alerts.forEach(a => a.remove());
+            }, 3000);
+        });
+    </script>
+
+    <!-- CSS personnalisé pour les animations et effets -->
+    <style>
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      25% { transform: translateY(-10px) rotate(1deg); }
+      50% { transform: translateY(0px) rotate(0deg); }
+      75% { transform: translateY(-5px) rotate(-1deg); }
+    }
+
+    .animate-float {
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .line-clamp-1 {
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+    }
+
+    .line-clamp-2 {
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    /* Effet de brillance sur les cartes au survol */
+    .group:hover::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 1.5s ease-out;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200px 0; }
+      100% { background-position: calc(200px + 100%) 0; }
+    }
+
+    /* Transitions fluides */
+    * {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    </style>
+    
+</body>
+</html>

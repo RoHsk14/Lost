@@ -1,0 +1,434 @@
+{% extends 'agent/base.html' %}
+
+{% block title %}Dashboard Agent - TogoRetrouve{% endblock %}
+
+{% block page_title %}Dashboard Agent{% endblock %}
+{% block page_subtitle %}Votre espace de travail intelligent{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- En-tête de bienvenue moderne -->
+    <div class="bg-gradient-to-r from-primary-600 via-primary-700 to-blue-700 rounded-3xl p-8 text-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-black opacity-5"></div>
+        <div class="absolute -top-10 -right-10 w-40 h-40 bg-white opacity-10 rounded-full"></div>
+        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-white opacity-5 rounded-full"></div>
+        
+        <div class="relative flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl lg:text-4xl font-bold mb-3">
+                    Bonjour {{ user.first_name|default:user.username }} 👋
+                </h1>
+                <p class="text-primary-100 text-lg opacity-90">
+                    {% now "l d F Y" %} - Voici un aperçu de votre activité du jour
+                </p>
+                <div class="mt-4 flex items-center text-primary-200">
+                    <i class="fas fa-map-marker-alt mr-2"></i>
+                    <span class="text-sm">{{ user.structure_locale|default:user.prefecture|default:user.region|default:"Non assigné" }}</span>
+                </div>
+            </div>
+            <div class="hidden lg:block">
+                <div class="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                    <i class="fas fa-chart-line text-4xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes statistiques modernes -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <!-- Total signalements -->
+        <div class="stats-card bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg group">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-list text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Signalements</h3>
+                            <p class="text-xs text-gray-400">Total traités</p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-3xl font-bold text-gray-900 mb-1">{{ stats.total_signalements|default:0 }}</p>
+                        <div class="flex items-center">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                +12%
+                            </span>
+                            <span class="text-xs text-gray-500 ml-2">vs mois dernier</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Objets retrouvés -->
+        <div class="stats-card bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg group">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-search text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Retrouvés</h3>
+                            <p class="text-xs text-gray-400">Objets localisés</p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-3xl font-bold text-gray-900 mb-1">{{ stats.objets_retrouves|default:0 }}</p>
+                        <div class="flex items-center">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                +8%
+                            </span>
+                            <span class="text-xs text-gray-500 ml-2">vs mois dernier</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Objets restitués -->
+        <div class="stats-card bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg group">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-handshake text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Restitués</h3>
+                            <p class="text-xs text-gray-400">Succès complets</p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-3xl font-bold text-gray-900 mb-1">{{ stats.objets_restitues|default:0 }}</p>
+                        <div class="flex items-center">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                +15%
+                            </span>
+                            <span class="text-xs text-gray-500 ml-2">vs mois dernier</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Réclamations en attente -->
+        <div class="stats-card bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg group">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-clock text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">En attente</h3>
+                            <p class="text-xs text-gray-400">À traiter</p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-3xl font-bold text-gray-900 mb-1">{{ stats.demandes_attente|default:0 }}</p>
+                        <div class="flex items-center">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                                <i class="fas fa-minus mr-1"></i>
+                                -5%
+                            </span>
+                            <span class="text-xs text-gray-500 ml-2">vs mois dernier</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal en grille -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Signalements récents - 2/3 de largeur -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100">
+                <!-- En-tête de section -->
+                <div class="p-6 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">Signalements récents</h3>
+                            <p class="text-gray-500">Dernières déclarations nécessitant votre attention</p>
+                        </div>
+                        <a href="{% url 'togo_agent:mes_signalements' %}" 
+                           class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 hover:border-primary-300 rounded-xl transition-all duration-200 hover:shadow-md">
+                            Voir tout
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Liste des signalements -->
+                <div class="divide-y divide-gray-50">
+                    {% for signalement in signalements_en_attente %}
+                        <div class="p-6 hover:bg-gray-50/50 transition-colors duration-200 group">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start space-x-4 flex-1">
+                                    <!-- Icône de catégorie -->
+                                    <div class="w-14 h-14 bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                                        <i class="fas {% if signalement.type_declaration == 'perdu' %}fa-search-minus{% else %}fa-search-plus{% endif %} text-primary-600 text-lg"></i>
+                                    </div>
+                                    
+                                    <div class="flex-1 min-w-0">
+                                        <!-- Titre et numéro -->
+                                        <div class="flex items-center mb-2">
+                                            <h4 class="text-lg font-bold text-gray-900 group-hover:text-primary-700 transition-colors">
+                                                {{ signalement.nom_objet }}
+                                            </h4>
+                                        </div>
+                                        
+                                        <!-- Badges et métadonnées -->
+                                        <div class="flex flex-wrap items-center gap-2 mb-3">
+                                            <span class="text-sm font-mono font-medium text-primary-600 bg-primary-50 px-2 py-1 rounded-lg">
+                                                #{{ signalement.numero_declaration }}
+                                            </span>
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
+                                                {% if signalement.statut == 'cree' %}bg-yellow-100 text-yellow-800 border border-yellow-200
+                                                {% elif signalement.statut == 'en_validation' %}bg-blue-100 text-blue-800 border border-blue-200
+                                                {% elif signalement.statut == 'valide' %}bg-green-100 text-green-800 border border-green-200
+                                                {% elif signalement.statut == 'publie' %}bg-purple-100 text-purple-800 border border-purple-200
+                                                {% endif %}">
+                                                <i class="fas fa-circle text-xs mr-1"></i>
+                                                {{ signalement.get_statut_display }}
+                                            </span>
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+                                                {% if signalement.type_declaration == 'perdu' %}bg-red-100 text-red-700 border border-red-200
+                                                {% else %}bg-green-100 text-green-700 border border-green-200{% endif %}">
+                                                <i class="fas {% if signalement.type_declaration == 'perdu' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} mr-1"></i>
+                                                {{ signalement.get_type_declaration_display }}
+                                            </span>
+                                        </div>
+                                        
+                                        <!-- Description -->
+                                        <p class="text-gray-600 text-sm mb-3 line-clamp-2">
+                                            {{ signalement.description|truncatewords:15 }}
+                                        </p>
+                                        
+                                        <!-- Informations utilisateur et date -->
+                                        <div class="flex items-center text-xs text-gray-500">
+                                            <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center mr-2">
+                                                <i class="fas fa-user text-gray-400 text-xs"></i>
+                                            </div>
+                                            <span class="font-medium">{{ signalement.declarant.get_full_name|default:signalement.declarant.username }}</span>
+                                            <span class="mx-2">•</span>
+                                            <i class="fas fa-calendar-alt mr-1"></i>
+                                            <time class="font-medium">{{ signalement.date_declaration|timesince }}</time>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Actions -->
+                                <div class="flex items-center space-x-2 ml-4">
+                                    <a href="{% url 'togo_agent:signalement_detail' signalement.id %}" 
+                                       class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 rounded-lg transition-all duration-200 hover:shadow-md">
+                                        <i class="fas fa-eye mr-2"></i>
+                                        Examiner
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="p-12 text-center">
+                            <div class="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <i class="fas fa-inbox text-gray-400 text-3xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Aucun signalement récent</h3>
+                            <p class="text-gray-500 max-w-sm mx-auto">
+                                Les nouveaux signalements nécessitant votre attention apparaîtront ici.
+                            </p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Colonne droite - Actions et activités -->
+        <div class="space-y-6">
+            <!-- Actions rapides -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-bolt mr-3 text-primary-600"></i>
+                    Actions rapides
+                </h3>
+                <div class="grid grid-cols-1 gap-3">
+                    <a href="{% url 'togo_agent:mes_signalements' %}" 
+                       class="group flex items-center p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-150 border border-blue-200 transition-all duration-200 hover:shadow-md">
+                        <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white mr-4 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-list-alt"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-blue-900">Mes signalements</p>
+                            <p class="text-xs text-blue-600">Gérer les déclarations</p>
+                        </div>
+                        <i class="fas fa-arrow-right ml-auto text-blue-500 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                    
+                    <a href="{% url 'togo_agent:verification_identite' %}" 
+                       class="group flex items-center p-4 rounded-2xl bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-150 border border-purple-200 transition-all duration-200 hover:shadow-md">
+                        <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center text-white mr-4 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-id-card"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-purple-900">Vérifications</p>
+                            <p class="text-xs text-purple-600">Documents d'identité</p>
+                        </div>
+                        <i class="fas fa-arrow-right ml-auto text-purple-500 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                    
+                    <a href="{% url 'togo_agent:messagerie' %}" 
+                       class="group flex items-center p-4 rounded-2xl bg-gradient-to-r from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-150 border border-emerald-200 transition-all duration-200 hover:shadow-md">
+                        <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white mr-4 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-emerald-900">Messagerie</p>
+                            <p class="text-xs text-emerald-600">Chat citoyen</p>
+                        </div>
+                        <i class="fas fa-arrow-right ml-auto text-emerald-500 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Réclamations en attente -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-3 text-amber-600"></i>
+                    Réclamations urgentes
+                </h3>
+                
+                <div class="space-y-4">
+                    {% for reclamation in reclamations_en_attente|slice:":3" %}
+                        <div class="p-4 rounded-xl border border-gray-200 hover:border-amber-200 hover:bg-amber-50/50 transition-all duration-200 group">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-900 text-sm mb-1">
+                                        {{ reclamation.declaration.nom_objet }}
+                                    </h4>
+                                    <p class="text-xs text-gray-500 mb-2">
+                                        Par {{ reclamation.reclamant.get_full_name|default:reclamation.reclamant.username }}
+                                    </p>
+                                    <div class="flex items-center text-xs text-gray-400">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        {{ reclamation.date_reclamation|timesince }}
+                                    </div>
+                                </div>
+                                <a href="{% url 'togo_agent:verifier_reclamation' reclamation.id %}" 
+                                   class="text-xs font-medium text-amber-600 hover:text-amber-700 bg-amber-100 hover:bg-amber-200 px-2 py-1 rounded-lg transition-colors">
+                                    Vérifier
+                                </a>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-8">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                            </div>
+                            <p class="text-sm text-gray-500">Aucune réclamation urgente</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                {% if reclamations_en_attente|length > 3 %}
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <a href="{% url 'togo_agent:verification_identite' %}" 
+                       class="text-sm font-medium text-primary-600 hover:text-primary-700">
+                        Voir toutes les réclamations ({{ reclamations_en_attente|length }})
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Conversations actives -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-comment-dots mr-3 text-indigo-600"></i>
+                    Messages récents
+                </h3>
+                
+                <div class="space-y-4">
+                    {% for conversation in conversations_actives|slice:":4" %}
+                        <div class="flex items-center p-3 rounded-xl hover:bg-gray-50 transition-colors group cursor-pointer">
+                            <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
+                                {% if conversation.signalement and conversation.signalement.declarant %}
+                                    {{ conversation.signalement.declarant.first_name|first|default:conversation.signalement.declarant.username|first|upper }}
+                                {% else %}
+                                    U
+                                {% endif %}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">
+                                    {% if conversation.signalement and conversation.signalement.declarant %}
+                                        {{ conversation.signalement.declarant.get_full_name|default:conversation.signalement.declarant.username }}
+                                    {% else %}
+                                        Utilisateur inconnu
+                                    {% endif %}
+                                </p>
+                                <p class="text-xs text-gray-500 truncate">
+                                    {% if conversation.signalement %}
+                                        {{ conversation.signalement.nom_objet|default:"Signalement" }}
+                                    {% else %}
+                                        Conversation
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% if conversation.messages_non_lus and conversation.messages_non_lus > 0 %}
+                                <span class="inline-flex items-center justify-center w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full">
+                                    {{ conversation.messages_non_lus }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-8">
+                            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-comment text-gray-400 text-xl"></i>
+                            </div>
+                            <p class="text-sm text-gray-500">Aucune conversation active</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                {% if conversations_actives|length > 4 %}
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <a href="{% url 'togo_agent:messagerie' %}" 
+                       class="text-sm font-medium text-primary-600 hover:text-primary-700">
+                        Voir toutes les conversations
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript pour les statistiques en temps réel -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonction pour mettre à jour les statistiques
+    function updateStats() {
+        fetch('{% url "togo_agent:ajax_stats" %}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('stat-total').textContent = data.stats.total_signalements || 0;
+                    document.getElementById('stat-retrouves').textContent = data.stats.objets_retrouves || 0;
+                    document.getElementById('stat-restitues').textContent = data.stats.objets_restitues || 0;
+                    document.getElementById('stat-attente').textContent = data.stats.demandes_attente || 0;
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de la mise à jour des statistiques:', error);
+            });
+    }
+    
+    // Mettre à jour les stats toutes les 30 secondes
+    setInterval(updateStats, 30000);
+});
+</script>
+{% endblock %}

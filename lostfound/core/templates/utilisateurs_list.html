@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Utilisateurs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    {% if messages %}
+    <div class="fixed top-4 right-4 space-y-2 z-50">
+        {% for message in messages %}
+        <div
+            class="px-4 py-3 rounded shadow-md text-white 
+            {% if message.tags == 'success' %} bg-green-500 
+            {% elif message.tags == 'error' %} bg-red-500 
+            {% elif message.tags == 'warning' %} bg-yellow-500 
+            {% else %} bg-blue-500 {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <nav class="bg-blue-600 text-white py-3 px-6 flex justify-between items-center">
+        <h1 class="font-bold text-xl">Objets Perdus & Trouvés</h1>
+        <div class="space-x-4">
+            <a href="{% url 'home' %}" class="hover:underline">Accueil</a>
+            <a href="{% url 'signalements_list' %}" class="hover:underline">Signalements</a>
+            <a href="{% url 'objets_list' %}" class="hover:underline">Objets</a>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold mb-6">Liste des utilisateurs</h1>
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <ul class="divide-y divide-gray-200">
+                {% for user in utilisateurs %}
+                <li class="py-2">{{ user.username }} - {{ user.email }} - {{ user.role|capfirst }}</li>
+                {% empty %}
+                <li class="text-gray-500">Aucun utilisateur pour le moment.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <script>
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.fixed.top-4.right-4 div');
+            alerts.forEach(a => a.remove());
+        }, 3000);
+    </script>
+    
+</body>
+</html>

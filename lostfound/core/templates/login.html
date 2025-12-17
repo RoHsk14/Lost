@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - TogoRetrouve</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="min-h-screen bg-gradient-to-r from-blue-600 to-blue-800">
+    <!-- Messages -->
+    {% if messages %}
+    <div class="fixed top-4 right-4 space-y-2 z-50">
+        {% for message in messages %}
+        <div
+            class="px-4 py-3 rounded shadow-md text-white 
+            {% if message.tags == 'success' %} bg-green-500 
+            {% elif message.tags == 'error' %} bg-red-500 
+            {% elif message.tags == 'warning' %} bg-yellow-500 
+            {% else %} bg-blue-500 {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Header avec logo -->
+    <div class="absolute top-8 left-8">
+        <a href="{% url 'index' %}" class="flex items-center space-x-2 text-white hover:text-blue-200 transition">
+            <i class="fas fa-search-location text-2xl"></i>
+            <span class="text-xl font-bold">TogoRetrouve</span>
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="min-h-screen flex items-center justify-center px-4">
+        <div class="max-w-md w-full">
+            <div class="bg-white rounded-2xl shadow-2xl p-8">
+                <!-- Titre -->
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Connexion</h2>
+                    <p class="text-gray-600">Accédez à votre espace TogoRetrouve</p>
+                </div>
+
+                <!-- Formulaire -->
+                <form method="POST" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Debug CSRF pour diagnostic -->
+                    {% if request.GET.debug %}
+                    <div class="bg-yellow-50 p-3 rounded-lg text-xs">
+                        <strong>Debug:</strong> CSRF Token = {{ csrf_token }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Nom d'utilisateur -->
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                            Nom d'utilisateur
+                        </label>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Entrez votre nom d'utilisateur"
+                        >
+                    </div>
+
+                    <!-- Mot de passe -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                            Mot de passe
+                        </label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="••••••••"
+                        >
+                    </div>
+
+                    <!-- Options -->
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center text-sm text-gray-600">
+                            <input type="checkbox" name="remember" class="mr-2">
+                            Se souvenir de moi
+                        </label>
+                        <a href="#" class="text-sm text-blue-600 hover:text-blue-800">
+                            Mot de passe oublié ?
+                        </a>
+                    </div>
+
+                    <!-- Bouton de connexion -->
+                    <button 
+                        type="submit" 
+                        class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition"
+                    >
+                        Se connecter
+                    </button>
+                </form>
+
+                <!-- Liens -->
+                <div class="mt-8 text-center">
+                    <p class="text-gray-600 text-sm">
+                        Pas encore de compte ?
+                        <a href="{% url 'register' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                            S'inscrire
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script pour masquer les messages -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const alerts = document.querySelectorAll('.fixed.top-4.right-4 div');
+                alerts.forEach(a => a.remove());
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
+

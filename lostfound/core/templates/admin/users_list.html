@@ -1,0 +1,1469 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Gestion des utilisateurs et agents{% endblock %}
+{% block page_heading %}Utilisateurs & Agents{% endblock %}
+{% block page_description %}Gestion complète des comptes utilisateurs et agents{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 16px;
+    }
+    
+    .badge-citoyen { background-color: #3498db; }
+    .badge-agent { background-color: #e67e22; }
+    .badge-admin { background-color: #e74c3c; }
+    .badge-superadmin { background-color: #9b59b6; }
+    
+    .badge-status {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    .badge-actif { background-color: #d4edda; color: #155724; }
+    .badge-inactif { background-color: #f8d7da; color: #721c24; }
+    .badge-en_attente { background-color: #fff3cd; color: #856404; }
+    
+    .stats-card {
+        background: white;
+        border: 1px solid #e3e6f0;
+        border-radius: 0.35rem;
+        padding: 1.25rem;
+        border-left: 0.25rem solid #4e73df;
+    }
+    
+    .stats-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #3a3b45;
+    }
+    
+    .stats-label {
+        font-size: 0.875rem;
+        color: #858796;
+        text-transform: uppercase;
+    }
+    
+    .activity-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    .activity-online { background-color: #28a745; }
+    .activity-recent { background-color: #ffc107; }
+    .activity-offline { background-color: #dc3545; }
+    
+    .user-permissions {
+        font-size: 11px;
+        margin-top: 2px;
+    }
+    
+    .declaration-count {
+        font-size: 12px;
+        background: #f8f9fc;
+        padding: 2px 6px;
+        border-radius: 10px;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Statistiques globales -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.total_users|default:0 }}</div>
+                    <div class="stats-label">Total utilisateurs</div>
+                    <small class="text-success">+{{ stats.users_today|default:0 }} aujourd'hui</small>
+                </div>
+                <div class="text-primary fs-2">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.citoyens.total|default:0 }}</div>
+                    <div class="stats-label">Citoyens</div>
+                    <small class="text-info">{{ stats.citoyens.actifs|default:0 }} actifs</small>
+                </div>
+                <div class="text-info fs-2">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.agents.total|default:0 }}</div>
+                    <div class="stats-label">Agents</div>
+                    <small class="text-success">{{ stats.agents.actifs|default:0 }} en ligne</small>
+                </div>
+                <div class="text-success fs-2">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.pending_verification|default:0 }}</div>
+                    <div class="stats-label">En attente</div>
+                    <small class="text-warning">Vérification requise</small>
+                </div>
+                <div class="text-warning fs-2">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres avancés -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-filter"></i> Filtres et recherche
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Recherche globale</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           placeholder="Nom, email, téléphone..." value="{{ request.GET.search }}">
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="role" class="form-label">Rôle</label>
+                <select class="form-select" id="role" name="role">
+                    <option value="">Tous les rôles</option>
+                    <option value="citoyen" {% if request.GET.role == 'citoyen' %}selected{% endif %}>👤 Citoyens</option>
+                    <option value="agent" {% if request.GET.role == 'agent' %}selected{% endif %}>👨‍💼 Agents</option>
+                    <option value="admin" {% if request.GET.role == 'admin' %}selected{% endif %}>🛡️ Admins</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="status" class="form-label">Statut</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">Tous</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>✅ Actif</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>❌ Inactif</option>
+                    <option value="unverified" {% if request.GET.status == 'unverified' %}selected{% endif %}>⏳ Non vérifié</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="region" class="form-label">Région</label>
+                <select class="form-select" id="region" name="region">
+                    <option value="">Toutes régions</option>
+                    {% for region in regions %}
+                        <option value="{{ region.id }}" {% if request.GET.region == region.id|stringformat:"s" %}selected{% endif %}>
+                            {{ region.nom }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="activity" class="form-label">Activité</label>
+                <select class="form-select" id="activity" name="activity">
+                    <option value="">Toute activité</option>
+                    <option value="today" {% if request.GET.activity == 'today' %}selected{% endif %}>🟢 Aujourd'hui</option>
+                    <option value="week" {% if request.GET.activity == 'week' %}selected{% endif %}>🟡 Cette semaine</option>
+                    <option value="month" {% if request.GET.activity == 'month' %}selected{% endif %}>🔵 Ce mois</option>
+                    <option value="inactive" {% if request.GET.activity == 'inactive' %}selected{% endif %}>🔴 Inactif</option>
+                </select>
+            </div>
+            
+            <div class="col-md-1">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Filtrer
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Actions rapides -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-bolt"></i> Actions rapides
+        </h6>
+        <div>
+            <button class="btn btn-outline-info btn-sm" onclick="showBulkActions()">
+                <i class="fas fa-tasks"></i> Actions groupées
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="fas fa-user-plus"></i> Créer un citoyen
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#addAgentModal">
+                    <i class="fas fa-user-tie"></i> Créer un agent
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-info w-100" onclick="exportUsers()">
+                    <i class="fas fa-download"></i> Exporter la liste
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-secondary w-100" onclick="sendNotifications()">
+                    <i class="fas fa-envelope"></i> Notifier en masse
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste détaillée des utilisateurs -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-users"></i> 
+            Liste complète des utilisateurs 
+            <span class="badge bg-primary">{{ users.paginator.count }} résultats</span>
+        </h6>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary" onclick="toggleView('table')" id="tableViewBtn">
+                <i class="fas fa-table"></i> Table
+            </button>
+            <button class="btn btn-outline-primary" onclick="toggleView('cards')" id="cardsViewBtn">
+                <i class="fas fa-th-large"></i> Cartes
+            </button>
+        </div>
+    </div>
+    
+    <div class="card-body p-0" id="tableView">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
+                        <th>
+                            <a href="?{{ request.GET.urlencode }}&ordre=username" class="text-decoration-none">
+                                Utilisateur <i class="fas fa-sort"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?{{ request.GET.urlencode }}&ordre=role" class="text-decoration-none">
+                                Rôle & Permissions <i class="fas fa-sort"></i>
+                            </a>
+                        </th>
+                        <th>Localisation</th>
+                        <th>
+                            <a href="?{{ request.GET.urlencode }}&ordre=-date_joined" class="text-decoration-none">
+                                Inscription <i class="fas fa-sort"></i>
+                            </a>
+                        </th>
+                        <th>Activité & Statut</th>
+                        <th>Performance</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr data-user-id="{{ user.id }}">
+                        <td>
+                            <input type="checkbox" class="user-checkbox" value="{{ user.id }}">
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar me-3">
+                                    {{ user.first_name|first|default:user.username|first|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold">
+                                        {{ user.get_full_name|default:user.username }}
+                                        {% if user.is_superuser %}
+                                            <i class="fas fa-crown text-warning" title="Super utilisateur"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-muted small">
+                                        <i class="fas fa-envelope"></i> {{ user.email }}
+                                    </div>
+                                    {% if user.telephone %}
+                                        <div class="text-muted small">
+                                            <i class="fas fa-phone"></i> {{ user.telephone }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="text-muted small">
+                                        ID: {{ user.id }} | @{{ user.username }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <span class="badge badge-{{ user.role }} mb-1">
+                                    {% if user.role == 'citoyen' %}👤{% elif user.role == 'agent' %}👨‍💼{% elif user.role == 'admin' %}🛡️{% else %}👑{% endif %}
+                                    {{ user.get_role_display }}
+                                </span>
+                            </div>
+                            <div class="user-permissions small text-muted">
+                                {% if user.is_staff %}✓ Staff{% endif %}
+                                {% if user.is_superuser %}✓ SuperUser{% endif %}
+                                {% if user.verifie %}✓ Vérifié{% endif %}
+                            </div>
+                            {% if user.role == 'agent' %}
+                                <div class="small text-info">
+                                    <i class="fas fa-tasks"></i> {{ user.declarations_validees_count|default:0 }} validations
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.region %}
+                                <div class="fw-bold">{{ user.region.nom }}</div>
+                                {% if user.prefecture %}
+                                    <small class="text-muted">📍 {{ user.prefecture.nom }}</small>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted small">🌍 Aucune région</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="fw-bold">{{ user.date_joined|date:"d/m/Y" }}</div>
+                            <small class="text-muted">{{ user.date_joined|time:"H:i" }}</small>
+                            <br>
+                            <small class="text-muted">
+                                Il y a {{ user.date_joined|timesince }}
+                            </small>
+                        </td>
+                        <td>
+                            <div class="mb-1">
+                                {% if user.last_login %}
+                                    {% if user.last_login|timesince|slice:":1" == "0" %}
+                                        <span class="activity-indicator activity-online"></span>
+                                        <small class="text-success">En ligne</small>
+                                    {% elif user.last_login|timesince|slice:":2" <= "7 " %}
+                                        <span class="activity-indicator activity-recent"></span>
+                                        <small class="text-warning">Récent</small>
+                                    {% else %}
+                                        <span class="activity-indicator activity-offline"></span>
+                                        <small class="text-muted">Inactif</small>
+                                    {% endif %}
+                                    <br>
+                                    <small class="text-muted">{{ user.last_login|date:"d/m H:i" }}</small>
+                                {% else %}
+                                    <span class="activity-indicator activity-offline"></span>
+                                    <small class="text-muted">Jamais connecté</small>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {% if user.is_active %}
+                                    {% if user.verifie %}
+                                        <span class="badge-status badge-actif">
+                                            <i class="fas fa-check-circle"></i> Vérifié
+                                        </span>
+                                    {% else %}
+                                        <span class="badge-status badge-en_attente">
+                                            <i class="fas fa-clock"></i> En attente
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge-status badge-inactif">
+                                        <i class="fas fa-times-circle"></i> Inactif
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="small">
+                                <div class="declaration-count mb-1">
+                                    <i class="fas fa-file-alt"></i> {{ user.declarations_count|default:0 }} déclarations
+                                </div>
+                                {% if user.role == 'agent' %}
+                                    <div class="declaration-count">
+                                        <i class="fas fa-check"></i> {{ user.nb_declarations_validees|default:0 }} validées
+                                    </div>
+                                {% endif %}
+                                {% if user.reclamations_count %}
+                                    <div class="declaration-count text-warning">
+                                        <i class="fas fa-exclamation"></i> {{ user.reclamations_count }} réclamations
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" title="Voir le profil détaillé" 
+                                        onclick="showUserDetails({{ user.id }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" title="Modifier les informations"
+                                        onclick="editUser({{ user.id }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                
+                                {% if not user.verifie and user.is_active %}
+                                    <button class="btn btn-outline-success" title="Vérifier le compte" 
+                                            onclick="verifyUser({{ user.id }})">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                {% endif %}
+                                
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-info dropdown-toggle" 
+                                            data-bs-toggle="dropdown" title="Plus d'actions">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <button class="dropdown-item" onclick="sendMessage({{ user.id }})">
+                                                <i class="fas fa-envelope"></i> Envoyer un message
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item" onclick="viewActivity({{ user.id }})">
+                                                <i class="fas fa-history"></i> Historique d'activité
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item" onclick="resetPassword({{ user.id }})">
+                                                <i class="fas fa-key"></i> Réinitialiser mot de passe
+                                            </button>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        {% if user.is_active %}
+                                            <li>
+                                                <button class="dropdown-item text-warning" 
+                                                        onclick="toggleUserStatus({{ user.id }}, false)">
+                                                    <i class="fas fa-ban"></i> Désactiver
+                                                </button>
+                                            </li>
+                                        {% else %}
+                                            <li>
+                                                <button class="dropdown-item text-success" 
+                                                        onclick="toggleUserStatus({{ user.id }}, true)">
+                                                    <i class="fas fa-check"></i> Activer
+                                                </button>
+                                            </li>
+                                        {% endif %}
+                                        {% if user.role != 'superadmin' and not user.is_superuser %}
+                                            <li>
+                                                <button class="dropdown-item text-danger" 
+                                                        onclick="deleteUser({{ user.id }})">
+                                                    <i class="fas fa-trash"></i> Supprimer
+                                                </button>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="fas fa-users fa-3x mb-3"></i>
+                                <h5>Aucun utilisateur trouvé</h5>
+                                <p>Essayez de modifier vos critères de recherche ou créez un nouvel utilisateur.</p>
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                                    <i class="fas fa-plus"></i> Créer un utilisateur
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Vue en cartes (cachée par défaut) -->
+    <div class="card-body d-none" id="cardsView">
+        <div class="row">
+            {% for user in users %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card border-left-primary h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="user-avatar me-3">
+                                {{ user.first_name|first|default:user.username|first|upper }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ user.get_full_name|default:user.username }}</h6>
+                                <small class="text-muted">{{ user.email }}</small>
+                            </div>
+                            <span class="badge badge-{{ user.role }}">{{ user.get_role_display }}</span>
+                        </div>
+                        
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="h6 mb-0">{{ user.declarations_count|default:0 }}</div>
+                                <small class="text-muted">Déclarations</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h6 mb-0">
+                                    {% if user.last_login %}✅{% else %}❌{% endif %}
+                                </div>
+                                <small class="text-muted">Actif</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h6 mb-0">
+                                    {% if user.verifie %}✅{% else %}⏳{% endif %}
+                                </div>
+                                <small class="text-muted">Vérifié</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3 text-center">
+                            <button class="btn btn-sm btn-primary" onclick="showUserDetails({{ user.id }})">
+                                <i class="fas fa-eye"></i> Détails
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="editUser({{ user.id }})">
+                                <i class="fas fa-edit"></i> Modifier
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Pagination -->
+    {% if users.has_other_pages %}
+    <div class="card-footer">
+        <div class="row align-items-center">
+            <div class="col">
+                <small class="text-muted">
+                    Affichage {{ users.start_index }} à {{ users.end_index }} 
+                    sur {{ users.paginator.count }} utilisateurs
+                </small>
+            </div>
+            <div class="col-auto">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if users.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{{ request.GET.urlencode }}&page=1">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ users.previous_page_number }}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ users.number }} / {{ users.paginator.num_pages }}</span>
+                        </li>
+                        
+                        {% if users.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ users.next_page_number }}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ users.paginator.num_pages }}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modaux pour création d'utilisateur et agent -->
+<!-- Modal Créer Citoyen -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus"></i> Créer un nouveau citoyen
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addUserForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nom d'utilisateur *</label>
+                                <input type="text" class="form-control" name="username" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email *</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Prénom</label>
+                                <input type="text" class="form-control" name="first_name">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nom de famille</label>
+                                <input type="text" class="form-control" name="last_name">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Téléphone</label>
+                                <input type="tel" class="form-control" name="telephone">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Mot de passe *</label>
+                                <input type="password" class="form-control" name="password" required>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="is_verified" id="isVerified">
+                                <label class="form-check-label" for="isVerified">
+                                    Marquer comme vérifié
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Créer le citoyen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Créer Agent -->
+<div class="modal fade" id="addAgentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-tie"></i> Créer un nouvel agent
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addAgentForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nom d'utilisateur *</label>
+                                <input type="text" class="form-control" name="username" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email professionnel *</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Prénom *</label>
+                                <input type="text" class="form-control" name="first_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nom de famille *</label>
+                                <input type="text" class="form-control" name="last_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Téléphone professionnel</label>
+                                <input type="tel" class="form-control" name="telephone">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Mot de passe *</label>
+                                <input type="password" class="form-control" name="password" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Région d'affectation *</label>
+                                <select class="form-select" name="region" required>
+                                    <option value="">Sélectionner une région</option>
+                                    {% for region in regions %}
+                                        <option value="{{ region.id }}">{{ region.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Préfecture (optionnel)</label>
+                                <select class="form-select" name="prefecture">
+                                    <option value="">Sélectionner une préfecture</option>
+                                    <!-- Sera rempli dynamiquement selon la région -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input" name="is_verified" id="agentVerified" checked>
+                                <label class="form-check-label" for="agentVerified">
+                                    Marquer comme vérifié
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="is_staff" id="agentStaff">
+                                <label class="form-check-label" for="agentStaff">
+                                    Accès à l'administration Django
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save"></i> Créer l'agent
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Statistiques utilisateurs -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.total_users|default:0 }}</div>
+                    <div class="stats-label">Total utilisateurs</div>
+                </div>
+                <div class="text-primary fs-2">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.users_today|default:0 }}</div>
+                    <div class="stats-label">Nouveaux aujourd'hui</div>
+                </div>
+                <div class="text-success fs-2">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.active_users|default:0 }}</div>
+                    <div class="stats-label">Utilisateurs actifs</div>
+                </div>
+                <div class="text-info fs-2">
+                    <i class="fas fa-user-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <div class="stats-number">{{ stats.pending_verification|default:0 }}</div>
+                    <div class="stats-label">En attente vérification</div>
+                </div>
+                <div class="text-warning fs-2">
+                    <i class="fas fa-user-clock"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres et recherche -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">Recherche</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       placeholder="Nom, email, téléphone..." value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-3">
+                <label for="role" class="form-label">Rôle</label>
+                <select class="form-select" id="role" name="role">
+                    <option value="">Tous les rôles</option>
+                    <option value="citoyen" {% if request.GET.role == 'citoyen' %}selected{% endif %}>Citoyen</option>
+                    <option value="agent" {% if request.GET.role == 'agent' %}selected{% endif %}>Agent</option>
+                    <option value="admin" {% if request.GET.role == 'admin' %}selected{% endif %}>Admin</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Statut</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">Tous</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Actif</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactif</option>
+                    <option value="unverified" {% if request.GET.status == 'unverified' %}selected{% endif %}>Non vérifié</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Filtrer
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Liste des utilisateurs -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Liste des utilisateurs</h5>
+        <div>
+            <button class="btn btn-outline-primary btn-sm me-2" onclick="exportUsers()">
+                <i class="fas fa-download"></i> Exporter
+            </button>
+            <a href="#" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="fas fa-plus"></i> Nouveau utilisateur
+            </a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Utilisateur</th>
+                        <th>Rôle</th>
+                        <th>Région</th>
+                        <th>Date d'inscription</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar me-3">
+                                    {{ user.first_name|first|default:user.username|first|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                    {% if user.telephone %}
+                                        <br><small class="text-muted"><i class="fas fa-phone"></i> {{ user.telephone }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ user.role }}">{{ user.get_role_display }}</span>
+                        </td>
+                        <td>
+                            {% if user.region %}
+                                <div>{{ user.region.nom }}</div>
+                                {% if user.prefecture %}
+                                    <small class="text-muted">{{ user.prefecture.nom }}</small>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>{{ user.date_joined|date:"d/m/Y" }}</div>
+                            <small class="text-muted">{{ user.date_joined|time:"H:i" }}</small>
+                        </td>
+                        <td>
+                            {% if user.is_active %}
+                                {% if user.verifie %}
+                                    <span class="badge-status badge-actif"><i class="fas fa-check-circle"></i> Vérifié</span>
+                                {% else %}
+                                    <span class="badge-status badge-en_attente"><i class="fas fa-clock"></i> En attente</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge-status badge-inactif"><i class="fas fa-times-circle"></i> Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="#" class="btn btn-outline-primary" title="Voir détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="btn btn-outline-secondary" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if not user.verifie and user.is_active %}
+                                    <button class="btn btn-outline-success" title="Vérifier le compte" 
+                                            onclick="verifyUser({{ user.id }})">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                {% endif %}
+                                {% if user.is_active %}
+                                    <button class="btn btn-outline-warning" title="Désactiver" 
+                                            onclick="toggleUserStatus({{ user.id }}, false)">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-outline-success" title="Activer" 
+                                            onclick="toggleUserStatus({{ user.id }}, true)">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <div class="text-muted">Aucun utilisateur trouvé</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    {% if users.has_other_pages %}
+    <div class="card-footer">
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                {% if users.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">&laquo; Premier</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ users.previous_page_number }}">Précédent</a></li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">Page {{ users.number }} sur {{ users.paginator.num_pages }}</span>
+                </li>
+                
+                {% if users.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ users.next_page_number }}">Suivant</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ users.paginator.num_pages }}">Dernier &raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables globales
+let selectedUsers = [];
+let currentView = 'table';
+
+// Initialisation de la page
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEventListeners();
+    updateBulkActions();
+});
+
+function initializeEventListeners() {
+    // Sélection multiple
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+            updateSelectedUsers();
+        });
+    });
+
+    // Sélection individuelle
+    document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedUsers);
+    });
+
+    // Formulaires modaux
+    document.getElementById('addUserForm').addEventListener('submit', handleAddUser);
+    document.getElementById('addAgentForm').addEventListener('submit', handleAddAgent);
+}
+
+// Gestion des vues
+function toggleView(view) {
+    currentView = view;
+    const tableView = document.getElementById('tableView');
+    const cardsView = document.getElementById('cardsView');
+    const tableBtn = document.getElementById('tableViewBtn');
+    const cardsBtn = document.getElementById('cardsViewBtn');
+
+    if (view === 'table') {
+        tableView.classList.remove('d-none');
+        cardsView.classList.add('d-none');
+        tableBtn.classList.add('active');
+        cardsBtn.classList.remove('active');
+    } else {
+        tableView.classList.add('d-none');
+        cardsView.classList.remove('d-none');
+        tableBtn.classList.remove('active');
+        cardsBtn.classList.add('active');
+    }
+}
+
+// Gestion de la sélection
+function updateSelectedUsers() {
+    selectedUsers = Array.from(document.querySelectorAll('.user-checkbox:checked'))
+                         .map(cb => cb.value);
+    
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const allCheckboxes = document.querySelectorAll('.user-checkbox');
+    const checkedCheckboxes = document.querySelectorAll('.user-checkbox:checked');
+    
+    selectAllCheckbox.indeterminate = checkedCheckboxes.length > 0 && checkedCheckboxes.length < allCheckboxes.length;
+    selectAllCheckbox.checked = checkedCheckboxes.length === allCheckboxes.length && allCheckboxes.length > 0;
+    
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const bulkButton = document.querySelector('[onclick="showBulkActions()"]');
+    if (bulkButton) {
+        bulkButton.innerHTML = selectedUsers.length > 0 
+            ? `<i class="fas fa-tasks"></i> Actions groupées (${selectedUsers.length})`
+            : '<i class="fas fa-tasks"></i> Actions groupées';
+        bulkButton.disabled = selectedUsers.length === 0;
+    }
+}
+
+// Actions sur les utilisateurs
+async function verifyUser(userId) {
+    if (!confirm('Confirmer la vérification de ce compte utilisateur ?')) return;
+    
+    try {
+        showLoading(true);
+        const response = await makeRequest(`/togoretrouve-admin/users/${userId}/verify/`, 'POST');
+        
+        if (response.success) {
+            showAlert('Utilisateur vérifié avec succès', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showAlert(response.error || 'Erreur lors de la vérification', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication avec le serveur', 'error');
+        console.error('Erreur:', error);
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function toggleUserStatus(userId, activate) {
+    const action = activate ? 'activer' : 'désactiver';
+    const actionText = activate ? 'activation' : 'désactivation';
+    
+    if (!confirm(`Confirmer l'${actionText} de ce compte utilisateur ?`)) return;
+    
+    try {
+        showLoading(true);
+        const response = await makeRequest(`/togoretrouve-admin/users/${userId}/toggle-status/`, 'POST', {
+            activate: activate
+        });
+        
+        if (response.success) {
+            showAlert(`Utilisateur ${activate ? 'activé' : 'désactivé'} avec succès`, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showAlert(response.error || `Erreur lors de l'${actionText}`, 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication avec le serveur', 'error');
+        console.error('Erreur:', error);
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function deleteUser(userId) {
+    if (!confirm('⚠️ ATTENTION: Supprimer définitivement cet utilisateur ?\n\nCette action est irréversible et supprimera aussi toutes ses déclarations.')) return;
+    
+    const confirmText = prompt('Tapez "SUPPRIMER" pour confirmer:');
+    if (confirmText !== 'SUPPRIMER') return;
+    
+    try {
+        showLoading(true);
+        const response = await makeRequest(`/togoretrouve-admin/users/${userId}/delete/`, 'DELETE');
+        
+        if (response.success) {
+            showAlert('Utilisateur supprimé avec succès', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showAlert(response.error || 'Erreur lors de la suppression', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication avec le serveur', 'error');
+        console.error('Erreur:', error);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Actions détaillées
+function showUserDetails(userId) {
+    // Implémenter modal de détails
+    window.open(`/togoretrouve-admin/users/${userId}/`, '_blank');
+}
+
+function editUser(userId) {
+    // Implémenter modal d'édition
+    window.location.href = `/togoretrouve-admin/users/${userId}/edit/`;
+}
+
+function viewActivity(userId) {
+    // Implémenter modal d'historique
+    showAlert('Fonctionnalité en développement', 'info');
+}
+
+function resetPassword(userId) {
+    if (!confirm('Réinitialiser le mot de passe de cet utilisateur ?')) return;
+    
+    makeRequest(`/togoretrouve-admin/users/${userId}/reset-password/`, 'POST')
+        .then(response => {
+            if (response.success) {
+                showAlert(`Nouveau mot de passe: ${response.new_password}`, 'success');
+            } else {
+                showAlert(response.error || 'Erreur lors de la réinitialisation', 'error');
+            }
+        })
+        .catch(error => {
+            showAlert('Erreur de communication', 'error');
+        });
+}
+
+function sendMessage(userId) {
+    const message = prompt('Message à envoyer:');
+    if (!message) return;
+    
+    makeRequest(`/togoretrouve-admin/users/${userId}/message/`, 'POST', { message })
+        .then(response => {
+            if (response.success) {
+                showAlert('Message envoyé avec succès', 'success');
+            } else {
+                showAlert(response.error || 'Erreur lors de l\'envoi', 'error');
+            }
+        });
+}
+
+// Actions groupées
+function showBulkActions() {
+    if (selectedUsers.length === 0) {
+        showAlert('Sélectionnez au moins un utilisateur', 'warning');
+        return;
+    }
+    
+    const actions = [
+        { id: 'verify', text: '✅ Vérifier les comptes', class: 'btn-success' },
+        { id: 'activate', text: '🔓 Activer les comptes', class: 'btn-info' },
+        { id: 'deactivate', text: '🔒 Désactiver les comptes', class: 'btn-warning' },
+        { id: 'notify', text: '📧 Envoyer une notification', class: 'btn-primary' },
+        { id: 'export', text: '📄 Exporter la sélection', class: 'btn-secondary' }
+    ];
+    
+    let html = `
+        <div class="modal fade" id="bulkActionsModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Actions groupées</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>${selectedUsers.length}</strong> utilisateurs sélectionnés</p>
+                        <div class="d-grid gap-2">
+    `;
+    
+    actions.forEach(action => {
+        html += `<button class="btn ${action.class}" onclick="executeBulkAction('${action.id}')">${action.text}</button>`;
+    });
+    
+    html += `
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Ajouter le modal au DOM
+    const existingModal = document.getElementById('bulkActionsModal');
+    if (existingModal) existingModal.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', html);
+    new bootstrap.Modal(document.getElementById('bulkActionsModal')).show();
+}
+
+async function executeBulkAction(action) {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('bulkActionsModal'));
+    modal.hide();
+    
+    if (!confirm(`Appliquer cette action à ${selectedUsers.length} utilisateurs ?`)) return;
+    
+    try {
+        showLoading(true);
+        const response = await makeRequest('/togoretrouve-admin/users/bulk-action/', 'POST', {
+            action: action,
+            users: selectedUsers
+        });
+        
+        if (response.success) {
+            showAlert(`Action appliquée à ${response.affected} utilisateurs`, 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert(response.error || 'Erreur lors de l\'action groupée', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Gestion des formulaires
+async function handleAddUser(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const userData = Object.fromEntries(formData.entries());
+    
+    try {
+        showLoading(true);
+        const response = await makeRequest('/togoretrouve-admin/users/create/', 'POST', userData);
+        
+        if (response.success) {
+            showAlert('Citoyen créé avec succès', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showAlert(response.error || 'Erreur lors de la création', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function handleAddAgent(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const agentData = Object.fromEntries(formData.entries());
+    agentData.role = 'agent'; // Force le rôle agent
+    
+    try {
+        showLoading(true);
+        const response = await makeRequest('/togoretrouve-admin/agents/create/', 'POST', agentData);
+        
+        if (response.success) {
+            showAlert('Agent créé avec succès', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('addAgentModal')).hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showAlert(response.error || 'Erreur lors de la création', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Utilitaires
+function exportUsers() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', 'csv');
+    
+    if (selectedUsers.length > 0) {
+        params.set('selected', selectedUsers.join(','));
+    }
+    
+    window.open(`${window.location.pathname}?${params.toString()}`);
+}
+
+function sendNotifications() {
+    const message = prompt('Message de notification:');
+    if (!message) return;
+    
+    const userIds = selectedUsers.length > 0 ? selectedUsers : 'all';
+    
+    makeRequest('/togoretrouve-admin/users/notify/', 'POST', {
+        message: message,
+        users: userIds
+    }).then(response => {
+        if (response.success) {
+            showAlert(`Notifications envoyées à ${response.sent} utilisateurs`, 'success');
+        } else {
+            showAlert(response.error || 'Erreur lors de l\'envoi', 'error');
+        }
+    });
+}
+
+// Fonctions d'aide
+async function makeRequest(url, method = 'GET', data = null) {
+    const options = {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        }
+    };
+    
+    if (data && method !== 'GET') {
+        options.body = JSON.stringify(data);
+    }
+    
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    return await response.json();
+}
+
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+function showAlert(message, type = 'info') {
+    const alerts = document.getElementById('alerts') || createAlertsContainer();
+    const alertId = 'alert-' + Date.now();
+    
+    const alertHtml = `
+        <div class="alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show" id="${alertId}">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    alerts.insertAdjacentHTML('beforeend', alertHtml);
+    
+    // Auto-suppression après 5 secondes
+    setTimeout(() => {
+        const alert = document.getElementById(alertId);
+        if (alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
+    }, 5000);
+}
+
+function createAlertsContainer() {
+    const container = document.createElement('div');
+    container.id = 'alerts';
+    container.className = 'position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+    return container;
+}
+
+function showLoading(show) {
+    const loadingOverlay = document.getElementById('loadingOverlay') || createLoadingOverlay();
+    loadingOverlay.style.display = show ? 'flex' : 'none';
+}
+
+function createLoadingOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'loadingOverlay';
+    overlay.className = 'position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
+    overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    overlay.style.zIndex = '9998';
+    overlay.innerHTML = `
+        <div class="text-center text-white">
+            <div class="spinner-border mb-3" role="status"></div>
+            <div>Traitement en cours...</div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    return overlay;
+}
+
+// Gestion dynamique des préfectures selon la région
+document.addEventListener('change', function(e) {
+    if (e.target.name === 'region' && e.target.closest('#addAgentModal')) {
+        const regionId = e.target.value;
+        const prefectureSelect = e.target.closest('.modal-content').querySelector('[name="prefecture"]');
+        
+        if (regionId) {
+            fetch(`/api/prefectures/${regionId}/`)
+                .then(response => response.json())
+                .then(prefectures => {
+                    prefectureSelect.innerHTML = '<option value="">Sélectionner une préfecture</option>';
+                    prefectures.forEach(pref => {
+                        prefectureSelect.innerHTML += `<option value="${pref.id}">${pref.nom}</option>`;
+                    });
+                });
+        } else {
+            prefectureSelect.innerHTML = '<option value="">Sélectionner une préfecture</option>';
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,362 @@
+{% extends 'admin/base.html' %}
+{% load admin_tags %}
+
+{% block title %}Détails de l'utilisateur - {{ user.get_full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.user-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.activity-item {
+    padding: 1rem;
+    border-left: 4px solid #e9ecef;
+    margin-bottom: 1rem;
+    background: #f8f9fa;
+    border-radius: 0 8px 8px 0;
+}
+
+.activity-item.recent {
+    border-left-color: #28a745;
+    background: #f8fff9;
+}
+
+.badge-role {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête utilisateur -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|urlencode }}&background=667eea&color=fff&size=120" 
+                                 class="user-avatar" alt="Avatar">
+                        </div>
+                        <div class="col-md-6">
+                            <h2 class="mb-2">{{ user.get_full_name }}</h2>
+                            <p class="text-muted mb-2">@{{ user.username }}</p>
+                            <span class="badge badge-role bg-{% if user.role == 'admin' %}danger{% elif user.role == 'agent' %}warning{% else %}primary{% endif %}">
+                                {{ user.get_role_display|upper }}
+                            </span>
+                            {% if user.est_verifie %}
+                                <span class="badge bg-success ms-2">✓ Vérifié</span>
+                            {% else %}
+                                <span class="badge bg-warning ms-2">⚠ Non vérifié</span>
+                            {% endif %}
+                            {% if user.is_active %}
+                                <span class="badge bg-success ms-2">🟢 Actif</span>
+                            {% else %}
+                                <span class="badge bg-danger ms-2">🔴 Inactif</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-primary btn-sm me-2" onclick="editUser({{ user.id }})">
+                                <i class="fas fa-edit"></i> Modifier
+                            </button>
+                            <button class="btn btn-warning btn-sm me-2" onclick="resetPassword({{ user.id }})">
+                                <i class="fas fa-key"></i> Réinitialiser MDP
+                            </button>
+                            {% if user.is_active %}
+                                <button class="btn btn-danger btn-sm" onclick="toggleUserStatus({{ user.id }}, false)">
+                                    <i class="fas fa-ban"></i> Désactiver
+                                </button>
+                            {% else %}
+                                <button class="btn btn-success btn-sm" onclick="toggleUserStatus({{ user.id }}, true)">
+                                    <i class="fas fa-check"></i> Activer
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations détaillées -->
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Informations personnelles -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-user"></i> Informations personnelles</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>{{ user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Téléphone:</strong></td>
+                                    <td>{{ user.telephone|default:"Non renseigné" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date d'inscription:</strong></td>
+                                    <td>{{ user.date_joined|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dernière connexion:</strong></td>
+                                    <td>{{ user.last_login|date:"d/m/Y H:i"|default:"Jamais connecté" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Région:</strong></td>
+                                    <td>{{ user.region.nom|default:"Non assignée" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Préfecture:</strong></td>
+                                    <td>{{ user.prefecture.nom|default:"Non assignée" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status de vérification:</strong></td>
+                                    <td>
+                                        {% if user.est_verifie %}
+                                            <span class="text-success">✓ Compte vérifié</span>
+                                        {% else %}
+                                            <span class="text-warning">⚠ En attente de vérification</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status du compte:</strong></td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="text-success">🟢 Actif</span>
+                                        {% else %}
+                                            <span class="text-danger">🔴 Désactivé</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activité récente -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Activité récente</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                        {% for activity in recent_activities %}
+                            <div class="activity-item {% if forloop.first %}recent{% endif %}">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <strong>{{ activity.action }}</strong>
+                                        <p class="mb-1 text-muted">{{ activity.description }}</p>
+                                    </div>
+                                    <small class="text-muted">{{ activity.date_action|timesince }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-4">Aucune activité récente</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Statistiques -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Statistiques</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-12 mb-3">
+                            <div class="stat-card">
+                                <h3 class="mb-1">{{ user.declarations_count|default:0 }}</h3>
+                                <small>Déclarations créées</small>
+                            </div>
+                        </div>
+                        {% if user.role == 'agent' %}
+                        <div class="col-6">
+                            <div class="stat-card bg-success">
+                                <h4 class="mb-1">{{ user.validations_count|default:0 }}</h4>
+                                <small>Validations</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card bg-info">
+                                <h4 class="mb-1">{{ user.responses_count|default:0 }}</h4>
+                                <small>Réponses</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Actions rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="sendMessage({{ user.id }})">
+                            <i class="fas fa-envelope"></i> Envoyer un message
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="viewDeclarations({{ user.id }})">
+                            <i class="fas fa-list"></i> Voir ses déclarations
+                        </button>
+                        {% if user.role == 'agent' %}
+                        <button class="btn btn-outline-warning btn-sm" onclick="viewValidations({{ user.id }})">
+                            <i class="fas fa-check-circle"></i> Voir ses validations
+                        </button>
+                        {% endif %}
+                        <button class="btn btn-outline-secondary btn-sm" onclick="exportUserData({{ user.id }})">
+                            <i class="fas fa-download"></i> Exporter ses données
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function editUser(userId) {
+    window.location.href = `/togoretrouve-admin/users/${userId}/edit/`;
+}
+
+async function toggleUserStatus(userId, activate) {
+    const action = activate ? 'activer' : 'désactiver';
+    if (!confirm(`Confirmer l'${activate ? 'activation' : 'désactivation'} de ce compte utilisateur ?`)) return;
+    
+    try {
+        const response = await fetch(`/togoretrouve-admin/users/${userId}/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: JSON.stringify({ activate: activate })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert(`Utilisateur ${activate ? 'activé' : 'désactivé'} avec succès`, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showAlert(result.error || 'Erreur lors de l\'opération', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication', 'error');
+    }
+}
+
+async function resetPassword(userId) {
+    if (!confirm('Réinitialiser le mot de passe de cet utilisateur ?')) return;
+    
+    try {
+        const response = await fetch(`/togoretrouve-admin/users/${userId}/reset-password/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert(`Nouveau mot de passe: ${result.new_password}`, 'success');
+        } else {
+            showAlert(result.error || 'Erreur lors de la réinitialisation', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication', 'error');
+    }
+}
+
+function sendMessage(userId) {
+    const message = prompt('Message à envoyer:');
+    if (!message) return;
+    
+    fetch(`/togoretrouve-admin/users/${userId}/message/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+        },
+        body: JSON.stringify({ message: message })
+    }).then(response => response.json())
+      .then(result => {
+          if (result.success) {
+              showAlert('Message envoyé avec succès', 'success');
+          } else {
+              showAlert(result.error || 'Erreur lors de l\'envoi', 'error');
+          }
+      });
+}
+
+function viewDeclarations(userId) {
+    window.open(`/togoretrouve-admin/declarations/?user=${userId}`, '_blank');
+}
+
+function viewValidations(userId) {
+    window.open(`/togoretrouve-admin/validations/?agent=${userId}`, '_blank');
+}
+
+function exportUserData(userId) {
+    window.open(`/togoretrouve-admin/users/${userId}/export/`, '_blank');
+}
+
+function showAlert(message, type = 'info') {
+    const alertClass = type === 'error' ? 'danger' : type;
+    const alertHtml = `
+        <div class="alert alert-${alertClass} alert-dismissible fade show position-fixed" 
+             style="top: 20px; right: 20px; z-index: 9999;">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', alertHtml);
+    
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            if (alert.textContent.includes(message)) {
+                alert.remove();
+            }
+        });
+    }, 5000);
+}
+</script>
+{% endblock %}

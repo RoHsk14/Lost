@@ -1,0 +1,567 @@
+{% extends 'agent/base.html' %}
+
+{% block title %}Signalements reçus - TogoRetrouve{% endblock %}
+
+{% block page_title %}Signalements reçus{% endblock %}
+{% block page_subtitle %}Gestion des signalements dans votre zone d'attribution{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header avec statistiques rapides -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ page_obj.paginator.count }}</p>
+                </div>
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-list text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">En attente</p>
+                    <p class="text-2xl font-bold text-orange-600">{{ stats.en_attente|default:0 }}</p>
+                </div>
+                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clock text-orange-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Validés</p>
+                    <p class="text-2xl font-bold text-green-600">{{ stats.valides|default:0 }}</p>
+                </div>
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check text-green-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Publiés</p>
+                    <p class="text-2xl font-bold text-purple-600">{{ stats.publies|default:0 }}</p>
+                </div>
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-globe text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barre de recherche et filtres modernes -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200" x-data="{ 
+        showFilters: false, 
+        searchQuery: '{{ search_query|default:"" }}',
+        selectedStatut: '{{ statut_filter|default:"" }}',
+        selectedType: '{{ type_filter|default:"" }}'
+    }">
+        <div class="p-6">
+            <!-- Barre de recherche principale -->
+            <form method="get" class="space-y-4">
+                <div class="flex items-center space-x-4">
+                    <!-- Champ de recherche -->
+                    <div class="flex-1 relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" 
+                               name="q" 
+                               x-model="searchQuery"
+                               placeholder="Rechercher par numéro, nom d'objet, description, déclarant..." 
+                               class="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200">
+                    </div>
+                    
+                    <!-- Bouton filtres -->
+                    <button type="button" 
+                            @click="showFilters = !showFilters"
+                            class="inline-flex items-center px-4 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+                            :class="{ 'bg-primary-50 border-primary-300 text-primary-700': showFilters }">
+                        <i class="fas fa-filter mr-2"></i>
+                        Filtres
+                        <i class="fas fa-chevron-down ml-2 transition-transform duration-200" :class="{ 'rotate-180': showFilters }"></i>
+                    </button>
+                    
+                    <!-- Bouton recherche -->
+                    <button type="submit" 
+                            class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                        <i class="fas fa-search mr-2"></i>
+                        Rechercher
+                    </button>
+                </div>
+                
+                <!-- Filtres avancés -->
+                <div x-show="showFilters" 
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-4 border-t border-gray-200">
+                    
+                    <div>
+                        <label for="statut" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                        <select name="statut" 
+                                id="statut" 
+                                x-model="selectedStatut"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            <option value="">Tous les statuts</option>
+                            {% for value, label in statuts_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                        <select name="type" 
+                                id="type" 
+                                x-model="selectedType"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            <option value="">Tous les types</option>
+                            {% for value, label in types_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="date_debut" class="block text-sm font-medium text-gray-700 mb-1">Date début</label>
+                        <input type="date" 
+                               name="date_debut" 
+                               id="date_debut" 
+                               value="{{ date_debut|default:'' }}"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="date_fin" class="block text-sm font-medium text-gray-700 mb-1">Date fin</label>
+                        <input type="date" 
+                               name="date_fin" 
+                               id="date_fin" 
+                               value="{{ date_fin|default:'' }}"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    </div>
+                    
+                    <div class="flex items-end">
+                        <a href="{% url 'togo_agent:mes_signalements' %}" 
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 rounded-lg transition-colors w-full justify-center">
+                            <i class="fas fa-undo mr-2"></i>
+                            Réinitialiser
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Actions groupées et vue -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200" x-data="{ 
+        viewMode: 'list',
+        selectedItems: [],
+        selectAll: false,
+        bulkAction: ''
+    }">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <h3 class="text-lg font-bold text-gray-900">
+                        Signalements 
+                        <span class="text-sm font-normal text-gray-500">
+                            ({{ page_obj.paginator.count }} résultat{{ page_obj.paginator.count|pluralize }})
+                        </span>
+                    </h3>
+                    
+                    <!-- Actions groupées -->
+                    <div class="flex items-center space-x-2" x-show="selectedItems.length > 0">
+                        <select x-model="bulkAction" 
+                                class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <option value="">Actions groupées</option>
+                            <option value="validate">Valider la sélection</option>
+                            <option value="publish">Publier la sélection</option>
+                            <option value="archive">Archiver la sélection</option>
+                        </select>
+                        <button @click="applyBulkAction()" 
+                                :disabled="!bulkAction"
+                                class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                            <i class="fas fa-check mr-1"></i>
+                            Appliquer
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <!-- Modes d'affichage -->
+                    <div class="flex rounded-lg border border-gray-300 overflow-hidden">
+                        <button @click="viewMode = 'list'" 
+                                class="px-3 py-2 text-sm font-medium transition-colors"
+                                :class="viewMode === 'list' ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'">
+                            <i class="fas fa-list"></i>
+                        </button>
+                        <button @click="viewMode = 'cards'" 
+                                class="px-3 py-2 text-sm font-medium border-l transition-colors"
+                                :class="viewMode === 'cards' ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'">
+                            <i class="fas fa-th"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Vue en liste -->
+        <div x-show="viewMode === 'list'" class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left w-8">
+                            <input type="checkbox" 
+                                   x-model="selectAll"
+                                   @change="toggleSelectAll()"
+                                   class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Signalement
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Déclarant
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Type & Statut
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Date
+                        </th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for signalement in page_obj %}
+                        <tr class="hover:bg-gray-50 transition-colors group">
+                            <td class="px-6 py-4">
+                                <input type="checkbox" 
+                                       value="{{ signalement.id }}"
+                                       x-model="selectedItems"
+                                       class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            </td>
+                            
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    {% if signalement.photo_principale %}
+                                        <img src="{{ signalement.photo_principale.url }}" 
+                                             alt="{{ signalement.nom_objet }}" 
+                                             class="w-12 h-12 rounded-xl object-cover mr-4 shadow-sm">
+                                    {% else %}
+                                        <div class="w-12 h-12 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center mr-4">
+                                            <i class="fas fa-image text-gray-400"></i>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="text-sm font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
+                                            {{ signalement.nom_objet }}
+                                        </h4>
+                                        <p class="text-xs font-mono font-medium text-primary-600 bg-primary-50 px-2 py-0.5 rounded mt-1 inline-block">
+                                            #{{ signalement.numero_declaration }}
+                                        </p>
+                                        <p class="text-xs text-gray-500 mt-1 line-clamp-1">
+                                            {{ signalement.description|truncatewords:10 }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-500 rounded-full flex items-center justify-center text-white font-bold text-xs mr-3">
+                                        {{ signalement.declarant.first_name|first|default:signalement.declarant.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">
+                                            {{ signalement.declarant.get_full_name|default:signalement.declarant.username }}
+                                        </p>
+                                        {% if signalement.declarant.telephone %}
+                                            <p class="text-xs text-gray-500">{{ signalement.declarant.telephone }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <td class="px-6 py-4">
+                                <div class="space-y-1">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
+                                        {% if signalement.type_declaration == 'perdu' %}
+                                            bg-red-100 text-red-800 border border-red-200
+                                        {% else %}
+                                            bg-green-100 text-green-800 border border-green-200
+                                        {% endif %}">
+                                        <i class="fas {% if signalement.type_declaration == 'perdu' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} mr-1"></i>
+                                        {{ signalement.get_type_declaration_display }}
+                                    </span>
+                                    
+                                    <br>
+                                    
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
+                                        {% if signalement.statut == 'cree' %}
+                                            bg-yellow-100 text-yellow-800 border border-yellow-200
+                                        {% elif signalement.statut == 'en_validation' %}
+                                            bg-blue-100 text-blue-800 border border-blue-200
+                                        {% elif signalement.statut == 'valide' %}
+                                            bg-green-100 text-green-800 border border-green-200
+                                        {% elif signalement.statut == 'publie' %}
+                                            bg-purple-100 text-purple-800 border border-purple-200
+                                        {% elif signalement.statut == 'restitue' %}
+                                            bg-emerald-100 text-emerald-800 border border-emerald-200
+                                        {% else %}
+                                            bg-gray-100 text-gray-800 border border-gray-200
+                                        {% endif %}">
+                                        <i class="fas fa-circle text-xs mr-1"></i>
+                                        {{ signalement.get_statut_display }}
+                                    </span>
+                                </div>
+                            </td>
+                            
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                <div class="space-y-1">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-calendar-alt mr-1 text-gray-400"></i>
+                                        {{ signalement.date_declaration|date:"d/m/Y" }}
+                                    </div>
+                                    <div class="text-xs text-gray-400">
+                                        {{ signalement.date_declaration|timesince }}
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <a href="{% url 'togo_agent:signalement_detail' signalement.id %}" 
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 hover:border-primary-300 rounded-lg transition-all duration-200 hover:shadow-sm">
+                                        <i class="fas fa-eye mr-1"></i>
+                                        Voir
+                                    </a>
+                                    
+                                    {% if signalement.statut == 'cree' %}
+                                        <a href="{% url 'togo_agent:valider_signalement' signalement.id %}" 
+                                           class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 hover:border-green-300 rounded-lg transition-all duration-200 hover:shadow-sm">
+                                            <i class="fas fa-check mr-1"></i>
+                                            Valider
+                                        </a>
+                                    {% elif signalement.statut == 'valide' %}
+                                        <button class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 hover:border-blue-300 rounded-lg transition-all duration-200 hover:shadow-sm">
+                                            <i class="fas fa-globe mr-1"></i>
+                                            Publier
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="max-w-sm mx-auto">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i class="fas fa-search text-gray-400 text-2xl"></i>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun signalement trouvé</h3>
+                                    <p class="text-gray-500">
+                                        {% if search_query or statut_filter or type_filter %}
+                                            Essayez de modifier vos critères de recherche ou
+                                            <a href="{% url 'togo_agent:mes_signalements' %}" class="text-primary-600 hover:text-primary-500">effacez les filtres</a>.
+                                        {% else %}
+                                            Les nouveaux signalements dans votre zone apparaîtront ici.
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Vue en cartes -->
+        <div x-show="viewMode === 'cards'" class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for signalement in page_obj %}
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 group">
+                        <div class="relative">
+                            {% if signalement.photo_principale %}
+                                <img src="{{ signalement.photo_principale.url }}" 
+                                     alt="{{ signalement.nom_objet }}" 
+                                     class="w-full h-48 object-cover rounded-t-xl">
+                            {% else %}
+                                <div class="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-xl flex items-center justify-center">
+                                    <i class="fas fa-image text-gray-400 text-3xl"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="absolute top-3 left-3 flex space-x-2">
+                                <span class="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-white/90 backdrop-blur-sm
+                                    {% if signalement.type_declaration == 'perdu' %}text-red-700{% else %}text-green-700{% endif %}">
+                                    <i class="fas {% if signalement.type_declaration == 'perdu' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} mr-1"></i>
+                                    {{ signalement.get_type_declaration_display }}
+                                </span>
+                            </div>
+                            
+                            <div class="absolute top-3 right-3">
+                                <input type="checkbox" 
+                                       value="{{ signalement.id }}"
+                                       x-model="selectedItems"
+                                       class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 bg-white/90 backdrop-blur-sm">
+                            </div>
+                        </div>
+                        
+                        <div class="p-4">
+                            <div class="mb-3">
+                                <h4 class="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors mb-1">
+                                    {{ signalement.nom_objet }}
+                                </h4>
+                                <p class="text-xs font-mono font-medium text-primary-600 bg-primary-50 px-2 py-1 rounded inline-block">
+                                    #{{ signalement.numero_declaration }}
+                                </p>
+                            </div>
+                            
+                            <p class="text-sm text-gray-600 mb-4 line-clamp-2">
+                                {{ signalement.description|truncatewords:15 }}
+                            </p>
+                            
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-500 rounded-full flex items-center justify-center text-white font-bold text-xs mr-2">
+                                        {{ signalement.declarant.first_name|first|default:signalement.declarant.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">
+                                            {{ signalement.declarant.get_full_name|default:signalement.declarant.username }}
+                                        </p>
+                                        <p class="text-xs text-gray-500">{{ signalement.date_declaration|timesince }}</p>
+                                    </div>
+                                </div>
+                                
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold
+                                    {% if signalement.statut == 'cree' %}bg-yellow-100 text-yellow-800
+                                    {% elif signalement.statut == 'en_validation' %}bg-blue-100 text-blue-800
+                                    {% elif signalement.statut == 'valide' %}bg-green-100 text-green-800
+                                    {% elif signalement.statut == 'publie' %}bg-purple-100 text-purple-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    <i class="fas fa-circle text-xs mr-1"></i>
+                                    {{ signalement.get_statut_display }}
+                                </span>
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                <a href="{% url 'togo_agent:signalement_detail' signalement.id %}" 
+                                   class="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 hover:border-primary-300 rounded-lg transition-all duration-200">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    Voir
+                                </a>
+                                
+                                {% if signalement.statut == 'cree' %}
+                                    <a href="{% url 'togo_agent:valider_signalement' signalement.id %}" 
+                                       class="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+                                        <i class="fas fa-check mr-1"></i>
+                                        Valider
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination moderne -->
+    {% if page_obj.has_other_pages %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Affichage de 
+                    <span class="font-medium">{{ page_obj.start_index }}</span>
+                    à 
+                    <span class="font-medium">{{ page_obj.end_index }}</span>
+                    sur 
+                    <span class="font-medium">{{ page_obj.paginator.count }}</span>
+                    résultats
+                </div>
+                
+                <nav class="flex items-center space-x-1" aria-label="Pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" 
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors">
+                            <i class="fas fa-angle-double-left mr-1"></i>
+                            Premier
+                        </a>
+                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" 
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors">
+                            <i class="fas fa-angle-left mr-1"></i>
+                            Précédent
+                        </a>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 border border-primary-300 rounded-lg">
+                                {{ num }}
+                            </span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" 
+                               class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors">
+                                {{ num }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" 
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors">
+                            Suivant
+                            <i class="fas fa-angle-right ml-1"></i>
+                        </a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" 
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors">
+                            Dernier
+                            <i class="fas fa-angle-double-right ml-1"></i>
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript pour les interactions -->
+<script>
+function toggleSelectAll() {
+    const checkboxes = document.querySelectorAll('input[x-model="selectedItems"]');
+    const selectAllCheckbox = document.querySelector('input[x-model="selectAll"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+}
+
+function applyBulkAction() {
+    // Implémentation des actions groupées
+    console.log('Action groupée à implémenter');
+}
+
+// Recherche instantanée (débounce)
+let searchTimeout;
+document.querySelector('input[name="q"]')?.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        // Optionnel: recherche automatique après 500ms de frappe
+    }, 500);
+});
+</script>
+{% endblock %}

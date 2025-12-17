@@ -1,0 +1,324 @@
+{% extends "agent/base.html" %}
+{% load static %}
+
+{% block title %}Chat temps réel - TogoRetrouve{% endblock %}
+{% block page_title %}Chat temps réel{% endblock %}
+
+{% block main_content %}
+<!-- Chat Dashboard dans l'espace agent -->
+<div class="space-y-6">
+    <!-- Test simple d'affichage -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <i class="fas fa-comments text-blue-600 mr-2"></i>
+            Interface de Chat Agent
+        </h2>
+        <p class="text-gray-600">Interface de messagerie prête à utiliser</p>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="grid grid-cols-3 gap-4 text-center">
+            <div>
+                <div class="text-2xl font-bold text-blue-600" id="total-conversations">0</div>
+                <div class="text-sm text-gray-500">Conversations</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-orange-600" id="unread-conversations">0</div>
+                <div class="text-sm text-gray-500">Non lues</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-red-600" id="total-unread-messages">0</div>
+                <div class="text-sm text-gray-500">Messages</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interface principale -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+            
+            <!-- Liste des conversations -->
+            <div class="lg:col-span-1">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Conversations</h3>
+                    <button onclick="loadConversations()" 
+                            class="p-2 text-gray-500 hover:text-blue-600 transition-colors"
+                            title="Actualiser">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                
+                <!-- Loading -->
+                <div id="conversations-loading" class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-2xl text-blue-500 mb-2"></i>
+                    <p class="text-gray-600">Chargement...</p>
+                </div>
+                
+                <!-- Liste -->
+                <div id="conversations-list" style="display: none;" class="space-y-3 max-h-96 overflow-y-auto">
+                    <!-- Conversations seront chargées ici -->
+                </div>
+                
+                <!-- Vide -->
+                <div id="conversations-empty" style="display: none;" class="text-center py-8 text-gray-500">
+                    <i class="fas fa-comments text-4xl mb-2"></i>
+                    <p>Aucune conversation</p>
+                </div>
+            </div>
+            
+            <!-- Zone de chat -->
+            <div class="lg:col-span-2">
+                <!-- État initial -->
+                <div id="chat-placeholder" class="text-center py-12 text-gray-500">
+                    <i class="fas fa-comment-alt text-6xl mb-4"></i>
+                    <h3 class="text-lg font-medium mb-2">Sélectionnez une conversation</h3>
+                    <p class="text-sm">Choisissez une conversation pour commencer à échanger</p>
+                </div>
+                
+                <!-- Interface de chat -->
+                <div id="chat-interface" style="display: none;" class="flex flex-col h-96">
+                    <!-- Header -->
+                    <div class="border-b p-4 bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 id="chat-title" class="font-semibold">Conversation</h3>
+                                <p id="chat-subtitle" class="text-sm text-gray-600">Signalement #</p>
+                            </div>
+                            <button onclick="closeChat()" class="text-gray-500 hover:text-red-500">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Messages -->
+                    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 bg-gray-50">
+                        <!-- Messages ici -->
+                    </div>
+                    
+                    <!-- Input -->
+                    <div class="border-t p-4 bg-white">
+                        <div class="flex space-x-2">
+                            <input type="text" id="chat-input" 
+                                   placeholder="Tapez votre message..." 
+                                   class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   onkeypress="if(event.key==='Enter') sendMessage()">
+                            <button onclick="sendMessage()" 
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+console.log('🚀 Chat Agent - Version Simple Fonctionnelle');
+let currentConversationId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM chargé, initialisation...');
+    loadConversations();
+    
+    // Auto-ouverture si URL contient openChat
+    const urlParams = new URLSearchParams(window.location.search);
+    const openChatId = urlParams.get('openChat');
+    if (openChatId) {
+        console.log('Auto-ouverture conversation:', openChatId);
+        setTimeout(() => selectConversation(openChatId), 1500);
+    }
+});
+
+async function loadConversations() {
+    console.log('Chargement des conversations...');
+    const loadingEl = document.getElementById('conversations-loading');
+    const listEl = document.getElementById('conversations-list');
+    const emptyEl = document.getElementById('conversations-empty');
+    
+    try {
+        loadingEl.style.display = 'block';
+        listEl.style.display = 'none';
+        emptyEl.style.display = 'none';
+        
+        const response = await fetch('/api/conversations/');
+        const conversations = await response.json();
+        
+        console.log('Conversations reçues:', conversations);
+        
+        // Mettre à jour les stats
+        document.getElementById('total-conversations').textContent = conversations.length;
+        const unreadConv = conversations.filter(c => c.unread_count > 0).length;
+        document.getElementById('unread-conversations').textContent = unreadConv;
+        const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+        document.getElementById('total-unread-messages').textContent = totalUnread;
+        
+        if (conversations.length === 0) {
+            loadingEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+            return;
+        }
+        
+        // Afficher les conversations
+        listEl.innerHTML = conversations.map(conv => `
+            <div class="conversation-item p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${currentConversationId == conv.id ? 'bg-blue-50 border-blue-300' : ''}"
+                 onclick="selectConversation(${conv.id})" data-id="${conv.id}">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-medium truncate">${conv.citoyen_nom || 'Citoyen'}</h4>
+                        <p class="text-sm text-gray-600 truncate">Signalement #${conv.signalement_numero}</p>
+                        <p class="text-xs text-gray-500">${conv.derniere_activite ? new Date(conv.derniere_activite).toLocaleDateString() : 'Nouveau'}</p>
+                    </div>
+                    ${conv.unread_count > 0 ? `
+                        <span class="ml-2 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                            ${conv.unread_count}
+                        </span>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+        
+        loadingEl.style.display = 'none';
+        listEl.style.display = 'block';
+        
+    } catch (error) {
+        console.error('Erreur chargement conversations:', error);
+        loadingEl.innerHTML = '<div class="text-red-500 text-center p-4">Erreur: ' + error.message + '</div>';
+    }
+}
+
+function selectConversation(conversationId) {
+    console.log('Sélection conversation:', conversationId);
+    currentConversationId = conversationId;
+    
+    // Mettre à jour la sélection visuelle
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('bg-blue-50', 'border-blue-300');
+    });
+    const selectedItem = document.querySelector(`[data-id="${conversationId}"]`);
+    if (selectedItem) {
+        selectedItem.classList.add('bg-blue-50', 'border-blue-300');
+    }
+    
+    // Masquer placeholder, afficher chat
+    document.getElementById('chat-placeholder').style.display = 'none';
+    document.getElementById('chat-interface').style.display = 'flex';
+    
+    // Mettre à jour le titre
+    document.getElementById('chat-title').textContent = `Conversation ${conversationId}`;
+    document.getElementById('chat-subtitle').textContent = `ID: ${conversationId}`;
+    
+    // Charger les messages
+    loadMessages(conversationId);
+}
+
+async function loadMessages(conversationId) {
+    console.log('Chargement messages pour conversation:', conversationId);
+    
+    try {
+        const response = await fetch(`/api/conversations/${conversationId}/messages/`);
+        const messages = await response.json();
+        
+        console.log('Messages reçus:', messages);
+        
+        const messagesEl = document.getElementById('chat-messages');
+        
+        if (messages.length === 0) {
+            messagesEl.innerHTML = '<div class="text-center text-gray-500 p-4">Aucun message dans cette conversation</div>';
+            return;
+        }
+        
+        messagesEl.innerHTML = messages.map(msg => {
+            const isAgent = msg.sender_role === 'agent';
+            const time = new Date(msg.date_envoi).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+            
+            return `
+                <div class="mb-3 ${isAgent ? 'text-right' : 'text-left'}">
+                    <div class="inline-block px-3 py-2 rounded-lg max-w-xs ${isAgent ? 'bg-blue-600 text-white' : 'bg-white border shadow-sm'}">
+                        <div class="text-sm">${msg.contenu}</div>
+                        <div class="text-xs mt-1 ${isAgent ? 'text-blue-200' : 'text-gray-500'}">${time}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Scroll vers le bas
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        
+    } catch (error) {
+        console.error('Erreur chargement messages:', error);
+        document.getElementById('chat-messages').innerHTML = '<div class="text-red-500 p-4">Erreur: ' + error.message + '</div>';
+    }
+}
+
+async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    
+    if (!message || !currentConversationId) {
+        console.log('Message vide ou pas de conversation sélectionnée');
+        return;
+    }
+    
+    console.log('Envoi message:', message);
+    
+    try {
+        const response = await fetch(`/api/conversations/${currentConversationId}/messages/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                contenu: message
+            })
+        });
+        
+        if (response.ok) {
+            input.value = '';
+            // Recharger les messages
+            loadMessages(currentConversationId);
+            // Recharger les conversations pour mettre à jour les compteurs
+            loadConversations();
+        } else {
+            const errorData = await response.text();
+            throw new Error(`Erreur serveur: ${response.status} - ${errorData}`);
+        }
+        
+    } catch (error) {
+        console.error('Erreur envoi message:', error);
+        alert('Erreur envoi: ' + error.message);
+    }
+}
+
+function closeChat() {
+    currentConversationId = null;
+    document.getElementById('chat-interface').style.display = 'none';
+    document.getElementById('chat-placeholder').style.display = 'block';
+    
+    // Retirer la sélection
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('bg-blue-50', 'border-blue-300');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

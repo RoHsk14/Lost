@@ -1,0 +1,283 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Déclarations{% endblock %}
+{% block admin_title %}Gestion des Déclarations{% endblock %}
+
+{% block extra_head %}
+<style>
+.status-cree { color: #6c757d; }
+.status-en_validation { color: #ffc107; }
+.status-valide { color: #28a745; }
+.status-publie { color: #007bff; }
+.status-reclame { color: #fd7e14; }
+.status-en_verification { color: #dc3545; }
+.status-restitue { color: #198754; }
+.status-rejete { color: #dc3545; }
+
+.declaration-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 4px solid #007bff;
+}
+
+.declaration-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.priority-high { border-left-color: #dc3545; }
+.priority-medium { border-left-color: #ffc107; }
+.priority-low { border-left-color: #28a745; }
+
+.photo-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">
+        <i class="fas fa-file-alt me-2 text-primary"></i>
+        Gestion des Déclarations
+    </h4>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filtersModal">
+            <i class="fas fa-filter"></i> Filtres
+        </button>
+        <button class="btn btn-primary" onclick="exportDeclarations()">
+            <i class="fas fa-download"></i> Exporter
+        </button>
+    </div>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card bg-secondary text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.total|default:0 }}</h5>
+                <small>Total</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.pending|default:0 }}</h5>
+                <small>En Attente</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.validated|default:0 }}</h5>
+                <small>Validées</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.published|default:0 }}</h5>
+                <small>Publiées</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.resolved|default:0 }}</h5>
+                <small>Résolues</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-dark text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.today|default:0 }}</h5>
+                <small>Aujourd'hui</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des déclarations -->
+<div class="card">
+    <div class="card-body">
+        {% if declarations %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Objet</th>
+                        <th>Déclarant</th>
+                        <th>Lieu</th>
+                        <th>Statut</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for declaration in declarations %}
+                    <tr>
+                        <td><strong>#{{ declaration.id }}</strong></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if declaration.photo_principale %}
+                                <img src="{{ declaration.photo_principale.url }}" alt="Photo" class="photo-thumbnail me-2">
+                                {% else %}
+                                <div class="photo-thumbnail bg-light d-flex align-items-center justify-content-center me-2">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="fw-bold">{{ declaration.nom_objet }}</div>
+                                    <small class="text-muted">{{ declaration.get_type_declaration_display }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-bold">{{ declaration.declarant.get_full_name }}</div>
+                            <small class="text-muted">{{ declaration.declarant.email }}</small>
+                        </td>
+                        <td>
+                            <div>{{ declaration.lieu_precis|default:"Non précisé" }}</div>
+                            {% if declaration.prefecture %}
+                            <small class="text-muted">{{ declaration.prefecture.nom }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary status-{{ declaration.statut }}">
+                                {{ declaration.get_statut_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div>{{ declaration.date_declaration|date:"d/m/Y" }}</div>
+                            <small class="text-muted">{{ declaration.date_declaration|date:"H:i" }}</small>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-primary btn-sm" onclick="viewDeclaration({{ declaration.id }})" title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                
+                                {% if declaration.statut == 'cree' %}
+                                <button class="btn btn-outline-success btn-sm" onclick="validateDeclaration({{ declaration.id }})" title="Valider">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                {% endif %}
+                                
+                                {% if declaration.statut == 'valide' %}
+                                <button class="btn btn-outline-info btn-sm" onclick="publishDeclaration({{ declaration.id }})" title="Publier">
+                                    <i class="fas fa-share"></i>
+                                </button>
+                                {% endif %}
+                                
+                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="editDeclaration({{ declaration.id }})">
+                                        <i class="fas fa-edit me-2"></i>Modifier
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="exportDeclaration({{ declaration.id }})">
+                                        <i class="fas fa-download me-2"></i>Exporter PDF
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteDeclaration({{ declaration.id }})">
+                                        <i class="fas fa-trash me-2"></i>Supprimer
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédent</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucune déclaration trouvée</h5>
+            <p class="text-muted">Les nouvelles déclarations apparaîtront ici</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewDeclaration(id) {
+    window.location.href = `/togoretrouve-admin/declarations/${id}/`;
+}
+
+function validateDeclaration(id) {
+    if (confirm('Confirmer la validation de cette déclaration ?')) {
+        window.location.href = `/togoretrouve-admin/declarations/${id}/valider/`;
+    }
+}
+
+function publishDeclaration(id) {
+    if (confirm('Publier cette déclaration ?')) {
+        // Rediriger vers la page de détail pour publication
+        window.location.href = `/togoretrouve-admin/declarations/${id}/`;
+    }
+}
+
+function editDeclaration(id) {
+    console.log('Modifier déclaration:', id);
+}
+
+function exportDeclaration(id) {
+    window.open(`/admin/api/declarations/${id}/export/pdf/`, '_blank');
+}
+
+function deleteDeclaration(id) {
+    if (confirm('⚠️ Supprimer définitivement cette déclaration ?')) {
+        console.log('Supprimer déclaration:', id);
+    }
+}
+
+function exportDeclarations() {
+    window.location.href = '/admin/api/declarations/export/';
+}
+</script>
+{% endblock %}

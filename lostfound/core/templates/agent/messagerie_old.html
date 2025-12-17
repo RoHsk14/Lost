@@ -1,0 +1,337 @@
+{% extends 'agent/base.html' %}
+
+{% block title %}Messagerie - TogoRetrouve{% endblock %}
+
+{% block page_title %}Messagerie{% endblock %}
+{% block page_subtitle %}Communication directe avec les citoyens{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow h-[calc(100vh-12rem)] flex">
+    <!-- Liste des conversations -->
+    <div class="w-1/3 border-r border-gray-200 flex flex-col">
+        <!-- Entête de la liste -->
+        <div class="p-4 border-b border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Conversations</h3>
+                <button class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            
+            <!-- Filtre par statut -->
+            <div class="flex space-x-2">
+                <select id="filtre-statut" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Tous les statuts</option>
+                    {% for value, label in statuts_choices %}
+                        <option value="{{ value }}" {% if statut_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <button onclick="filtrerConversations()" class="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                    <i class="fas fa-filter"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Liste scrollable des conversations -->
+        <div class="flex-1 overflow-y-auto">
+            {% for conversation in conversations %}
+                <div class="conversation-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer {% if forloop.first %}bg-primary-50 border-l-4 border-primary-500{% endif %}" 
+                     data-conversation-id="{{ conversation.id }}" 
+                     onclick="ouvrirConversation({{ conversation.id }})">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-1">
+                                <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-between text-sm font-bold text-gray-600 mr-3">
+                                    {{ conversation.declarant.first_name|first|default:conversation.declarant.username|first|upper }}
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-medium text-gray-900">{{ conversation.declarant.get_full_name|default:conversation.declarant.username }}</h4>
+                                    {% if conversation.messages_non_lus > 0 %}
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {{ conversation.messages_non_lus }} non lu{{ conversation.messages_non_lus|pluralize }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="text-sm font-medium text-gray-800 mb-1">{{ conversation.sujet|truncatechars:40 }}</p>
+                            <div class="flex items-center justify-between">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                                    {% if conversation.statut == 'ouverte' %}bg-green-100 text-green-800
+                                    {% elif conversation.statut == 'en_cours' %}bg-yellow-100 text-yellow-800
+                                    {% elif conversation.statut == 'fermee' %}bg-gray-100 text-gray-800
+                                    {% endif %}">
+                                    {{ conversation.get_statut_display }}
+                                </span>
+                                <span class="text-xs text-gray-500">{{ conversation.date_dernier_message|timesince }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="p-8 text-center text-gray-500">
+                    <i class="fas fa-envelope text-gray-400 text-4xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune conversation</h3>
+                    <p>Les conversations avec les citoyens apparaîtront ici.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Zone de conversation -->
+    <div class="flex-1 flex flex-col" id="zone-conversation">
+        {% if conversations %}
+            <!-- Entête de la conversation active -->
+            <div class="p-4 border-b border-gray-200 bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-sm font-bold text-gray-600 mr-3">
+                            {{ conversations.0.declarant.first_name|first|default:conversations.0.declarant.username|first|upper }}
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-900">{{ conversations.0.declarant.get_full_name|default:conversations.0.declarant.username }}</h4>
+                            <p class="text-sm text-gray-600">{{ conversations.0.signalement.nom_objet|default:"Conversation générale" }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <option value="ouverte" {% if conversations.0.statut == 'ouverte' %}selected{% endif %}>Ouverte</option>
+                            <option value="en_cours" {% if conversations.0.statut == 'en_cours' %}selected{% endif %}>En cours</option>
+                            <option value="fermee" {% if conversations.0.statut == 'fermee' %}selected{% endif %}>Fermée</option>
+                        </select>
+                        <button class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Messages -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4" id="messages-container">
+                <!-- Messages simulés - À remplacer par les vrais messages -->
+                <div class="flex justify-end">
+                    <div class="max-w-xs lg:max-w-md px-4 py-2 bg-primary-600 text-white rounded-lg">
+                        <p class="text-sm">Bonjour, j'ai bien reçu votre réclamation pour l'iPhone trouvé. Pouvez-vous me fournir la preuve d'achat ?</p>
+                        <p class="text-xs mt-1 opacity-75">Hier à 14:32</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-start">
+                    <div class="max-w-xs lg:max-w-md px-4 py-2 bg-gray-200 text-gray-800 rounded-lg">
+                        <p class="text-sm">Bonjour, oui bien sûr. Je vais vous envoyer la facture que j'ai gardée. J'ai acheté ce téléphone il y a 3 mois.</p>
+                        <p class="text-xs mt-1 text-gray-600">Hier à 15:18</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-start">
+                    <div class="max-w-xs lg:max-w-md px-4 py-2 bg-gray-200 text-gray-800 rounded-lg">
+                        <p class="text-sm mb-2">Voici la facture :</p>
+                        <div class="bg-white p-2 rounded border">
+                            <div class="flex items-center">
+                                <i class="fas fa-file-pdf text-red-500 mr-2"></i>
+                                <span class="text-sm">facture_iphone.pdf</span>
+                            </div>
+                        </div>
+                        <p class="text-xs mt-1 text-gray-600">Hier à 15:20</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end">
+                    <div class="max-w-xs lg:max-w-md px-4 py-2 bg-primary-600 text-white rounded-lg">
+                        <p class="text-sm">Perfect ! Le document est conforme. Votre réclamation est approuvée. Vous pouvez venir récupérer votre téléphone au commissariat avec une pièce d'identité.</p>
+                        <p class="text-xs mt-1 opacity-75">Aujourd'hui à 09:15</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Zone de saisie -->
+            <div class="p-4 border-t border-gray-200">
+                <form id="form-message" class="flex items-end space-x-3">
+                    <div class="flex-1">
+                        <textarea id="message-input" rows="2" 
+                                  placeholder="Tapez votre message..." 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-primary-500 focus:border-primary-500"></textarea>
+                    </div>
+                    <div class="flex flex-col space-y-2">
+                        <button type="button" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100" title="Joindre un fichier">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <button type="submit" class="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700" title="Envoyer">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Options supplémentaires -->
+                <div class="flex items-center justify-between mt-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="message-interne" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                        <span class="ml-2 text-sm text-gray-600">Message interne (non visible par le citoyen)</span>
+                    </label>
+                    <div class="flex items-center space-x-2 text-sm text-gray-500">
+                        <span>En ligne</span>
+                        <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- État vide -->
+            <div class="flex-1 flex items-center justify-center">
+                <div class="text-center text-gray-500">
+                    <i class="fas fa-comments text-6xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Sélectionnez une conversation</h3>
+                    <p>Choisissez une conversation dans la liste pour commencer à échanger.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Input file caché pour l'upload -->
+<input type="file" id="file-input" class="hidden" accept="image/*,.pdf,.doc,.docx">
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let conversationActive = null;
+
+function ouvrirConversation(conversationId) {
+    // Réinitialiser les styles des conversations
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('bg-primary-50', 'border-l-4', 'border-primary-500');
+    });
+    
+    // Marquer la conversation comme active
+    const conversationElement = document.querySelector(`[data-conversation-id="${conversationId}"]`);
+    conversationElement.classList.add('bg-primary-50', 'border-l-4', 'border-primary-500');
+    
+    conversationActive = conversationId;
+    
+    // Charger les messages de la conversation
+    chargerMessages(conversationId);
+}
+
+function chargerMessages(conversationId) {
+    // Ici, vous feriez un appel AJAX pour charger les vrais messages
+    // fetch(`{% url 'togo_agent:conversation_detail' 0 %}`.replace('0', conversationId))
+    console.log('Chargement des messages pour la conversation', conversationId);
+}
+
+function filtrerConversations() {
+    const statut = document.getElementById('filtre-statut').value;
+    const url = new URL(window.location);
+    
+    if (statut) {
+        url.searchParams.set('statut', statut);
+    } else {
+        url.searchParams.delete('statut');
+    }
+    
+    window.location.href = url.toString();
+}
+
+// Envoi de message
+document.getElementById('form-message').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!conversationActive) {
+        alert('Aucune conversation sélectionnée');
+        return;
+    }
+    
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput.value.trim();
+    const estInterne = document.getElementById('message-interne').checked;
+    
+    if (!message) {
+        alert('Veuillez saisir un message');
+        return;
+    }
+    
+    // Ajouter le message à l'interface immédiatement
+    ajouterMessageInterface(message, true, estInterne);
+    
+    // Vider le champ de saisie
+    messageInput.value = '';
+    document.getElementById('message-interne').checked = false;
+    
+    // Envoyer le message au serveur
+    const formData = new FormData();
+    formData.append('contenu', message);
+    formData.append('est_interne', estInterne);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch(`{% url 'togo_agent:conversation_detail' 0 %}`.replace('0', conversationActive), {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erreur lors de l\'envoi du message');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Message envoyé avec succès');
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur lors de l\'envoi du message');
+    });
+});
+
+function ajouterMessageInterface(message, estAgent, estInterne = false) {
+    const messagesContainer = document.getElementById('messages-container');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `flex ${estAgent ? 'justify-end' : 'justify-start'}`;
+    
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    
+    const messageClass = estAgent 
+        ? (estInterne ? 'bg-gray-600' : 'bg-primary-600') 
+        : 'bg-gray-200 text-gray-800';
+    
+    const textClass = estAgent ? 'text-white' : 'text-gray-800';
+    
+    messageDiv.innerHTML = `
+        <div class="max-w-xs lg:max-w-md px-4 py-2 ${messageClass} ${textClass} rounded-lg">
+            ${estInterne ? '<p class="text-xs opacity-75 mb-1">Message interne</p>' : ''}
+            <p class="text-sm">${message}</p>
+            <p class="text-xs mt-1 ${estAgent ? 'opacity-75' : 'text-gray-600'}">Maintenant</p>
+        </div>
+    `;
+    
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Gestion des fichiers joints
+document.querySelector('[title="Joindre un fichier"]').addEventListener('click', function() {
+    document.getElementById('file-input').click();
+});
+
+document.getElementById('file-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        // Ici, vous pourriez upload le fichier et l'ajouter au message
+        console.log('Fichier sélectionné:', file.name);
+        alert('Fonctionnalité de fichier joint à implémenter');
+    }
+});
+
+// Auto-resize du textarea
+document.getElementById('message-input').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+// Raccourci clavier pour envoyer
+document.getElementById('message-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('form-message').dispatchEvent(new Event('submit'));
+    }
+});
+</script>
+{% endblock %}

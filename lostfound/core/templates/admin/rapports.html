@@ -1,0 +1,455 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Rapports et Analytics{% endblock %}
+{% block page_heading %}Rapports Complets{% endblock %}
+{% block page_description %}Analyse détaillée des données de la plateforme{% endblock %}
+
+{% block extra_head %}
+<style>
+.metric-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border-radius: 15px !important;
+    padding: 25px !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
+}
+
+.metric-value {
+    font-size: 2.5rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 5px !important;
+    color: white !important;
+}
+
+.metric-label {
+    opacity: 0.9 !important;
+    font-size: 0.95rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    color: white !important;
+}
+
+.chart-container {
+    background: white !important;
+    border-radius: 15px !important;
+    padding: 25px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    margin-bottom: 25px !important;
+}
+
+.export-btn {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+    border: none !important;
+    color: white !important;
+    padding: 12px 25px !important;
+    border-radius: 25px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+}
+
+.export-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(17, 153, 142, 0.4) !important;
+    color: white !important;
+    text-decoration: none !important;
+}
+
+.table-modern {
+    background: white !important;
+    border-radius: 15px !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+.table-modern th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 15px !important;
+}
+
+.table-modern td {
+    border: none !important;
+    padding: 15px !important;
+    border-bottom: 1px solid #f1f3f4 !important;
+}
+
+.progress-custom {
+    height: 10px !important;
+    border-radius: 10px !important;
+    background: #f1f3f4 !important;
+}
+
+.progress-bar-custom {
+    border-radius: 10px !important;
+    background: linear-gradient(90deg, #ff9a9e 0%, #fecfef 100%) !important;
+    height: 100% !important;
+}
+
+.btn-group .btn {
+    border-radius: 8px !important;
+    margin: 0 2px !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Contrôles de période et export -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="btn-group">
+            <a href="?periode=7" class="btn {% if periode == '7' %}btn-primary{% else %}btn-outline-secondary{% endif %}">7 jours</a>
+            <a href="?periode=30" class="btn {% if periode == '30' %}btn-primary{% else %}btn-outline-secondary{% endif %}">30 jours</a>
+            <a href="?periode=90" class="btn {% if periode == '90' %}btn-primary{% else %}btn-outline-secondary{% endif %}">90 jours</a>
+            <a href="?periode=365" class="btn {% if periode == '365' %}btn-primary{% else %}btn-outline-secondary{% endif %}">1 an</a>
+        </div>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="?periode={{ periode }}&export=csv" class="export-btn me-2">
+            <i class="fas fa-download me-2"></i>Exporter CSV
+        </a>
+        <a href="?periode={{ periode }}&export=pdf&view=page" target="_blank" class="export-btn me-2">
+            <i class="fas fa-file-pdf me-2"></i>Exporter PDF
+        </a>
+        <button class="export-btn" onclick="exportJSON()">
+            <i class="fas fa-code me-2"></i>Exporter JSON
+        </button>
+    </div>
+</div>
+
+<!-- Métriques principales -->
+<div class="row mb-4">
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="metric-value">{{ total_signalements }}</div>
+            <div class="metric-label">Total Signalements</div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="metric-value">{{ signalements_periode }}</div>
+            <div class="metric-label">Cette Période</div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+            <div class="metric-value">{{ signalements_en_attente }}</div>
+            <div class="metric-label">En Attente</div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333;">
+            <div class="metric-value">{{ signalements_valides }}</div>
+            <div class="metric-label">Validés</div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #333;">
+            <div class="metric-value">{{ signalements_restitues }}</div>
+            <div class="metric-label">Restitués</div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+            <div class="metric-value">{{ taux_restitution }}%</div>
+            <div class="metric-label">Taux Réussite</div>
+        </div>
+    </div>
+</div>
+
+<!-- Graphiques temporairement désactivés -->
+
+
+
+
+
+<!-- Tableaux de données -->
+<div class="row mb-4">
+    <!-- Signalements par région -->
+    <div class="col-lg-6 mb-4">
+        <div class="table-modern">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>🌍 Région</th>
+                        <th class="text-center">Nombre</th>
+                        <th class="text-center">%</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for region in repartition_regions %}
+                    <tr>
+                        <td class="fw-semibold">{{ region.region__nom|default:"Non spécifiée" }}</td>
+                        <td class="text-center">{{ region.count }}</td>
+                        <td class="text-center">
+                            <div class="progress-custom">
+                                <div class="progress-bar-custom" style="width: {% widthratio region.count total_signalements 100 %}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">Aucune donnée disponible</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Top agents performants -->
+    <div class="col-lg-6 mb-4">
+        <div class="table-modern">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>👨‍💼 Top Agents</th>
+                        <th class="text-center">Traités</th>
+                        <th class="text-center">Performance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in top_agents %}
+                    <tr>
+                        <td class="fw-semibold">{{ agent.get_full_name|default:agent.username }}</td>
+                        <td class="text-center">{{ agent.signalements_traites }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-success">
+                                {% if agent.signalements_traites > 10 %}Excellent
+                                {% elif agent.signalements_traites > 5 %}Bon
+                                {% else %}Moyen{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">Aucun agent actif sur la période</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Métriques utilisateurs -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="chart-container">
+            <h5 class="fw-bold mb-4">👥 Statistiques Utilisateurs</h5>
+            <div class="row">
+                <div class="col-md-3 text-center">
+                    <div class="p-3">
+                        <h3 class="text-primary mb-1">{{ total_utilisateurs }}</h3>
+                        <small class="text-muted">Total Utilisateurs</small>
+                    </div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="p-3">
+                        <h3 class="text-success mb-1">{{ utilisateurs_actifs }}</h3>
+                        <small class="text-muted">Actifs ({{ jours }} jours)</small>
+                    </div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="p-3">
+                        <h3 class="text-info mb-1">{{ nouveaux_utilisateurs }}</h3>
+                        <small class="text-muted">Nouveaux</small>
+                    </div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="p-3">
+                        <h3 class="text-warning mb-1">{{ agents_actifs }}/{{ total_agents }}</h3>
+                        <small class="text-muted">Agents Actifs</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Évolution hebdomadaire remplace l'évolution quotidienne -->
+{% endblock %}
+
+{% block extra_js %}
+<!-- Scripts simplifiés -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page de rapports chargée sans graphiques.');
+    
+    // Pas de graphiques pour le moment
+});
+
+// Export JSON
+function exportJSON() {
+    try {
+        const data = {{ rapport_json|safe }} || {
+            export_date: new Date().toISOString(),
+            periode: '{{ periode|default:"30" }}',
+            total_signalements: {{ total_signalements|default:"0" }},
+            message: 'Données de rapport exportées'
+        };
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `rapport_togoretrouve_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        console.log('Export JSON réussi!');
+    } catch (error) {
+        console.error('Erreur lors de l\'export JSON:', error);
+        alert('Erreur lors de l\'export. Voir la console pour plus de détails.');
+    }
+}
+
+// Fonction pour générer le PDF côté client
+function exportPDF() {
+    // Masquer temporairement les boutons d'export pour l'impression
+    const exportButtons = document.querySelectorAll('.export-btn');
+    const btnGroup = document.querySelector('.btn-group');
+    
+    exportButtons.forEach(btn => btn.style.display = 'none');
+    if (btnGroup) btnGroup.style.display = 'none';
+    
+    // Ajouter un en-tête pour le PDF
+    const header = document.createElement('div');
+    header.style.cssText = 'text-align: center; margin-bottom: 20px; page-break-inside: avoid;';
+    header.innerHTML = `
+        <h1 style="color: #667eea; margin-bottom: 10px;">📊 RAPPORT TOGORETROUVÉ</h1>
+        <p style="color: #666; margin: 0;">Période: {{ periode|default:"30" }} derniers jours</p>
+        <p style="color: #666; margin: 0; font-size: 14px;">Généré le ${new Date().toLocaleDateString('fr-FR', { 
+            year: 'numeric', month: 'long', day: 'numeric', 
+            hour: '2-digit', minute: '2-digit' 
+        })}</p>
+        <hr style="border: 1px solid #667eea; margin: 15px 0;">
+    `;
+    
+    // Insérer l'en-tête au début du contenu
+    const content = document.querySelector('.container-fluid') || document.body;
+    content.insertBefore(header, content.firstChild);
+    
+    // Lancer l'impression
+    window.print();
+    
+    // Restaurer l'affichage après impression
+    setTimeout(() => {
+        exportButtons.forEach(btn => btn.style.display = 'inline-block');
+        if (btnGroup) btnGroup.style.display = 'flex';
+        header.remove();
+    }, 1000);
+}
+</script>
+
+<!-- CSS pour l'impression PDF -->
+<style media="print">
+@page {
+    size: A4;
+    margin: 15mm;
+    @top-center {
+        content: "Rapport TogoRetrouvé";
+    }
+    @bottom-center {
+        content: "Page " counter(page) " sur " counter(pages);
+    }
+}
+
+.no-print, .export-btn, .btn-group {
+    display: none !important;
+}
+
+.chart-container {
+    page-break-inside: avoid;
+    margin-bottom: 20px !important;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+}
+
+.metric-card {
+    background: #f8f9fa !important;
+    color: #333 !important;
+    border: 1px solid #dee2e6 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+}
+
+.metric-value {
+    color: #333 !important;
+}
+
+.metric-label {
+    color: #666 !important;
+}
+
+.table-modern {
+    box-shadow: none !important;
+    page-break-inside: avoid;
+}
+
+.table-modern th {
+    background: #6c757d !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
+
+.table-modern td {
+    border-bottom: 1px solid #ddd !important;
+}
+
+.progress-bar-custom {
+    background: #007bff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
+
+body {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+    color: #333 !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #333 !important;
+    page-break-after: avoid;
+}
+
+.row {
+    page-break-inside: avoid;
+}
+
+.col-lg-6, .col-md-6 {
+    width: 48% !important;
+    float: left !important;
+    margin-right: 4% !important;
+}
+
+.col-lg-2, .col-md-4 {
+    width: 31% !important;
+    float: left !important;
+    margin-right: 3.5% !important;
+    margin-bottom: 10px !important;
+}
+
+.badge {
+    color: #333 !important;
+    background: #f8f9fa !important;
+    border: 1px solid #ddd !important;
+}
+</style>
+{% endblock %}
