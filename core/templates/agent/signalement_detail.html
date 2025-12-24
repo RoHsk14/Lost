@@ -1,14 +1,15 @@
+<!DOCTYPE html>
 {% extends 'agent/base.html' %}
 
-{% block title %}{{ signalement.nom_objet }} - Détails signalement{% endblock %}
-
+{% block title %}{{ signalement.nom_objet }} - Détails du signalement{% endblock %}
 {% block page_title %}Détails du signalement{% endblock %}
 {% block page_subtitle %}{{ signalement.numero_declaration }} - {{ signalement.nom_objet }}{% endblock %}
-
 {% block content %}
 <div class="space-y-8">
     <!-- Breadcrumb de navigation -->
-    <nav class="flex items-center space-x-2 text-sm text-gray-500">
+        <!-- Fin du contenu principal -->
+    </div>
+</div>
         <a href="{% url 'togo_agent:dashboard' %}" class="hover:text-primary-600 transition-colors">Dashboard</a>
         <i class="fas fa-chevron-right text-xs"></i>
         <a href="{% url 'togo_agent:mes_signalements' %}" class="hover:text-primary-600 transition-colors">Signalements</a>
@@ -73,7 +74,13 @@
             
             <!-- Actions principales -->
             <div class="flex items-center space-x-3">
-                {% if signalement.statut == 'cree' %}
+                                {% if signalement.statut == 'cree' %}
+                                <a href="{% url 'togo_agent:modifier_signalement' signalement.id %}" class="flex items-center bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-xl font-medium transition-all transform hover:scale-105" style="opacity: 1; transform: scale(1) translateY(0px); transition: 0.6s ease-out;">
+                                    <i class="fas fa-edit mr-2"></i>
+                                    Modifier
+                                </a>
+                                {% endif %}
+                {% if peut_valider %}
                     <form method="POST" action="{% url 'togo_agent:valider_signalement' signalement.id %}" id="form-valider" style="display: inline;">
                         {% csrf_token %}
                         <input type="hidden" name="commentaire_agent" id="commentaire-agent-input" value="">
@@ -83,12 +90,35 @@
                             Valider
                         </button>
                     </form>
-                {% elif signalement.statut == 'valide' %}
-                    <button onclick="publierSignalement()" 
-                            class="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
-                        <i class="fas fa-globe mr-2"></i>
-                        Publier
-                    </button>
+                {% endif %}
+                {% if peut_marquer_retrouve %}
+                    <form method="POST" action="{% url 'togo_agent:marquer_retrouve' signalement.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="commentaire_agent" value="Objet retrouvé">
+                        <button type="submit" class="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+                            <i class="fas fa-search mr-2"></i>
+                            Marquer comme retrouvé
+                        </button>
+                    </form>
+                {% endif %}
+                {% if peut_marquer_restitue %}
+                    <form method="POST" action="{% url 'togo_agent:marquer_restitue' signalement.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="commentaire_agent" value="Objet restitué au propriétaire">
+                        <button type="submit" class="inline-flex items-center px-4 py-2.5 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-700 transition-colors shadow-sm">
+                            <i class="fas fa-handshake mr-2"></i>
+                            Marquer comme restitué
+                        </button>
+                    </form>
+                {% endif %}
+                {% if signalement.statut == 'restitue' %}
+                    <form method="POST" action="{% url 'togo_agent:archiver_signalement' signalement.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="inline-flex items-center px-4 py-2.5 bg-gray-700 text-white font-medium rounded-xl hover:bg-gray-800 transition-colors shadow-sm">
+                            <i class="fas fa-archive mr-2"></i>
+                            Archiver
+                        </button>
+                    </form>
                 {% endif %}
                 
                 <button onclick="contacterDeclarant()" 
@@ -358,7 +388,7 @@
                             <dt class="text-sm font-medium text-gray-500">Catégorie</dt>
                             <dd class="text-sm font-semibold text-gray-900 mt-1 flex items-center">
                                 {% if signalement.categorie.icone %}
-                                    <i class="{{ signalement.categorie.icone }} mr-2" style="color: {{ signalement.categorie.couleur }}"></i>
+                                    <i class="{{ signalement.categorie.icone }} mr-2" style="color: {{ signalement.categorie.couleur|default:'#000' }};"></i>
                                 {% endif %}
                                 {{ signalement.categorie.nom }}
                             </dd>
@@ -405,7 +435,7 @@
                         <button onclick="publierSignalement()" 
                                 class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors">
                             <i class="fas fa-globe mr-2"></i>
-                            Publier
+                            Publié
                         </button>
                     {% elif signalement.statut == 'publie' %}
                         <button onclick="marquerRetrouveRestitue()" 
@@ -440,15 +470,49 @@
                 </button>
             </div>
             <div class="p-4">
-                <img id="modal-photo-img" src="" alt="Aperçu" class="max-w-full max-h-[70vh] mx-auto rounded-lg">
+                {% if signalement.photo_principale and signalement.photo_principale.name %}
+                    <img id="modal-photo-img" src="{{ signalement.photo_principale.url }}" alt="Aperçu" class="max-w-full max-h-[70vh] mx-auto rounded-lg">
+                {% else %}
+                    <img id="modal-photo-img-{{ forloop.counter }}" src="#" alt="Aperçu" class="max-w-full max-h-[70vh] mx-auto rounded-lg">
+                {% endif %}
+            <!-- Fin du contenu principal -->
+                </div>
             </div>
-        </div>
-    </div>
 </div>
 
-<!-- JavaScript pour les interactions -->
+{% endblock %} {# Fin du block content #}
+
+{% block scripts %}
 <script>
-// Actions des boutons
+function contacterDeclarant() {
+    var signalementId = "{{ signalement.id }}";
+    var declarantId = "{{ signalement.declarant.id }}";
+    var baseUrl = "{% url 'togo_agent:ouvrir_conversation' %}";
+    if (baseUrl === "") {
+        baseUrl = "/agent/ouvrir_conversation/";
+    }
+    window.location.href = baseUrl + "?signalement_id=" + signalementId + "&declarant_id=" + declarantId;
+}
+function marquerRetrouveRestitue() {
+    if (confirm('Marquer cet objet comme restitué ?')) {
+        window.location.href = "{% url 'togo_agent:marquer_restitue' signalement.id %}";
+    }
+}
+function genererRapport() {
+    window.location.href = "{% url 'togo_agent:generer_rapport' signalement.id %}";
+}
+function ouvrirModalPhoto(url) {
+    document.getElementById('modal-photo-img').src = url;
+    document.getElementById('modal-photo').classList.remove('hidden');
+}
+function fermerModalPhoto() {
+    document.getElementById('modal-photo').classList.add('hidden');
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !document.getElementById('modal-photo').classList.contains('hidden')) {
+        fermerModalPhoto();
+    }
+});
 function validerSignalement() {
     const commentaire = prompt('Commentaire de validation (optionnel):');
     if (commentaire !== null) {
@@ -456,51 +520,7 @@ function validerSignalement() {
         document.getElementById('form-valider').submit();
     }
 }
-
-function rejeterSignalement() {
-    const raison = prompt('Raison du rejet (optionnel):');
-    if (raison !== null) {
-        // Logique de rejet
-        showToast('Signalement rejeté', 'warning');
-    }
-}
-
-function publierSignalement() {
-    if (confirm('Publier ce signalement pour le rendre visible aux citoyens ?')) {
-        // Logique de publication
-        showToast('Signalement publié', 'success');
-    }
-}
-
-function contacterDeclarant() {
-    window.location.href = "{% url 'togo_agent:contacter_declarant' signalement.id %}";
-}
-
-function marquerRetrouveRestitue() {
-    if (confirm('Marquer cet objet comme restitué ?')) {
-        window.location.href = "{% url 'togo_agent:marquer_restitue' signalement.id %}";
-    }
-}
-
-function genererRapport() {
-    window.location.href = "{% url 'togo_agent:generer_rapport' signalement.id %}";
-}
-
-// Modal photo
-function ouvrirModalPhoto(url) {
-    document.getElementById('modal-photo-img').src = url;
-    document.getElementById('modal-photo').classList.remove('hidden');
-}
-
-function fermerModalPhoto() {
-    document.getElementById('modal-photo').classList.add('hidden');
-}
-
-// Fermer modal avec Escape
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && !document.getElementById('modal-photo').classList.contains('hidden')) {
-        fermerModalPhoto();
-    }
-});
 </script>
+        </div>
+    </div>
 {% endblock %}

@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 {% extends 'agent/base.html' %}
 
 {% block title %}Signalements reçus - TogoRetrouve{% endblock %}
@@ -8,7 +9,7 @@
 {% block content %}
 <div class="space-y-6">
     <!-- Header avec statistiques rapides -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
@@ -358,7 +359,7 @@
                                     {% elif signalement.statut == 'valide' %}
                                         <button class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 hover:border-blue-300 rounded-lg transition-all duration-200 hover:shadow-sm">
                                             <i class="fas fa-globe mr-1"></i>
-                                            Publier
+                                            Publié
                                         </button>
                                     {% endif %}
                                 </div>
@@ -534,7 +535,7 @@
                         </a>
                     {% endif %}
                 </nav>
-            </div>
+            <!-- Fin du contenu principal -->
         </div>
     {% endif %}
 </div>
@@ -564,4 +565,5 @@ document.querySelector('input[name="q"]')?.addEventListener('input', function() 
     }, 500);
 });
 </script>
+    </div>
 {% endblock %}

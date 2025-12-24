@@ -10,13 +10,39 @@ from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
 import json
 from datetime import datetime, timedelta
-
 from .models import (
     Declaration, Reclamation, Conversation, Message, PieceJustificative, 
     Notification, ActionLog, CommentaireAnonyme, Utilisateur
 )
 from .decorators import role_required
 # Les formulaires spécifiques aux agents seront ajoutés plus tard si nécessaire
+
+@login_required
+@role_required(['agent'])
+def archiver_signalement(request, signalement_id):
+    """
+    Archiver un signalement (statut = 'archive')
+    """
+    user = request.user
+    signalement = get_object_or_404(Declaration, id=signalement_id)
+    # Vérification des droits
+    if not _agent_peut_acceder_signalement(user, signalement):
+        messages.error(request, "Vous n'avez pas accès à ce signalement.")
+        return redirect('togo_agent:mes_signalements')
+    if request.method == 'POST':
+        if signalement.statut == 'restitue':
+            signalement.statut = 'archive'
+            signalement.save()
+            ActionLog.objects.create(
+                declaration=signalement,
+                utilisateur=user,
+                action='declaration_archivee',
+                description=f"Signalement archivé par {user.get_full_name()}"
+            )
+            messages.success(request, f'Signalement {signalement.numero_declaration} archivé avec succès.')
+        else:
+            messages.error(request, "Ce signalement ne peut pas être archivé.")
+    return redirect('togo_agent:signalement_detail', signalement_id=signalement_id)
 
 
 @login_required
@@ -206,14 +232,16 @@ def mes_signalements(request):
     type_filter = request.GET.get('type', '')
     search_query = request.GET.get('q', '')
     
-    signalements = Declaration.objects.filter(**base_filter)
-    
+
+    # Exclure les signalements archivés par défaut
+    signalements = Declaration.objects.filter(**base_filter).exclude(statut='archive')
+
     if statut_filter:
         signalements = signalements.filter(statut=statut_filter)
-    
+
     if type_filter:
         signalements = signalements.filter(type_declaration=type_filter)
-    
+
     if search_query:
         signalements = signalements.filter(
             Q(nom_objet__icontains=search_query) |
@@ -1422,6 +1450,32 @@ def generer_recu_restitution(request, reclamation_id):
     }
     
     return render(request, 'agent/recu_restitution.html', context)
+
+
+@login_required
+@role_required(['agent'])
+def modifier_signalement(request, signalement_id):
+    """
+    Permet à l'agent de modifier un signalement uniquement s'il est au statut 'cree'.
+    """
+    user = request.user
+    signalement = get_object_or_404(Declaration, id=signalement_id, statut='cree', structure_locale=user.structure_locale)
+
+    if request.method == 'POST':
+        # Exemple de champs modifiables, à adapter selon le formulaire réel
+        signalement.nom_objet = request.POST.get('nom_objet', signalement.nom_objet)
+        signalement.description = request.POST.get('description', signalement.description)
+        signalement.lieu_precis = request.POST.get('lieu_precis', signalement.lieu_precis)
+        # ... autres champs modifiables ...
+        signalement.save()
+        messages.success(request, 'Le signalement a été modifié avec succès.')
+        return redirect('togo_agent:signalement_detail', signalement_id=signalement.id)
+
+    context = {
+        'signalement': signalement,
+        # Ajouter ici un formulaire ou les champs nécessaires
+    }
+    return render(request, 'agent/modifier_signalement.html', context)
 
 
 def _agent_peut_acceder_signalement(agent, signalement):

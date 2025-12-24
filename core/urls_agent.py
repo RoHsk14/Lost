@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views_agent
+from .views import ouvrir_conversation
 
 app_name = 'togo_agent'
 
@@ -17,7 +18,8 @@ urlpatterns = [
     path('signalement/<int:signalement_id>/restitue/', views_agent.marquer_restitue, name='marquer_restitue'),
     path('signalement/<int:signalement_id>/contacter/', views_agent.contacter_declarant, name='contacter_declarant'),
     path('signalement/<int:signalement_id>/rapport/', views_agent.generer_rapport, name='generer_rapport'),
-    
+    path('signalement/<int:signalement_id>/archiver/', views_agent.archiver_signalement, name='archiver_signalement'),
+    path('signalement/<int:signalement_id>/modifier/', views_agent.modifier_signalement, name='modifier_signalement'),  # Nouvelle route ajoutée
     # Module "Commentaires et échanges"
     path('commentaires/', views_agent.commentaires_echanges, name='commentaires_echanges'),
     path('commentaires/repondre/<int:commentaire_id>/', views_agent.repondre_commentaire, name='repondre_commentaire'),
@@ -36,6 +38,9 @@ urlpatterns = [
     path('conversation/<int:conversation_id>/', views_agent.conversation_detail, name='conversation_detail'),
     path('conversation/<int:conversation_id>/send/', views_agent.send_message, name='send_message'),
     path('conversation/<int:conversation_id>/messages/', views_agent.get_conversation_messages, name='get_conversation_messages'),
+    
+    # Ouvrir une conversation (chat)
+    path('ouvrir_conversation/', ouvrir_conversation, name='ouvrir_conversation'),
     
     # Fonction de validation finale et restitution
     path('restitution/<int:reclamation_id>/valider/', views_agent.valider_restitution, name='valider_restitution'),

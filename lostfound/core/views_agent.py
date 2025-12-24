@@ -101,6 +101,8 @@ def agent_chat_dashboard(request):
     # Paramètres pour ouvrir une conversation spécifique
     conversation_id = request.GET.get('conversation_id')
     reclamation_id = request.GET.get('reclamation_id')
+    signalement_id = request.GET.get('signalement_id')
+    declarant_id = request.GET.get('declarant_id')
     
     # Filtrage strict par structure locale uniquement
     if not user.structure_locale:
@@ -157,7 +159,6 @@ def agent_chat_dashboard(request):
                 agent=user,
                 declarant=reclamation.reclamant
             ).first()
-            
             if not selected_conversation:
                 selected_conversation = Conversation.objects.create(
                     signalement=reclamation.declaration,
@@ -166,6 +167,25 @@ def agent_chat_dashboard(request):
                 )
         except Reclamation.DoesNotExist:
             messages.error(request, 'Réclamation introuvable')
+    elif signalement_id and declarant_id:
+        try:
+            from .models import Declaration, Utilisateur
+            signalement = Declaration.objects.get(id=signalement_id)
+            declarant = Utilisateur.objects.get(id=declarant_id)
+            selected_conversation = Conversation.objects.filter(
+                signalement=signalement,
+                agent=user,
+                declarant=declarant
+            ).first()
+            if not selected_conversation:
+                selected_conversation = Conversation.objects.create(
+                    signalement=signalement,
+                    agent=user,
+                    declarant=declarant
+                )
+                messages.success(request, "Une nouvelle conversation a été créée avec le déclarant.")
+        except (Declaration.DoesNotExist, Utilisateur.DoesNotExist):
+            messages.error(request, 'Signalement ou déclarant introuvable')
     
     # Activité récente
     activites_recentes = ActionLog.objects.filter(
@@ -644,33 +664,39 @@ def contacter_declarant(request, signalement_id):
         messages.error(request, "Vous n'avez pas accès à ce signalement.")
         return redirect('togo_agent:mes_signalements')
     
+    from core.models import Conversation, Message
+    # Récupérer ou créer la conversation unique pour ce signalement/agent/déclarant
+    conversation, _ = Conversation.objects.get_or_create(
+        signalement=signalement,
+        agent=user,
+        declarant=signalement.declarant
+    )
+
     if request.method == 'POST':
         contenu = request.POST.get('contenu', '').strip()
         if contenu:
-            # Créer une notification pour le déclarant
-            from core.models import Notification
-            Notification.objects.create(
-                destinataire=signalement.declarant,
-                declaration=signalement,
-                type_notification='nouveau_message',
-                titre=f'Message de l\'agent concernant {signalement.numero_declaration}',
-                message=f'Message de {user.get_full_name()} ({user.structure_locale}):\n\n{contenu}'
+            destinataire = signalement.declarant
+            Message.objects.create(
+                conversation=conversation,
+                sender=user,
+                receiver=destinataire,
+                contenu=contenu
             )
-            
             messages.success(request, "✅ Message envoyé au déclarant !")
-            return redirect('togo_agent:signalement_detail', signalement_id=signalement_id)
+            return redirect('togo_agent:contacter_declarant', signalement_id=signalement_id)
         else:
             messages.error(request, "❌ Le message ne peut pas être vide.")
-    
-    # Récupérer les notifications liées à cette déclaration
-    notifications = signalement.notification_set.all().order_by('-date_creation')
-    
+
+    # Récupérer les messages de la conversation (ordre chronologique)
+    messages_conv = conversation.messages.select_related('sender').order_by('created_at')
+
     context = {
         'signalement': signalement,
         'declarant': signalement.declarant,
-        'notifications': notifications,
+        'conversation': conversation,
+        'messages_conv': messages_conv,
+        'user': user,
     }
-    
     return render(request, 'agent/contacter_declarant.html', context)
 
 
@@ -1422,6 +1448,32 @@ def generer_recu_restitution(request, reclamation_id):
     }
     
     return render(request, 'agent/recu_restitution.html', context)
+
+
+@login_required
+@role_required(['agent'])
+def ouvrir_conversation(request):
+    """
+    Ouvrir ou créer une conversation pour un signalement donné
+    """
+    user = request.user
+    signalement_id = request.GET.get('signalement_id')
+    declarant_id = request.GET.get('declarant_id')
+    
+    if not signalement_id or not declarant_id:
+        return redirect('togo_agent:messagerie')
+    
+    signalement = get_object_or_404(Declaration, id=signalement_id)
+    declarant = get_object_or_404(Utilisateur, id=declarant_id)
+    
+    # Récupérer ou créer la conversation
+    conv, _ = Conversation.objects.get_or_create(
+        signalement=signalement,
+        agent=user,
+        declarant=declarant
+    )
+    
+    return redirect(f'/agent/messagerie/?conversation_id={conv.id}')
 
 
 def _agent_peut_acceder_signalement(agent, signalement):

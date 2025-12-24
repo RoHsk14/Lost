@@ -189,18 +189,21 @@
                     </span>
                     
                     {% if signalement.photo_principale %}
-                        <img src="{{ signalement.photo_principale.url }}" alt="{{ signalement.nom_objet }}" 
-                             class="w-full h-full object-cover"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <!-- Fallback si image ne charge pas -->
-                        <div class="w-full h-full bg-gradient-to-br from-emerald-50 to-green-100 flex items-center justify-center flex-col" style="display: none;">
-                            <i class="fas fa-image-slash text-emerald-400 text-2xl mb-2"></i>
-                            <span class="text-xs text-emerald-600 text-center px-2">Image<br>indisponible</span>
+                        <div class="relative w-full h-full">
+                            <img src="{{ signalement.photo_principale.url }}" alt="{{ signalement.nom_objet }}" 
+                                 class="w-full h-full object-cover rounded-t-xl transition-all duration-200"
+                                 style="aspect-ratio: 4/3; background: #f3f4f6;"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <!-- Fallback si image ne charge pas -->
+                            <div class="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center rounded-t-xl" style="display: none;">
+                                <i class="fas fa-image text-gray-300 text-5xl mb-2"></i>
+                                <span class="text-xs text-gray-500 text-center px-2">Aucune photo disponible</span>
+                            </div>
                         </div>
                     {% else %}
-                        <div class="w-full h-full bg-gradient-to-br from-emerald-50 to-green-100 flex items-center justify-center flex-col">
-                            <i class="fas fa-search text-emerald-400 text-2xl mb-2"></i>
-                            <span class="text-xs text-emerald-600 text-center">Pas d'image</span>
+                        <div class="w-full h-full bg-gray-100 flex flex-col items-center justify-center">
+                            <i class="fas fa-image text-gray-300 text-5xl mb-2"></i>
+                            <span class="text-xs text-gray-500 text-center">Aucune photo disponible</span>
                         </div>
                     {% endif %}
                 </div>

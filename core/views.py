@@ -447,7 +447,7 @@ def agent_documents(request):
             try:
                 if not message.fichier:
                     continue
-                    
+                
                 nom_fichier = message.fichier.name.split('/')[-1]
                 extension = nom_fichier.lower().split('.')[-1] if '.' in nom_fichier else ''
                 
@@ -761,13 +761,14 @@ def signalement_detail(request, pk):
     else:
         form = CommentaireAnonymeForm()
     
+    photos_supplementaires = signalement.photos_supplementaires.all()
     context = {
         'signalement': signalement,
         'commentaires': commentaires,
         'form': form,
-        'nb_commentaires': commentaires.count()
+        'nb_commentaires': commentaires.count(),
+        'photos_supplementaires': photos_supplementaires,
     }
-    
     return render(request, 'signalement_detail.html', context)
 
 # Function to add signalement - Updated to use Declaration model
@@ -814,6 +815,10 @@ def signalement_add(request):
                 except StructureLocale.DoesNotExist:
                     pass
 
+            # Correction : prise en compte de l'image principale si uploadée
+            if 'photo_principale' in request.FILES:
+                declaration.photo_principale = request.FILES['photo_principale']
+
             try:
                 declaration.save()
                 messages.success(request, "✅ Déclaration ajoutée avec succès !")
@@ -821,7 +826,6 @@ def signalement_add(request):
             except Exception as e:
                 # Log de l'erreur pour debug
                 print(f"❌ Erreur lors de la sauvegarde: {e}")
-                
                 # Si c'est une erreur d'unicité sur numero_declaration, régénérer
                 if 'UNIQUE constraint failed: core_declaration.numero_declaration' in str(e):
                     try:
@@ -858,9 +862,18 @@ def signalement_add(request):
 
 
 def signalement_edit(request, pk):
-    signalement = get_object_or_404(Signalement, pk=pk)
+    from .models import Declaration
+    try:
+        signalement = Declaration.objects.get(pk=pk)
+    except Declaration.DoesNotExist:
+        messages.error(request, "Signalement introuvable.")
+        return redirect('signalements_list')
+    if signalement.statut != 'cree':
+        messages.error(request, "Ce signalement ne peut plus être modifié car il a déjà été traité.")
+        return redirect('signalement_detail', pk=signalement.pk)
+    from .forms import DeclarationForm
     if request.method == 'POST':
-        form = SignalementForm(request.POST, request.FILES, instance=signalement)
+        form = DeclarationForm(request.POST, request.FILES, instance=signalement)
         if form.is_valid():
             form.save()
             messages.success(request, "✅ Signalement modifié avec succès !")
@@ -868,11 +881,15 @@ def signalement_edit(request, pk):
         else:
             messages.error(request, "❌ Erreur lors de la modification.")
     else:
-        form = SignalementForm(instance=signalement)
+        form = DeclarationForm(instance=signalement)
     return render(request, 'signalement_edit.html', {'form': form, 'signalement': signalement})
 
 def signalement_delete(request, pk):
-    signalement = get_object_or_404(Signalement, pk=pk)
+    from .models import Declaration
+    signalement = get_object_or_404(Declaration, pk=pk)
+    if request.user != signalement.declarant:
+        messages.error(request, "Vous n'avez pas l'autorisation de supprimer ce signalement.")
+        return redirect('signalement_detail', pk=pk)
     if request.method == 'POST':
         signalement.delete()
         messages.warning(request, "🗑️ Signalement supprimé avec succès.")
@@ -1881,3 +1898,25 @@ def agent_messagerie(request):
     
     # Sinon, rediriger vers le chat général
     return redirect('/agent/chat/')
+
+from django.contrib.auth.decorators import login_required
+from .decorators import role_required
+from django.shortcuts import get_object_or_404, redirect
+from .models import Declaration, Utilisateur, Conversation
+
+@login_required
+@role_required(['agent'])
+def ouvrir_conversation(request):
+    user = request.user
+    signalement_id = request.GET.get('signalement_id')
+    declarant_id = request.GET.get('declarant_id')
+    if not signalement_id or not declarant_id:
+        return redirect('togo_agent:messagerie')
+    signalement = get_object_or_404(Declaration, id=signalement_id)
+    declarant = get_object_or_404(Utilisateur, id=declarant_id)
+    conv, _ = Conversation.objects.get_or_create(
+        signalement=signalement,
+        agent=user,
+        declarant=declarant
+    )
+    return redirect(f'/agent/messagerie/?conversation_id={conv.id}')

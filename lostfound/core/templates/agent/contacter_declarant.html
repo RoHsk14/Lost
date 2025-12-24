@@ -1,3 +1,5 @@
+
+<!DOCTYPE html>
 {% extends 'agent/base.html' %}
 {% load static %}
 
@@ -81,17 +83,15 @@
                     </p>
                 </div>
 
-                <!-- Notifications/Messages -->
+                <!-- Messages de la conversation -->
                 <div class="flex-1 overflow-y-auto p-4 space-y-4" id="messages-container">
-                    {% for notification in notifications %}
-                        <div class="flex justify-start">
+                    {% for message in messages_conv %}
+                        <div class="flex {% if message.sender == user %}justify-end{% else %}justify-start{% endif %}">
                             <div class="max-w-xs lg:max-w-md">
-                                <!-- Bulle de notification -->
-                                <div class="p-3 rounded-2xl shadow-sm bg-gray-100 text-gray-800 rounded-bl-sm">
-                                    <p class="text-sm font-medium">{{ notification.titre }}</p>
-                                    <p class="text-sm mt-1">{{ notification.message|linebreaksbr }}</p>
+                                <div class="p-3 rounded-2xl shadow-sm {% if message.sender == user %}bg-blue-100 text-blue-900 rounded-br-sm{% else %}bg-gray-100 text-gray-800 rounded-bl-sm{% endif %}">
+                                    <p class="text-sm">{{ message.contenu|linebreaksbr }}</p>
                                     <p class="text-xs text-gray-500 mt-2">
-                                        {{ notification.date_creation|date:"d/m à H:i" }}
+                                        {{ message.sender.get_full_name|default:message.sender.username }} · {{ message.created_at|date:"d/m à H:i" }}
                                     </p>
                                 </div>
                             </div>
@@ -107,7 +107,7 @@
 
                 <!-- Zone de saisie -->
                 <div class="border-t border-gray-200 p-4">
-                    <form method="post" class="flex gap-2">
+                    <form method="post" class="flex gap-2" id="form-message" data-conversation-id="{{ conversation.id }}">
                         {% csrf_token %}
                         <div class="flex-1">
                             <textarea 
@@ -121,7 +121,7 @@
                             <button 
                                 type="submit"
                                 class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
                                 </svg>
                                 Envoyer
@@ -139,12 +139,43 @@
 document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('messages-container');
     container.scrollTop = container.scrollHeight;
-});
 
-// Auto-resize du textarea
-document.querySelector('textarea[name="contenu"]').addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    // Auto-resize du textarea
+    document.querySelector('textarea[name="contenu"]').addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Envoi du message via l'API REST
+    document.getElementById('form-message').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const textarea = this.querySelector('textarea[name="contenu"]');
+        const contenu = textarea.value.trim();
+        const conversationId = this.dataset.conversationId;
+        if (!contenu) return;
+
+        try {
+            const response = await fetch(`/api/conversations/${conversationId}/messages/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ contenu })
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                textarea.value = '';
+                location.reload(); // Ou mieux : ajouter dynamiquement le message à la liste
+            <!-- Patched for Django template compatibility and HTML5 compliance -->
+            } else {
+                alert(result.error || "Erreur lors de l'envoi");
+            }
+        } catch (err) {
+            alert('Erreur de connexion');
+        }
+    });
 });
 </script>
 {% endblock %}

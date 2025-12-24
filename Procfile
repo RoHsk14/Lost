@@ -1,1 +1,1 @@
-web: gunicorn lostfound.wsgi:application
+web: gunicorn lostfound.lostfound.wsgi:application
