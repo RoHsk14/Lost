@@ -11,39 +11,14 @@ class Migration(migrations.Migration):
         ('core', '0014_create_chat_tables'),
     ]
 
+    # Cette migration était initialement destinée à créer des modèles de chat.
+    # Dans la base actuelle, ces tables existent déjà (migration 0014 ou tables historiques),
+    # et appliquer ces CreateModel provoque une erreur "table already exists" lors des tests.
+    # Pour rendre l'ensemble idempotent et permettre la création de la base de tests,
+    # on conserve une migration no-op (neffectue aucun changement SQL) ici.
+    def _noop(apps, schema_editor):
+        return None
+
     operations = [
-        migrations.CreateModel(
-            name='Conversation',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('sujet', models.CharField(max_length=200)),
-                ('statut', models.CharField(choices=[('ouverte', 'Ouverte'), ('fermee', 'Fermée'), ('en_attente', 'En attente')], default='ouverte', max_length=20)),
-                ('date_creation', models.DateTimeField(auto_now_add=True)),
-                ('derniere_activite', models.DateTimeField(auto_now=True)),
-                ('lu_par_citoyen', models.BooleanField(default=True)),
-                ('lu_par_agent', models.BooleanField(default=False)),
-                ('agent', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='conversations_agent', to=settings.AUTH_USER_MODEL)),
-                ('citoyen', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='conversations_citoyen', to=settings.AUTH_USER_MODEL)),
-            ],
-            options={
-                'ordering': ['-derniere_activite'],
-            },
-        ),
-        migrations.CreateModel(
-            name='Message',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('contenu', models.TextField()),
-                ('fichier', models.FileField(blank=True, null=True, upload_to='messages/')),
-                ('date_envoi', models.DateTimeField(auto_now_add=True)),
-                ('lu_par_citoyen', models.BooleanField(default=False)),
-                ('lu_par_agent', models.BooleanField(default=False)),
-                ('message_systeme', models.BooleanField(default=False)),
-                ('conversation', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='messages', to='core.conversation')),
-                ('expediteur', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
-            ],
-            options={
-                'ordering': ['date_envoi'],
-            },
-        ),
+        migrations.RunPython(_noop, reverse_code=migrations.RunPython.noop),
     ]

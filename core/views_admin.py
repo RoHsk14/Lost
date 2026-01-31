@@ -179,50 +179,50 @@ def admin_dashboard(request):
         })
     
     # Debug: Ajouter des valeurs par défaut si les données sont vides
-    if total_declarations == 0:
-        metriques.update({
-            'declarations_total': 86,
-            'declarations_periode': 86,
-            'objets_perdus': 32,
-            'objets_trouves': 35,
-            'declarations_en_attente': 0,
-            'declarations_validees': 19,
-            'citoyens_total': 37,
-            'nouveaux_citoyens': 37,
-            'agents_actifs': 12,
-            'agents_total': 12,
-            'nouveaux_agents': 0,
-            'objets_restitues': 15,
-            'taux_restitution': 17.4,
-            'croissance': 0,
-            'agents_ratio': "12/12",
-            'conversations_total': 18,
-            'conversations_actives': 18,
-        })
+    # if total_declarations == 0:
+    #     metriques.update({
+    #         'declarations_total': 86,
+    #         'declarations_periode': 86,
+    #         'objets_perdus': 32,
+    #         'objets_trouves': 35,
+    #         'declarations_en_attente': 0,
+    #         'declarations_validees': 19,
+    #         'citoyens_total': 37,
+    #         'nouveaux_citoyens': 37,
+    #         'agents_actifs': 12,
+    #         'agents_total': 12,
+    #         'nouveaux_agents': 0,
+    #         'objets_restitues': 15,
+    #         'taux_restitution': 17.4,
+    #         'croissance': 0,
+    #         'agents_ratio': "12/12",
+    #         'conversations_total': 18,
+    #         'conversations_actives': 18,
+    #     })
         
-        # Données de test pour le graphique
-        evolution_declarations = {
-            'labels': ['Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
-            'values': [8, 12, 15, 18, 21, 12]
-        }
+    #     # Données de test pour le graphique
+    #     evolution_declarations = {
+    #         'labels': ['Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
+    #         'values': [8, 12, 15, 18, 21, 12]
+    #     }
         
-        # Données de test pour les catégories
-        top_categories = [
-            {'nom': 'Téléphone', 'count': 15, 'percentage': 100},
-            {'nom': 'Documents', 'count': 12, 'percentage': 80},
-            {'nom': 'Clés', 'count': 10, 'percentage': 67},
-            {'nom': 'Sac', 'count': 8, 'percentage': 53},
-            {'nom': 'Portefeuille', 'count': 6, 'percentage': 40}
-        ]
+    #     # Données de test pour les catégories
+    #     top_categories = [
+    #         {'nom': 'Téléphone', 'count': 15, 'percentage': 100},
+    #         {'nom': 'Documents', 'count': 12, 'percentage': 80},
+    #         {'nom': 'Clés', 'count': 10, 'percentage': 67},
+    #         {'nom': 'Sac', 'count': 8, 'percentage': 53},
+    #         {'nom': 'Portefeuille', 'count': 6, 'percentage': 40}
+    #     ]
         
-        # Données de test pour les régions
-        top_regions = [
-            {'nom': 'Maritime', 'count': 25, 'percentage': 100},
-            {'nom': 'Plateaux', 'count': 18, 'percentage': 72},
-            {'nom': 'Centrale', 'count': 15, 'percentage': 60},
-            {'nom': 'Kara', 'count': 12, 'percentage': 48},
-            {'nom': 'Savanes', 'count': 8, 'percentage': 32}
-        ]
+    #     # Données de test pour les régions
+    #     top_regions = [
+    #         {'nom': 'Maritime', 'count': 25, 'percentage': 100},
+    #         {'nom': 'Plateaux', 'count': 18, 'percentage': 72},
+    #         {'nom': 'Centrale', 'count': 15, 'percentage': 60},
+    #         {'nom': 'Kara', 'count': 12, 'percentage': 48},
+    #         {'nom': 'Savanes', 'count': 8, 'percentage': 32}
+    #     ]
     
     context = {
         'metriques': metriques,

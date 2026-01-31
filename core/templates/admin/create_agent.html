@@ -318,7 +318,7 @@ document.getElementById('prefectureSelect').addEventListener('change', function(
     structureLocaleNew.classList.add('d-none');
     structureLocaleNew.value = '';
     if (prefectureId) {
-        fetch(`/api/structures/${prefectureId}/`)
+        fetch(`/api/structures/prefecture/${prefectureId}/`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Erreur réseau');

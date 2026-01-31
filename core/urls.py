@@ -63,12 +63,16 @@ router.register(r'signalements', SignalementViewSet, basename='signalement')
 
 urlpatterns = [
     # ===== API =====
-    path('api/', include(router.urls)),
+    # Endpoints fonctionnels (prioritaires)
     path('api/regions/', api_views.api_regions, name='api_regions'),
-    path('api/prefectures/<int:region_id>/', api_views.api_prefectures, name='api_prefectures'),
-    path('api/structures/<int:prefecture_id>/', api_views.api_structures, name='api_structures'),
-    path('api/prefectures/', views.api_prefectures, name='api_prefectures_query'),
-    path('api/structures/', views.api_structures, name='api_structures_query'),
+    # Endpoints spécifiques sans conflit avec le router DRF
+    path('api/prefectures/region/<int:region_id>/', api_views.api_prefectures, name='api_prefectures'),
+    path('api/structures/prefecture/<int:prefecture_id>/', api_views.api_structures, name='api_structures'),
+    # Endpoints utilitaires (query params)
+    path('api/query/prefectures/', views.api_prefectures, name='api_prefectures_query'),
+    path('api/query/structures/', views.api_structures, name='api_structures_query'),
+    # Router DRF (list/detail)
+    path('api/', include(router.urls)),
     
     # APIs pour le chat intégré dans les dashboards
     path('api/conversations/', api_views.api_conversations, name='api_conversations'),

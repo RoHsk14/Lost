@@ -586,24 +586,23 @@ def index(request):
 
     if nom or lieu or date_perte:
         recherche_effectuee = True
-        # Recherche dans la table Declaration (objets publiés et validés)
-        objets_resultats = Declaration.objects.filter(
-            statut__in=['valide', 'publie'],
+        # Recherche dans la table Declaration (élargie pour inclure les nouveaux signalements)
+        base_search = Declaration.objects.filter(
+            statut__in=['cree', 'en_validation', 'valide', 'publie'],
             visible_publiquement=True
         )
         if nom:
-            objets_resultats = objets_resultats.filter(nom_objet__icontains=nom)
+            base_search = base_search.filter(nom_objet__icontains=nom)
         if lieu:
-            # Recherche dans lieu_precis ou dans prefecture/region
-            objets_resultats = objets_resultats.filter(
+            base_search = base_search.filter(
                 Q(lieu_precis__icontains=lieu) |
                 Q(prefecture__nom__icontains=lieu) |
                 Q(region__nom__icontains=lieu)
             )
         if date_perte:
-            objets_resultats = objets_resultats.filter(date_incident=date_perte)
+            base_search = base_search.filter(date_incident=date_perte)
         
-        objets_resultats = objets_resultats.select_related(
+        objets_resultats = base_search.select_related(
             'declarant', 'region', 'prefecture', 'categorie'
         ).order_by('-date_declaration')
 
@@ -623,7 +622,7 @@ def index(request):
 
     # Récupération des déclarations récentes (tous types confondus)
     signalements_recents = Declaration.objects.filter(
-        statut__in=['valide', 'publie'],
+        statut__in=['cree', 'en_validation', 'valide', 'publie'],
         visible_publiquement=True
     ).select_related('declarant', 'region', 'prefecture', 'categorie').order_by('-date_declaration')[:4]
 
@@ -716,28 +715,33 @@ def declaration_detail_public(request, pk):
 # Gestion des signalements
 # ---------------------------
 def signalements_list(request):
-    # Récupérer seulement les déclarations validées ou publiées
-    search_query = request.GET.get('search', '')
+    # Récupérer les paramètres de recherche
+    nom = request.GET.get('nom')
+    lieu = request.GET.get('lieu')
+    date_perte = request.GET.get('date_perte')
     
-    if search_query:
-        declarations = Declaration.objects.filter(
-            Q(statut__in=['valide', 'publie']),  # Exclure 'restitue'
-            Q(nom_objet__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(lieu_precis__icontains=search_query) |
-            Q(declarant__username__icontains=search_query) |
-            Q(declarant__first_name__icontains=search_query) |
-            Q(declarant__last_name__icontains=search_query)
-        ).select_related('declarant', 'prefecture', 'structure_locale').order_by('-date_declaration')
-    else:
-        declarations = Declaration.objects.filter(
-            Q(statut__in=['valide', 'publie'])  # Exclure 'restitue'
-        ).select_related('declarant', 'prefecture', 'structure_locale').order_by('-date_declaration')
+    # On filtre les signalements qui sont soit créés, soit validés, soit publiés
+    base_queryset = Declaration.objects.filter(
+        statut__in=['cree', 'valide', 'publie']
+    ).select_related('declarant', 'prefecture', 'structure_locale', 'region').order_by('-date_declaration')
+
+    if nom:
+        base_queryset = base_queryset.filter(nom_objet__icontains=nom)
+    if lieu:
+        base_queryset = base_queryset.filter(
+            Q(lieu_precis__icontains=lieu) |
+            Q(prefecture__nom__icontains=lieu) |
+            Q(region__nom__icontains=lieu)
+        )
+    if date_perte:
+        base_queryset = base_queryset.filter(date_incident=date_perte)
     
     context = {
-        'signalements': declarations,  # On garde le nom 'signalements' pour la compatibilité du template
-        'search_query': search_query,
-        'total_count': declarations.count(),
+        'signalements': base_queryset,
+        'nom': nom,
+        'lieu': lieu,
+        'date_perte': date_perte,
+        'total_count': base_queryset.count(),
     }
     return render(request, 'signalements_list.html', context)
 
@@ -901,70 +905,67 @@ def signalement_delete(request, pk):
 # ---------------------------
 def objets_list(request):
     """Vue pour afficher tous les objets trouvés"""
-    # Récupérer les objets trouvés : 
-    # 1. Objets trouvés à l'origine (type_declaration='trouve')
-    # 2. Objets perdus qui ont été retrouvés (type_declaration='perdu' et statut='publie')
-    search_query = request.GET.get('search', '')
+    nom = request.GET.get('nom')
+    lieu = request.GET.get('lieu')
+    date_perte = request.GET.get('date_perte')
     
-    if search_query:
-        objets_trouves = Declaration.objects.filter(
-            Q(
-                # Objets trouvés à l'origine (seulement les validés, pas les restitués)
-                (Q(type_declaration='trouve') & Q(statut__in=['valide', 'publie'])) |
-                # Objets perdus qui ont été retrouvés (pas les restitués)
-                (Q(type_declaration='perdu') & Q(statut='publie'))
-            ),
-            Q(nom_objet__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(lieu_precis__icontains=search_query) |
-            Q(declarant__username__icontains=search_query) |
-            Q(declarant__first_name__icontains=search_query) |
-            Q(declarant__last_name__icontains=search_query)
-        ).select_related('declarant', 'prefecture', 'structure_locale').order_by('-date_declaration')
-    else:
-        objets_trouves = Declaration.objects.filter(
-            Q(
-                # Objets trouvés à l'origine (seulement les validés, pas les restitués)
-                (Q(type_declaration='trouve') & Q(statut__in=['valide', 'publie'])) |
-                # Objets perdus qui ont été retrouvés (pas les restitués)
-                (Q(type_declaration='perdu') & Q(statut='publie'))
-            )
-        ).select_related('declarant', 'prefecture', 'structure_locale').order_by('-date_declaration')
+    base_queryset = Declaration.objects.filter(
+        Q(
+            # Objets trouvés à l'origine (seulement les validés, pas les restitués)
+            (Q(type_declaration='trouve') & Q(statut__in=['valide', 'publie'])) |
+            # Objets perdus qui ont été retrouvés (pas les restitués)
+            (Q(type_declaration='perdu') & Q(statut='publie'))
+        )
+    ).select_related('declarant', 'prefecture', 'structure_locale', 'region').order_by('-date_declaration')
+
+    if nom:
+        base_queryset = base_queryset.filter(nom_objet__icontains=nom)
+    if lieu:
+        base_queryset = base_queryset.filter(
+            Q(lieu_precis__icontains=lieu) |
+            Q(prefecture__nom__icontains=lieu) |
+            Q(region__nom__icontains=lieu)
+        )
+    if date_perte:
+        base_queryset = base_queryset.filter(date_incident=date_perte)
     
     context = {
-        'objets_trouves': objets_trouves,
-        'search_query': search_query,
-        'total_count': objets_trouves.count(),
+        'objets_trouves': base_queryset,
+        'nom': nom,
+        'lieu': lieu,
+        'date_perte': date_perte,
+        'total_count': base_queryset.count(),
     }
     return render(request, 'objets_list.html', context)
 
 def objets_perdus_list(request):
     """Vue pour afficher tous les objets perdus qui ne sont pas encore retrouvés"""
-    # Récupérer seulement les objets perdus qui ne sont PAS encore retrouvés (statut != 'publie')
-    search_query = request.GET.get('search', '')
+    nom = request.GET.get('nom')
+    lieu = request.GET.get('lieu')
+    date_perte = request.GET.get('date_perte')
     
-    if search_query:
-        objets_perdus = Declaration.objects.filter(
-            type_declaration='perdu',
-            statut__in=['cree', 'en_validation', 'valide']  # Exclure 'publie' (retrouvé) et 'restitue'
-        ).filter(
-            Q(nom_objet__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(lieu_precis__icontains=search_query) |
-            Q(declarant__username__icontains=search_query) |
-            Q(declarant__first_name__icontains=search_query) |
-            Q(declarant__last_name__icontains=search_query)
-        ).select_related('declarant', 'prefecture', 'structure_locale').order_by('-date_declaration')
-    else:
-        objets_perdus = Declaration.objects.filter(
-            type_declaration='perdu',
-            statut__in=['cree', 'en_validation', 'valide']  # Exclure 'publie' (retrouvé) et 'restitue'
-        ).select_related('declarant', 'prefecture', 'structure_locale').order_by('-date_declaration')
+    base_queryset = Declaration.objects.filter(
+        type_declaration='perdu',
+        statut__in=['cree', 'en_validation', 'valide']  # Exclure 'publie' (retrouvé) et 'restitue'
+    ).select_related('declarant', 'prefecture', 'structure_locale', 'region').order_by('-date_declaration')
+
+    if nom:
+        base_queryset = base_queryset.filter(nom_objet__icontains=nom)
+    if lieu:
+        base_queryset = base_queryset.filter(
+            Q(lieu_precis__icontains=lieu) |
+            Q(prefecture__nom__icontains=lieu) |
+            Q(region__nom__icontains=lieu)
+        )
+    if date_perte:
+        base_queryset = base_queryset.filter(date_incident=date_perte)
     
     context = {
-        'objets_perdus': objets_perdus,
-        'search_query': search_query,
-        'total_count': objets_perdus.count(),
+        'objets_perdus': base_queryset,
+        'nom': nom,
+        'lieu': lieu,
+        'date_perte': date_perte,
+        'total_count': base_queryset.count(),
     }
     return render(request, 'objets_perdus_list.html', context)
 
@@ -988,13 +989,24 @@ def login_view(request):
     get_token(request)  # Force la création d'un nouveau token
     
     if request.method == 'POST':
-        username = request.POST.get('username')
+        # Supporter la saisie par nom d'utilisateur ou par email
+        username_or_email = request.POST.get('username')
         password = request.POST.get('password')
         
-        if not username or not password:
+        if not username_or_email or not password:
             messages.error(request, "Veuillez remplir tous les champs.")
             return render(request, 'login.html')
             
+        # Si l'utilisateur a fourni un email, on essaie de le résoudre en username
+        username = username_or_email
+        if username_or_email and '@' in username_or_email:
+            try:
+                u = User.objects.get(email__iexact=username_or_email)
+                username = u.username
+            except User.DoesNotExist:
+                # On laisse la valeur fournie (peut être un username contenant '@')
+                username = username_or_email
+
         user = authenticate(request, username=username, password=password)
         if user:
             if not user.is_active:
