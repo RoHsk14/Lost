@@ -1,0 +1,692 @@
+{% extends "admin/base_modern.html" %}
+
+{% block page_title %}Paramètres de la Plateforme{% endblock %}
+
+{% block extra_css %}
+<style>
+.settings-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.settings-nav {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 1rem;
+    position: sticky;
+    top: 100px;
+}
+
+.settings-nav-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 8px;
+    color: #6b7280;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    margin-bottom: 0.5rem;
+}
+
+.settings-nav-item:hover {
+    background: #f9fafb;
+    color: #667eea;
+}
+
+.settings-nav-item.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.settings-nav-item i {
+    width: 24px;
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.settings-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.settings-section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.settings-section-title i {
+    color: #667eea;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-control-modern {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.form-control-modern:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-text {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.settings-card {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.settings-card-title {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.system-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.system-stat:last-child {
+    border-bottom: none;
+}
+
+.system-stat-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.system-stat-value {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.progress-bar-system {
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.3s ease;
+}
+
+.log-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.2s ease;
+}
+
+.log-item:hover {
+    background: #f9fafb;
+}
+
+.log-item:last-child {
+    border-bottom: none;
+}
+
+.log-time {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.btn-save-modern {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-save-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+}
+
+.toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 28px;
+    background: #e5e7eb;
+    border-radius: 14px;
+    transition: background 0.3s ease;
+    cursor: pointer;
+}
+
+.toggle-switch.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: left 0.3s ease;
+}
+
+.toggle-switch.active .toggle-slider {
+    left: 26px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container py-4">
+    <div class="row g-4">
+        <!-- Menu Latéral -->
+        <div class="col-lg-3">
+            <div class="settings-nav">
+                <a href="#general" class="settings-nav-item active" data-section="general">
+                    <i class="fas fa-cog"></i>
+                    <span>Général</span>
+                </a>
+                <a href="#email" class="settings-nav-item" data-section="email">
+                    <i class="fas fa-envelope"></i>
+                    <span>Email</span>
+                </a>
+                <a href="#appearance" class="settings-nav-item" data-section="appearance">
+                    <i class="fas fa-palette"></i>
+                    <span>Apparence</span>
+                </a>
+                <a href="#security" class="settings-nav-item" data-section="security">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Sécurité</span>
+                </a>
+                <a href="#system" class="settings-nav-item" data-section="system">
+                    <i class="fas fa-server"></i>
+                    <span>Système</span>
+                </a>
+                <a href="#logs" class="settings-nav-item" data-section="logs">
+                    <i class="fas fa-history"></i>
+                    <span>Logs</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Contenu Principal -->
+        <div class="col-lg-9">
+            <!-- Section Général -->
+            <div class="settings-section" id="general-section">
+                <h5 class="settings-section-title">
+                    <i class="fas fa-cog"></i>
+                    Paramètres Généraux
+                </h5>
+
+                <form method="post" action="?section=general">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Nom de la Plateforme</label>
+                                <input type="text" class="form-control-modern" name="site_name" 
+                                       value="{{ settings.site_name }}" required>
+                                <small class="form-text">Affiché dans le titre et le header</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">URL du Site</label>
+                                <input type="url" class="form-control-modern" name="site_url" 
+                                       value="{{ settings.site_url }}" required>
+                                <small class="form-text">Adresse complète du site</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Email de Contact</label>
+                                <input type="email" class="form-control-modern" name="contact_email" 
+                                       value="{{ settings.contact_email }}" required>
+                                <small class="form-text">Email affiché publiquement</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Téléphone Support</label>
+                                <input type="tel" class="form-control-modern" name="support_phone" 
+                                       value="{{ settings.support_phone }}" required>
+                                <small class="form-text">Numéro de support</small>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label">Description du Site</label>
+                                <textarea class="form-control-modern" name="site_description" 
+                                          rows="3" required>{{ settings.site_description }}</textarea>
+                                <small class="form-text">Description pour le SEO</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h6 class="settings-card-title">
+                            <i class="fas fa-sliders-h text-primary"></i>
+                            Limites et Configuration
+                        </h6>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Taille Max Fichier (MB)</label>
+                                    <input type="number" class="form-control-modern" name="max_file_size" 
+                                           value="{{ settings.max_file_size }}" min="1" max="50">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Photos Max par Déclaration</label>
+                                    <input type="number" class="form-control-modern" name="max_photos" 
+                                           value="{{ settings.max_photos_per_declaration }}" min="1" max="10">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Timeout Validation (heures)</label>
+                                    <input type="number" class="form-control-modern" name="validation_timeout" 
+                                           value="{{ settings.validation_timeout }}" min="1" max="168">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Durée Publication (jours)</label>
+                                    <input type="number" class="form-control-modern" name="publication_duration" 
+                                           value="{{ settings.publication_duration }}" min="7" max="365">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn-save-modern">
+                            <i class="fas fa-save me-2"></i>Enregistrer les Modifications
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Section Email -->
+            <div class="settings-section d-none" id="email-section">
+                <h5 class="settings-section-title">
+                    <i class="fas fa-envelope"></i>
+                    Configuration Email
+                </h5>
+
+                <form method="post" action="?section=email">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Serveur SMTP</label>
+                                <input type="text" class="form-control-modern" name="smtp_host" 
+                                       value="{{ email_settings.smtp_host }}" required>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Port SMTP</label>
+                                <input type="number" class="form-control-modern" name="smtp_port" 
+                                       value="{{ email_settings.smtp_port }}" required>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Nom d'Utilisateur</label>
+                                <input type="text" class="form-control-modern" name="smtp_username" 
+                                       value="{{ email_settings.smtp_username }}">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Mot de Passe</label>
+                                <input type="password" class="form-control-modern" name="smtp_password" 
+                                       placeholder="••••••••">
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded">
+                                <div>
+                                    <strong>Utiliser TLS</strong>
+                                    <br>
+                                    <small class="text-muted">Connexion sécurisée recommandée</small>
+                                </div>
+                                <div class="toggle-switch {% if email_settings.smtp_use_tls %}active{% endif %}" onclick="toggleSwitch(this)">
+                                    <div class="toggle-slider"></div>
+                                    <input type="hidden" name="smtp_use_tls" value="{% if email_settings.smtp_use_tls %}on{% else %}off{% endif %}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-paper-plane me-2"></i>Tester la Configuration
+                        </button>
+                        <button type="submit" class="btn-save-modern">
+                            <i class="fas fa-save me-2"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Section Apparence -->
+            <div class="settings-section d-none" id="appearance-section">
+                <h5 class="settings-section-title">
+                    <i class="fas fa-palette"></i>
+                    Apparence
+                </h5>
+
+                <div class="settings-card">
+                    <h6 class="settings-card-title">
+                        <i class="fas fa-image text-info"></i>
+                        Logo de la Plateforme
+                    </h6>
+
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-building fa-5x text-muted"></i>
+                        </div>
+                        <button class="btn btn-outline-primary">
+                            <i class="fas fa-upload me-2"></i>Télécharger un Logo
+                        </button>
+                        <p class="mt-2 text-muted small">Format recommandé: PNG ou SVG, taille 200x200px</p>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h6 class="settings-card-title">
+                        <i class="fas fa-paint-brush text-warning"></i>
+                        Couleurs du Thème
+                    </h6>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Couleur Principale</label>
+                                <div class="d-flex gap-2">
+                                    <input type="color" class="form-control-modern" value="#667eea" style="width: 80px;">
+                                    <input type="text" class="form-control-modern" value="#667eea" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Couleur Secondaire</label>
+                                <div class="d-flex gap-2">
+                                    <input type="color" class="form-control-modern" value="#764ba2" style="width: 80px;">
+                                    <input type="text" class="form-control-modern" value="#764ba2" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Ces modifications affecteront l'apparence générale de la plateforme.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Sécurité -->
+            <div class="settings-section d-none" id="security-section">
+                <h5 class="settings-section-title">
+                    <i class="fas fa-shield-alt"></i>
+                    Sécurité
+                </h5>
+
+                <div class="settings-card">
+                    <h6 class="settings-card-title">
+                        <i class="fas fa-key text-danger"></i>
+                        Politique de Mots de Passe
+                    </h6>
+
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded mb-2">
+                                <div>
+                                    <strong>Longueur Minimale : 8 caractères</strong>
+                                </div>
+                                <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                                    <div class="toggle-slider"></div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded mb-2">
+                                <div>
+                                    <strong>Exiger des Lettres Majuscules</strong>
+                                </div>
+                                <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                                    <div class="toggle-slider"></div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded mb-2">
+                                <div>
+                                    <strong>Exiger des Chiffres</strong>
+                                </div>
+                                <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                                    <div class="toggle-slider"></div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded">
+                                <div>
+                                    <strong>Exiger des Caractères Spéciaux</strong>
+                                </div>
+                                <div class="toggle-switch" onclick="toggleSwitch(this)">
+                                    <div class="toggle-slider"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h6 class="settings-card-title">
+                        <i class="fas fa-lock text-warning"></i>
+                        Authentification à Deux Facteurs
+                    </h6>
+
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <strong>Activer la 2FA pour les Administrateurs</strong>
+                            <br>
+                            <small class="text-muted">Recommandé pour une sécurité renforcée</small>
+                        </div>
+                        <div class="toggle-switch" onclick="toggleSwitch(this)">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Système -->
+            <div class="settings-section d-none" id="system-section">
+                <h5 class="settings-section-title">
+                    <i class="fas fa-server"></i>
+                    Informations Système
+                </h5>
+
+                <div class="settings-card">
+                    <h6 class="settings-card-title">
+                        <i class="fas fa-database text-primary"></i>
+                        Base de Données
+                    </h6>
+
+                    <div class="system-stat">
+                        <span class="system-stat-label">Type</span>
+                        <span class="system-stat-value">{{ system_info.database_type }}</span>
+                    </div>
+                    <div class="system-stat">
+                        <span class="system-stat-label">Dernier Backup</span>
+                        <span class="system-stat-value">
+                            {% if system_info.last_backup %}
+                                {{ system_info.last_backup|date:"d/m/Y H:i" }}
+                            {% else %}
+                                Aucun backup
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <button class="btn btn-outline-primary w-100 mt-3">
+                        <i class="fas fa-download me-2"></i>Créer un Backup Maintenant
+                    </button>
+                </div>
+
+                <div class="settings-card">
+                    <h6 class="settings-card-title">
+                        <i class="fas fa-hdd text-success"></i>
+                        Stockage
+                    </h6>
+
+                    <div class="system-stat">
+                        <span class="system-stat-label">Espace Utilisé</span>
+                        <span class="system-stat-value">{{ system_info.disk_used }} / {{ system_info.disk_total }}</span>
+                    </div>
+
+                    <div class="progress-bar-system">
+                        <div class="progress-fill" style="width: {{ system_info.disk_usage }}%"></div>
+                    </div>
+                    <small class="text-muted">{{ system_info.disk_usage }}% utilisé</small>
+                </div>
+            </div>
+
+            <!-- Section Logs -->
+            <div class="settings-section d-none" id="logs-section">
+                <h5 class="settings-section-title">
+                    <i class="fas fa-history"></i>
+                    Journaux d'Activité
+                </h5>
+
+                <div class="settings-card">
+                    {% if recent_logs %}
+                    {% for log in recent_logs %}
+                    <div class="log-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>{{ log.action }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    Par {{ log.utilisateur.get_full_name|default:log.utilisateur.username }}
+                                </small>
+                            </div>
+                            <div class="log-time">
+                                {{ log.date_action|date:"d/m/Y H:i" }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-3x mb-3 opacity-25"></i>
+                        <p>Aucun log récent</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="text-end">
+                    <button class="btn btn-outline-danger">
+                        <i class="fas fa-trash me-2"></i>Effacer Tous les Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Navigation entre sections
+    const navItems = document.querySelectorAll('.settings-nav-item');
+    const sections = document.querySelectorAll('.settings-section');
+
+    navItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Retire active de tous les items
+            navItems.forEach(nav => nav.classList.remove('active'));
+            
+            // Ajoute active à l'item cliqué
+            this.classList.add('active');
+            
+            // Cache toutes les sections
+            sections.forEach(section => section.classList.add('d-none'));
+            
+            // Affiche la section correspondante
+            const sectionId = this.getAttribute('data-section') + '-section';
+            document.getElementById(sectionId).classList.remove('d-none');
+        });
+    });
+});
+
+function toggleSwitch(element) {
+    element.classList.toggle('active');
+    const input = element.querySelector('input[type="hidden"]');
+    if (input) {
+        input.value = element.classList.contains('active') ? 'on' : 'off';
+    }
+}
+</script>
+{% endblock %}

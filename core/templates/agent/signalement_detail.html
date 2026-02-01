@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+{% extends 'agent/base.html' %}
+
+{% block title %}{{ signalement.nom_objet }} - Détails du signalement{% endblock %}
+{% block page_title %}Détails du signalement{% endblock %}
+{% block page_subtitle %}{{ signalement.numero_declaration }} - {{ signalement.nom_objet }}{% endblock %}
+{% block content %}
+<div class="space-y-8">
+    <!-- Breadcrumb de navigation -->
+        <!-- Fin du contenu principal -->
+    </div>
+</div>
+        <a href="{% url 'togo_agent:dashboard' %}" class="hover:text-primary-600 transition-colors">Dashboard</a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <a href="{% url 'togo_agent:mes_signalements' %}" class="hover:text-primary-600 transition-colors">Signalements</a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <span class="text-gray-900 font-medium">{{ signalement.numero_declaration }}</span>
+    </nav>
+
+    <!-- Header avec actions principales -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
+            <div class="flex items-start space-x-4">
+                <!-- Photo de l'objet ou placeholder -->
+                <div class="flex-shrink-0">
+                    {% if signalement.photo_principale %}
+                        <img src="{{ signalement.photo_principale.url }}" 
+                             alt="{{ signalement.nom_objet }}" 
+                             class="w-20 h-20 rounded-2xl object-cover shadow-lg">
+                    {% else %}
+                        <div class="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-cube text-gray-400 text-2xl"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex-1">
+                    <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{{ signalement.nom_objet }}</h1>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-primary-100 text-primary-800 border border-primary-200">
+                            <i class="fas fa-hashtag mr-2"></i>
+                            {{ signalement.numero_declaration }}
+                        </span>
+                        
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold
+                            {% if signalement.statut == 'cree' %}bg-yellow-100 text-yellow-800 border border-yellow-200
+                            {% elif signalement.statut == 'en_validation' %}bg-blue-100 text-blue-800 border border-blue-200
+                            {% elif signalement.statut == 'valide' %}bg-green-100 text-green-800 border border-green-200
+                            {% elif signalement.statut == 'publie' %}bg-purple-100 text-purple-800 border border-purple-200
+                            {% elif signalement.statut == 'restitue' %}bg-emerald-100 text-emerald-800 border border-emerald-200
+                            {% elif signalement.statut == 'rejete' %}bg-red-100 text-red-800 border border-red-200
+                            {% else %}bg-gray-100 text-gray-800 border border-gray-200{% endif %}">
+                            <i class="fas fa-circle text-xs mr-2"></i>
+                            {{ signalement.get_statut_display }}
+                        </span>
+                        
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold
+                            {% if signalement.type_declaration == 'perdu' %}bg-red-100 text-red-800 border border-red-200
+                            {% else %}bg-green-100 text-green-800 border border-green-200{% endif %}">
+                            <i class="fas {% if signalement.type_declaration == 'perdu' %}fa-exclamation-circle{% else %}fa-search-plus{% endif %} mr-2"></i>
+                            {{ signalement.get_type_declaration_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="flex items-center mt-3 text-sm text-gray-500">
+                        <i class="fas fa-calendar-alt mr-2"></i>
+                        <span>Déclaré le {{ signalement.date_declaration|date:"l d F Y à H:i" }}</span>
+                        <span class="mx-2">•</span>
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>{{ signalement.date_declaration|timesince }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions principales -->
+            <div class="flex items-center space-x-3">
+                                {% if signalement.statut == 'cree' %}
+                                <a href="{% url 'togo_agent:modifier_signalement' signalement.id %}" class="flex items-center bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-xl font-medium transition-all transform hover:scale-105" style="opacity: 1; transform: scale(1) translateY(0px); transition: 0.6s ease-out;">
+                                    <i class="fas fa-edit mr-2"></i>
+                                    Modifier
+                                </a>
+                                {% endif %}
+                {% if peut_valider %}
+                    <form method="POST" action="{% url 'togo_agent:valider_signalement' signalement.id %}" id="form-valider" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="commentaire_agent" id="commentaire-agent-input" value="">
+                        <button type="button" onclick="validerSignalement()" 
+                                class="inline-flex items-center px-4 py-2.5 bg-green-600 text-white font-medium rounded-xl hover:bg-green-700 transition-colors shadow-sm">
+                            <i class="fas fa-check mr-2"></i>
+                            Valider
+                        </button>
+                    </form>
+                {% endif %}
+                {% if peut_marquer_retrouve %}
+                    <form method="POST" action="{% url 'togo_agent:marquer_retrouve' signalement.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="commentaire_agent" value="Objet retrouvé">
+                        <button type="submit" class="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+                            <i class="fas fa-search mr-2"></i>
+                            Marquer comme retrouvé
+                        </button>
+                    </form>
+                {% endif %}
+                {% if peut_marquer_restitue %}
+                    <form method="POST" action="{% url 'togo_agent:marquer_restitue' signalement.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="commentaire_agent" value="Objet restitué au propriétaire">
+                        <button type="submit" class="inline-flex items-center px-4 py-2.5 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-700 transition-colors shadow-sm">
+                            <i class="fas fa-handshake mr-2"></i>
+                            Marquer comme restitué
+                        </button>
+                    </form>
+                {% endif %}
+                {% if signalement.statut == 'restitue' %}
+                    <form method="POST" action="{% url 'togo_agent:archiver_signalement' signalement.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="inline-flex items-center px-4 py-2.5 bg-gray-700 text-white font-medium rounded-xl hover:bg-gray-800 transition-colors shadow-sm">
+                            <i class="fas fa-archive mr-2"></i>
+                            Archiver
+                        </button>
+                    </form>
+                {% endif %}
+                
+                <button onclick="contacterDeclarant()" 
+                        class="inline-flex items-center px-4 py-2.5 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-700 transition-colors shadow-sm">
+                    <i class="fas fa-comments mr-2"></i>
+                    Contacter
+                </button>
+                
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" 
+                            class="inline-flex items-center px-3 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    
+                    <div x-show="open" @click.outside="open = false" 
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="transform opacity-0 scale-95"
+                         x-transition:enter-end="transform opacity-100 scale-100"
+                         class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
+                        <div class="py-2">
+                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+                                <i class="fas fa-download mr-3 text-gray-400"></i>
+                                Générer rapport
+                            </button>
+                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+                                <i class="fas fa-print mr-3 text-gray-400"></i>
+                                Imprimer
+                            </button>
+                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+                                <i class="fas fa-history mr-3 text-gray-400"></i>
+                                Historique
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal en grille -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Colonne principale -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Description détaillée -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-info-circle mr-3 text-primary-600"></i>
+                    Description de l'objet
+                </h3>
+                
+                <div class="prose prose-gray max-w-none">
+                    <p class="text-gray-700 leading-relaxed text-lg">{{ signalement.description }}</p>
+                </div>
+                
+                {% if signalement.caractere_distinctif %}
+                    <div class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                        <h4 class="font-semibold text-amber-800 mb-2 flex items-center">
+                            <i class="fas fa-star mr-2"></i>
+                            Caractéristiques distinctives
+                        </h4>
+                        <p class="text-amber-700">{{ signalement.caractere_distinctif }}</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Galerie de photos -->
+            {% if signalement.photos.all %}
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-images mr-3 text-primary-600"></i>
+                        Photos de l'objet
+                    </h3>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {% for photo in signalement.photos.all %}
+                            <div class="relative group cursor-pointer" onclick="ouvrirModalPhoto('{{ photo.image.url }}')">
+                                <img src="{{ photo.image.url }}" 
+                                     alt="Photo {{ forloop.counter }}" 
+                                     class="w-full h-32 object-cover rounded-xl shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-105">
+                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-xl transition-all duration-300 flex items-center justify-center">
+                                    <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"></i>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Localisation -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-map-marker-alt mr-3 text-primary-600"></i>
+                    Localisation
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% if signalement.region %}
+                        <div class="text-center p-4 bg-gray-50 rounded-xl">
+                            <i class="fas fa-globe text-2xl text-gray-600 mb-2"></i>
+                            <p class="text-sm font-medium text-gray-500">Région</p>
+                            <p class="text-lg font-bold text-gray-900">{{ signalement.region.nom }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if signalement.prefecture %}
+                        <div class="text-center p-4 bg-gray-50 rounded-xl">
+                            <i class="fas fa-map text-2xl text-gray-600 mb-2"></i>
+                            <p class="text-sm font-medium text-gray-500">Préfecture</p>
+                            <p class="text-lg font-bold text-gray-900">{{ signalement.prefecture.nom }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if signalement.structure_locale %}
+                        <div class="text-center p-4 bg-gray-50 rounded-xl">
+                            <i class="fas fa-building text-2xl text-gray-600 mb-2"></i>
+                            <p class="text-sm font-medium text-gray-500">Structure locale</p>
+                            <p class="text-lg font-bold text-gray-900">{{ signalement.structure_locale.nom }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                {% if signalement.lieu_precis %}
+                    <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                        <h4 class="font-semibold text-blue-800 mb-2 flex items-center">
+                            <i class="fas fa-crosshairs mr-2"></i>
+                            Lieu précis
+                        </h4>
+                        <p class="text-blue-700">{{ signalement.lieu_precis }}</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Réclamations liées -->
+            {% if reclamations %}
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-hand-paper mr-3 text-amber-600"></i>
+                        Réclamations reçues
+                        <span class="ml-auto bg-amber-100 text-amber-800 text-xs px-3 py-1 rounded-full font-semibold">
+                            {{ reclamations|length }}
+                        </span>
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        {% for reclamation in reclamations %}
+                            <div class="p-4 border border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50/50 transition-all duration-200 group">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex items-start space-x-4 flex-1">
+                                        <div class="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                            {{ reclamation.reclamant.first_name|first|default:reclamation.reclamant.username|first|upper }}
+                                        </div>
+                                        
+                                        <div class="flex-1">
+                                            <h4 class="font-semibold text-gray-900 group-hover:text-primary-700 transition-colors">
+                                                {{ reclamation.reclamant.get_full_name|default:reclamation.reclamant.username }}
+                                            </h4>
+                                            <p class="text-sm text-gray-600 mt-1">{{ reclamation.description|truncatewords:20 }}</p>
+                                            <div class="flex items-center mt-2 space-x-4 text-xs text-gray-500">
+                                                <span class="flex items-center">
+                                                    <i class="fas fa-calendar-alt mr-1"></i>
+                                                    {{ reclamation.date_reclamation|timesince }}
+                                                </span>
+                                                {% if reclamation.pieces_justificatives.count > 0 %}
+                                                    <span class="flex items-center">
+                                                        <i class="fas fa-paperclip mr-1"></i>
+                                                        {{ reclamation.pieces_justificatives.count }} document{{ reclamation.pieces_justificatives.count|pluralize }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center space-x-2 ml-4">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold
+                                            {% if reclamation.statut == 'soumise' %}bg-yellow-100 text-yellow-800
+                                            {% elif reclamation.statut == 'en_verification' %}bg-blue-100 text-blue-800
+                                            {% elif reclamation.statut == 'validee' %}bg-green-100 text-green-800
+                                            {% else %}bg-red-100 text-red-800{% endif %}">
+                                            {{ reclamation.get_statut_display }}
+                                        </span>
+                                        
+                                        <a href="{% url 'togo_agent:verifier_reclamation' reclamation.id %}" 
+                                           class="inline-flex items-center px-3 py-1 text-xs font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors">
+                                            <i class="fas fa-eye mr-1"></i>
+                                            Examiner
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Informations du déclarant -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-user mr-3 text-primary-600"></i>
+                    Déclarant
+                </h3>
+                
+                <div class="text-center mb-4">
+                    <div class="w-16 h-16 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-3">
+                        {{ signalement.declarant.first_name|first|default:signalement.declarant.username|first|upper }}
+                    </div>
+                    <h4 class="font-semibold text-gray-900">
+                        {{ signalement.declarant.get_full_name|default:signalement.declarant.username }}
+                    </h4>
+                    <p class="text-sm text-gray-500">Citoyen</p>
+                </div>
+                
+                <div class="space-y-3">
+                    {% if signalement.declarant.telephone %}
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                            <div class="flex items-center">
+                                <i class="fas fa-phone text-green-600 mr-3"></i>
+                                <span class="text-sm font-medium text-gray-900">{{ signalement.declarant.telephone }}</span>
+                            </div>
+                            <a href="tel:{{ signalement.declarant.telephone }}" 
+                               class="text-green-600 hover:text-green-700">
+                                <i class="fas fa-external-link-alt text-xs"></i>
+                            </a>
+                        </div>
+                    {% endif %}
+                    
+                    {% if signalement.declarant.email %}
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                            <div class="flex items-center">
+                                <i class="fas fa-envelope text-blue-600 mr-3"></i>
+                                <span class="text-sm font-medium text-gray-900">{{ signalement.declarant.email }}</span>
+                            </div>
+                            <a href="mailto:{{ signalement.declarant.email }}" 
+                               class="text-blue-600 hover:text-blue-700">
+                                <i class="fas fa-external-link-alt text-xs"></i>
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <button onclick="contacterDeclarant()" 
+                            class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-700 transition-colors">
+                        <i class="fas fa-comments mr-2"></i>
+                        Envoyer un message
+                    </button>
+                </div>
+            </div>
+
+            <!-- Métadonnées du signalement -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-info mr-3 text-primary-600"></i>
+                    Informations
+                </h3>
+                
+                <dl class="space-y-4">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Date de l'incident</dt>
+                        <dd class="text-sm font-semibold text-gray-900 mt-1">{{ signalement.date_incident|date:"d F Y" }}</dd>
+                    </div>
+                    
+                    {% if signalement.categorie %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Catégorie</dt>
+                            <dd class="text-sm font-semibold text-gray-900 mt-1 flex items-center">
+                                {% if signalement.categorie.icone %}
+                                    <i class="{{ signalement.categorie.icone }} mr-2" style="color: {{ signalement.categorie.couleur|default:'#000' }};"></i>
+                                {% endif %}
+                                {{ signalement.categorie.nom }}
+                            </dd>
+                        </div>
+                    {% endif %}
+                    
+                    {% if signalement.valeur_estimee %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Valeur estimée</dt>
+                            <dd class="text-sm font-semibold text-gray-900 mt-1">{{ signalement.valeur_estimee }} FCFA</dd>
+                        </div>
+                    {% endif %}
+                    
+                    {% if signalement.agent_validateur %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Agent validateur</dt>
+                            <dd class="text-sm font-semibold text-gray-900 mt-1">{{ signalement.agent_validateur.get_full_name }}</dd>
+                        </div>
+                    {% endif %}
+                </dl>
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-bolt mr-3 text-primary-600"></i>
+                    Actions rapides
+                </h3>
+                
+                <div class="space-y-3">
+                    {% if signalement.statut == 'cree' %}
+                        <button onclick="validerSignalement()" 
+                                class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-green-600 text-white font-medium rounded-xl hover:bg-green-700 transition-colors">
+                            <i class="fas fa-check mr-2"></i>
+                            Valider le signalement
+                        </button>
+                        
+                        <button onclick="rejeterSignalement()" 
+                                class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-colors">
+                            <i class="fas fa-times mr-2"></i>
+                            Rejeter
+                        </button>
+                    {% elif signalement.statut == 'valide' %}
+                        <button onclick="publierSignalement()" 
+                                class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-globe mr-2"></i>
+                            Publié
+                        </button>
+                    {% elif signalement.statut == 'publie' %}
+                        <button onclick="marquerRetrouveRestitue()" 
+                                class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-handshake mr-2"></i>
+                            Marquer restitué
+                        </button>
+                    {% endif %}
+                    
+                    <button onclick="genererRapport()" 
+                            class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors">
+                        <i class="fas fa-download mr-2"></i>
+                        Générer rapport
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour agrandir les photos -->
+<div id="modal-photo" class="fixed inset-0 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black bg-opacity-75 transition-opacity" onclick="fermerModalPhoto()"></div>
+        
+        <div class="relative bg-white rounded-2xl shadow-2xl max-w-4xl max-h-[90vh] overflow-hidden">
+            <div class="p-4 flex justify-between items-center border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Aperçu de l'image</h3>
+                <button onclick="fermerModalPhoto()" 
+                        class="w-8 h-8 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                {% if signalement.photo_principale and signalement.photo_principale.name %}
+                    <img id="modal-photo-img" src="{{ signalement.photo_principale.url }}" alt="Aperçu" class="max-w-full max-h-[70vh] mx-auto rounded-lg">
+                {% else %}
+                    <img id="modal-photo-img-{{ forloop.counter }}" src="#" alt="Aperçu" class="max-w-full max-h-[70vh] mx-auto rounded-lg">
+                {% endif %}
+            <!-- Fin du contenu principal -->
+                </div>
+            </div>
+</div>
+
+{% endblock %} {# Fin du block content #}
+
+{% block scripts %}
+<script>
+function contacterDeclarant() {
+    var signalementId = "{{ signalement.id }}";
+    var declarantId = "{{ signalement.declarant.id }}";
+    var baseUrl = "{% url 'togo_agent:ouvrir_conversation' %}";
+    if (baseUrl === "") {
+        baseUrl = "/agent/ouvrir_conversation/";
+    }
+    window.location.href = baseUrl + "?signalement_id=" + signalementId + "&declarant_id=" + declarantId;
+}
+function marquerRetrouveRestitue() {
+    if (confirm('Marquer cet objet comme restitué ?')) {
+        window.location.href = "{% url 'togo_agent:marquer_restitue' signalement.id %}";
+    }
+}
+function genererRapport() {
+    window.location.href = "{% url 'togo_agent:generer_rapport' signalement.id %}";
+}
+function ouvrirModalPhoto(url) {
+    document.getElementById('modal-photo-img').src = url;
+    document.getElementById('modal-photo').classList.remove('hidden');
+}
+function fermerModalPhoto() {
+    document.getElementById('modal-photo').classList.add('hidden');
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !document.getElementById('modal-photo').classList.contains('hidden')) {
+        fermerModalPhoto();
+    }
+});
+function validerSignalement() {
+    const commentaire = prompt('Commentaire de validation (optionnel):');
+    if (commentaire !== null) {
+        document.getElementById('commentaire-agent-input').value = commentaire;
+        document.getElementById('form-valider').submit();
+    }
+}
+</script>
+        </div>
+    </div>
+{% endblock %}

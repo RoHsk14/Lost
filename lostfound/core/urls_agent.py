@@ -49,4 +49,7 @@ urlpatterns = [
     path('ajax/stats/', views_agent.ajax_statistiques_dashboard, name='ajax_stats'),
     path('ajax/statistiques/', views_agent.ajax_statistiques_dashboard, name='ajax_statistiques_dashboard'),
     path('ajax/notification/<int:notification_id>/lue/', views_agent.ajax_marquer_notification_lue, name='ajax_marquer_notification_lue'),
+    
+    # Ouvrir une conversation
+    path('ouvrir_conversation/', views_agent.ouvrir_conversation, name='ouvrir_conversation'),
 ]

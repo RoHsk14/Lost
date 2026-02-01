@@ -1,0 +1,925 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Messagerie Rapide - TogoRetrouve{% endblock %}
+
+{% block extra_head %}
+<!-- Force cache refresh pour corriger erreurs JS -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<!-- Meta tag pour CSRF en cas de tracking prevention -->
+<meta name="csrf-token" content="{{ csrf_token }}">
+<meta name="user-id" content="{{ request.user.id }}">
+<meta name="user-role" content="{{ request.user.role }}">
+<meta name="user-name" content="{{ request.user.get_full_name }}">
+{% endblock %}
+
+{% block content %}
+<!-- Meta tags pour compatibility tracking prevention -->
+<meta name="csrf-token" content="{{ csrf_token }}">
+<meta name="user-id" content="{{ request.user.id }}">
+<meta name="user-role" content="{{ request.user.role }}">
+<meta name="user-name" content="{{ request.user.get_full_name }}">
+<!-- Cache buster timestamp -->
+<meta name="cache-buster" content="v2.2_20251203_173000">
+
+<div class="min-h-screen bg-gray-50">
+    <!-- Header optimisé -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-comments text-3xl text-blue-600"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Messagerie Optimisée</h1>
+                        <p class="text-sm text-gray-600">
+                            ⚡ Interface ultra-rapide - 
+                            {% if request.user.role == 'citoyen' %}Échangez avec vos agents{% else %}Gérez vos conversations citoyen{% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Statistiques en temps réel -->
+                <div class="flex items-center space-x-6">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-600" id="total-conversations">-</div>
+                        <div class="text-xs text-gray-500">Conversations</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-orange-600" id="unread-conversations">-</div>
+                        <div class="text-xs text-gray-500">Non lues</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-red-600" id="total-unread-messages">-</div>
+                        <div class="text-xs text-gray-500">Messages</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Liste des conversations -->
+            <div class="lg:col-span-1 bg-white rounded-lg shadow">
+                <div class="p-6 border-b">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i class="fas fa-list mr-2"></i>
+                            Conversations
+                        </h2>
+                        <button onclick="refreshConversations()" 
+                                class="p-2 text-gray-500 hover:text-blue-600 transition-colors"
+                                title="Actualiser">
+                            <i class="fas fa-sync-alt" id="refresh-icon"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Loading state -->
+                <div id="conversations-loading" class="p-8 text-center">
+                    <i class="fas fa-spinner fa-spin text-2xl text-blue-500 mb-4"></i>
+                    <p class="text-gray-600">Chargement rapide...</p>
+                </div>
+                
+                <!-- Liste des conversations -->
+                <div id="conversations-list" class="max-h-96 overflow-y-auto" style="display: none;">
+                    <!-- Les conversations seront chargées ici par JavaScript -->
+                </div>
+                
+                <!-- État vide -->
+                <div id="conversations-empty" class="p-8 text-center text-gray-500" style="display: none;">
+                    <i class="fas fa-comments text-4xl mb-4"></i>
+                    <p>Aucune conversation pour le moment.</p>
+                    <p class="text-sm mt-2">
+                        {% if request.user.role == 'citoyen' %}
+                            Contactez un agent depuis vos signalements.
+                        {% else %}
+                            Les conversations apparaîtront quand les citoyens vous contactent.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Zone de chat optimisée -->
+            <div class="lg:col-span-2 bg-white rounded-lg shadow">
+                <div id="chat-area" class="h-96 flex items-center justify-center text-gray-500">
+                    <div class="text-center">
+                        <i class="fas fa-rocket text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-medium mb-2">Interface de Chat Ultra-Rapide</h3>
+                        <p class="text-sm mb-4">Sélectionnez une conversation pour commencer.</p>
+                        <div class="flex items-center justify-center space-x-4 text-xs text-gray-400">
+                            <span><i class="fas fa-bolt text-yellow-500"></i> Chargement instantané</span>
+                            <span><i class="fas fa-shield-alt text-green-500"></i> Temps réel</span>
+                            <span><i class="fas fa-cloud text-blue-500"></i> Cache intelligent</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance Monitor (mode debug) -->
+    <div id="performance-monitor" class="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white p-3 rounded-lg text-xs" style="display: none;">
+        <div class="font-bold mb-2">⚡ Performance Monitor</div>
+        <div>API Conversations: <span id="api-time-conversations">-</span>ms</div>
+        <div>API Compteurs: <span id="api-time-counters">-</span>ms</div>
+        <div>Cache: <span id="cache-status">-</span></div>
+        <div>WebSocket: <span id="websocket-status">Déconnecté</span></div>
+    </div>
+</div>
+
+<!-- Notification Toast -->
+<div id="notification-toast" class="fixed top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+    <div class="flex items-center">
+        <i class="fas fa-bell mr-2"></i>
+        <span id="notification-message">Nouveau message</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .conversation-item {
+        transition: all 0.2s ease;
+    }
+    
+    .conversation-item:hover {
+        background-color: #f8fafc;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .conversation-item.active {
+        background-color: #dbeafe !important;
+        border-left: 4px solid #3b82f6;
+        font-weight: 600;
+    }
+    
+    .unread-badge {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        background-color: #f3f4f6;
+        border-radius: 18px;
+        margin: 4px 0;
+    }
+    
+    .typing-indicator span {
+        height: 8px;
+        width: 8px;
+        background-color: #6b7280;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 4px;
+        animation: typing 1.4s infinite ease-in-out;
+    }
+    
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    
+    @keyframes typing {
+        0%, 80%, 100% {
+            transform: scale(0);
+            opacity: 0.5;
+        }
+        40% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    /* Scrollbar personnalisée */
+    #conversations-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #conversations-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    
+    #conversations-list::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+    
+    #conversations-list::-webkit-scrollbar-thumb:hover {
+        background: #a1a1a1;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Force le rechargement du cache avec version -->
+<script>
+console.log('🚀 Chat Dashboard Fast - Version 2.0 - Erreurs corrigées');
+// Variables globales avec protection contre tracking prevention
+let notificationSocket = null;
+let currentConversationId = null;
+let conversationsCache = null;
+let countersCache = null;
+let lastCacheTime = 0;
+let performanceMode = false;
+
+// Initialisation sécurisée pour éviter tracking prevention
+try {
+    performanceMode = new URLSearchParams(window.location.search).get('debug') === 'true';
+} catch (e) {
+    console.warn('URLSearchParams non disponible, mode debug désactivé');
+    performanceMode = false;
+}
+
+// Afficher le moniteur de performance si en mode debug
+if (performanceMode) {
+    document.getElementById('performance-monitor').style.display = 'block';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Initialisation de l\'interface optimisée');
+    
+    // Tenter de récupérer le cache existant
+    try {
+        if (typeof sessionStorage !== 'undefined') {
+            const cached = sessionStorage.getItem('chatCache');
+            if (cached) {
+                const cacheData = JSON.parse(cached);
+                if (Date.now() - cacheData.timestamp < 300000) { // 5 minutes
+                    conversationsCache = cacheData.conversations;
+                    lastCacheTime = cacheData.timestamp;
+                    console.log('📦 Cache récupéré depuis sessionStorage');
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Récupération cache impossible:', e);
+    }
+    
+    initNotificationWebSocket();
+    loadConversationsFast();
+    
+    // Auto-refresh intelligent (plus lent si aucune activité)
+    setInterval(() => {
+        if (document.visibilityState === 'visible') {
+            updateCounters();
+        }
+    }, 30000); // 30 secondes
+    
+    // Refresh complet périodique
+    setInterval(() => {
+        if (document.visibilityState === 'visible') {
+            refreshConversations();
+        }
+    }, 120000); // 2 minutes
+});
+
+function initNotificationWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/notifications/`;
+    
+    notificationSocket = new WebSocket(wsUrl);
+    
+    notificationSocket.onopen = function(e) {
+        console.log('🔌 WebSocket notifications connecté');
+        if (performanceMode) {
+            document.getElementById('websocket-status').textContent = 'Connecté';
+        }
+    };
+    
+    notificationSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        
+        if (data.type === 'notification') {
+            showNotification(data.data.message);
+            updateCounters(); // Mise à jour légère
+        } else if (data.type === 'new_conversation') {
+            refreshConversations(); // Recharger complètement
+        }
+    };
+    
+    notificationSocket.onclose = function(e) {
+        console.log('🔌 WebSocket déconnecté - tentative de reconnexion...');
+        if (performanceMode) {
+            document.getElementById('websocket-status').textContent = 'Reconnexion...';
+        }
+        setTimeout(initNotificationWebSocket, 3000);
+    };
+}
+
+async function loadConversationsFast() {
+    const loadingEl = document.getElementById('conversations-loading');
+    const listEl = document.getElementById('conversations-list');
+    const emptyEl = document.getElementById('conversations-empty');
+    
+    loadingEl.style.display = 'block';
+    listEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    
+    try {
+        const startTime = performance.now();
+        
+        // Utiliser l'API ultra-rapide
+        const response = await fetch('/chat/api/conversations/ultra/');
+        const conversations = await response.json();
+        
+        const endTime = performance.now();
+        const duration = Math.round(endTime - startTime);
+        
+        if (performanceMode) {
+            document.getElementById('api-time-conversations').textContent = duration;
+            document.getElementById('cache-status').textContent = response.headers.get('X-Cache-Hit') || 'Miss';
+        }
+        
+        console.log(`⚡ Conversations chargées en ${duration}ms`);
+        
+        // Mettre à jour le cache avec protection
+        try {
+            conversationsCache = conversations;
+            lastCacheTime = Date.now();
+            // Stocker en session si possible
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem('chatCache', JSON.stringify({
+                    conversations: conversations,
+                    timestamp: lastCacheTime
+                }));
+            }
+        } catch (e) {
+            // Tracking prevention peut bloquer sessionStorage
+            console.warn('Cache localStorage bloqué, utilisation mémoire uniquement');
+            conversationsCache = conversations;
+            lastCacheTime = Date.now();
+        }
+        
+        // Afficher les conversations
+        renderConversations(conversations);
+        
+        // Charger les compteurs en parallèle
+        updateCounters();
+        
+    } catch (error) {
+        console.error('❌ Erreur lors du chargement:', error);
+        showError('Impossible de charger les conversations');
+    } finally {
+        loadingEl.style.display = 'none';
+    }
+}
+
+function renderConversations(conversations) {
+    const listEl = document.getElementById('conversations-list');
+    const emptyEl = document.getElementById('conversations-empty');
+    
+    if (!conversations || conversations.length === 0) {
+        listEl.style.display = 'none';
+        emptyEl.style.display = 'block';
+        updateStats(0, 0, 0);
+        return;
+    }
+    
+    let html = '';
+    let totalUnread = 0;
+    let conversationsWithUnread = 0;
+    
+    conversations.forEach(conv => {
+        const isUnread = conv.unread_count > 0;
+        if (isUnread) {
+            conversationsWithUnread++;
+            totalUnread += conv.unread_count;
+        }
+        
+        const timeAgo = formatTimeAgo(conv.derniere_activite);
+        
+        html += `
+            <div class="conversation-item p-4 border-b cursor-pointer ${isUnread ? 'bg-blue-50' : ''}" 
+                 onclick="openConversation(${conv.id})" 
+                 data-conversation-id="${conv.id}">
+                
+                <div class="flex items-start justify-between">
+                    <div class="flex-1 min-w-0">
+                        <!-- Participant -->
+                        <div class="flex items-center space-x-2 mb-1">
+                            <i class="fas fa-${conv.other_participant.role === 'agent' ? 'user-shield text-blue-500' : 'user text-green-500'}"></i>
+                            <span class="font-medium text-sm truncate">${conv.other_participant.nom}</span>
+                            ${conv.other_participant.role === 'agent' ? '<span class="text-xs bg-blue-100 text-blue-800 px-1 rounded">Agent</span>' : ''}
+                        </div>
+                        
+                        <!-- Signalement -->
+                        <div class="text-xs text-gray-600 mb-1">
+                            <i class="fas fa-tag mr-1"></i>
+                            ${conv.signalement_numero} 
+                        </div>
+                        
+                        <!-- Dernier message -->
+                        ${conv.last_message ? `
+                            <div class="text-xs text-gray-500 truncate mb-1">
+                                <strong>${conv.last_message.sender_name}:</strong>
+                                ${conv.last_message.type_message === 'fichier' ? 
+                                    '<i class="fas fa-paperclip"></i> Fichier joint' : 
+                                    conv.last_message.contenu
+                                }
+                            </div>
+                            <div class="text-xs text-gray-400">
+                                ${timeAgo}
+                            </div>
+                        ` : '<div class="text-xs text-gray-400">Conversation vide</div>'}
+                    </div>
+                    
+                    <!-- Badge non lu -->
+                    ${isUnread ? `
+                        <span class="unread-badge inline-flex items-center justify-center w-6 h-6 ml-2 text-xs font-bold text-white bg-red-500 rounded-full">
+                            ${conv.unread_count}
+                        </span>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    listEl.innerHTML = html;
+    listEl.style.display = 'block';
+    emptyEl.style.display = 'none';
+    
+    updateStats(conversations.length, conversationsWithUnread, totalUnread);
+}
+
+async function updateCounters() {
+    try {
+        const startTime = performance.now();
+        
+        const response = await fetch('/chat/api/conversations/counters/ultra/');
+        const data = await response.json();
+        
+        const endTime = performance.now();
+        const duration = Math.round(endTime - startTime);
+        
+        if (performanceMode) {
+            document.getElementById('api-time-counters').textContent = duration;
+        }
+        
+        // Mettre à jour les badges individuels
+        Object.entries(data.counters).forEach(([convId, unreadCount]) => {
+            const convEl = document.querySelector(`[data-conversation-id="${convId}"]`);
+            if (convEl) {
+                const badgeEl = convEl.querySelector('.unread-badge');
+                
+                if (unreadCount > 0) {
+                    if (badgeEl) {
+                        badgeEl.textContent = unreadCount;
+                    } else {
+                        // Ajouter un badge si nécessaire
+                        const badgeHtml = `
+                            <span class="unread-badge inline-flex items-center justify-center w-6 h-6 ml-2 text-xs font-bold text-white bg-red-500 rounded-full">
+                                ${unreadCount}
+                            </span>
+                        `;
+                        convEl.querySelector('.flex-1').insertAdjacentHTML('afterend', badgeHtml);
+                    }
+                    convEl.classList.add('bg-blue-50');
+                } else {
+                    if (badgeEl) {
+                        badgeEl.remove();
+                    }
+                    convEl.classList.remove('bg-blue-50');
+                }
+            }
+        });
+        
+        // Mettre à jour le total
+        document.getElementById('total-unread-messages').textContent = data.total_unread;
+        
+    } catch (error) {
+        console.error('❌ Erreur lors de la mise à jour des compteurs:', error);
+    }
+}
+
+function refreshConversations() {
+    const refreshIcon = document.getElementById('refresh-icon');
+    refreshIcon.classList.add('fa-spin');
+    
+    // Invalider le cache
+    conversationsCache = null;
+    
+    loadConversationsFast().finally(() => {
+        refreshIcon.classList.remove('fa-spin');
+    });
+}
+
+function openConversation(conversationId) {
+    // Marquer comme active
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.querySelector(`[data-conversation-id="${conversationId}"]`).classList.add('active');
+    
+    currentConversationId = conversationId;
+    
+    // Charger l'interface de chat
+    loadOptimizedChatInterface(conversationId);
+}
+
+function loadOptimizedChatInterface(conversationId) {
+    const chatArea = document.getElementById('chat-area');
+    
+    chatArea.innerHTML = `
+        <div class="flex flex-col h-full">
+            <!-- Header optimisé -->
+            <div class="border-b p-4 bg-gradient-to-r from-blue-50 to-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-lg">💬 Chat Ultra-Rapide</h3>
+                        <p class="text-sm text-gray-600">Conversation #${conversationId}</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="markAsReadFast(${conversationId})" 
+                                class="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors">
+                            <i class="fas fa-check-double mr-1"></i>Lu
+                        </button>
+                        <button onclick="refreshChat(${conversationId})" 
+                                class="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors">
+                            <i class="fas fa-sync-alt mr-1"></i>↻
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Messages avec chargement optimisé -->
+            <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+                <div class="flex justify-center items-center h-32">
+                    <div class="text-center">
+                        <i class="fas fa-bolt text-yellow-500 text-2xl mb-2"></i>
+                        <div class="text-sm text-gray-600">Chargement ultra-rapide...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Zone de saisie améliorée -->
+            <div class="border-t p-4 bg-white">
+                <div class="flex items-center space-x-3">
+                    <input type="file" id="file-input-${conversationId}" accept="image/*,.pdf,.doc,.docx,.txt" 
+                           style="display: none;" onchange="uploadFileFast(${conversationId})">
+                    <button onclick="document.getElementById('file-input-${conversationId}').click()" 
+                            class="p-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors group"
+                            title="Joindre un fichier">
+                        <i class="fas fa-paperclip group-hover:text-blue-600"></i>
+                    </button>
+                    
+                    <div class="flex-1 relative">
+                        <input type="text" id="message-input-${conversationId}" 
+                               placeholder="Message ultra-rapide..." 
+                               class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                               onkeypress="handleKeyPressFast(event, ${conversationId})"
+                               oninput="handleTypingFast(${conversationId})">
+                        <div id="typing-indicator-${conversationId}" class="absolute -top-8 left-0 text-xs text-gray-500" style="display: none;">
+                            <i class="fas fa-circle text-green-500 animate-pulse"></i> En train d'écrire...
+                        </div>
+                    </div>
+                    
+                    <button onclick="sendMessageFast(${conversationId})" 
+                            class="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors group"
+                            id="send-btn-${conversationId}"
+                            title="Envoyer (Entrée)">
+                        <i class="fas fa-paper-plane group-hover:scale-110 transition-transform"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Initialiser le chat optimisé
+    initOptimizedChat(conversationId);
+    loadMessagesFast(conversationId);
+    markAsReadFast(conversationId);
+}
+
+function initOptimizedChat(conversationId) {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/chat/${conversationId}/`;
+    
+    if (window.chatSocket) {
+        window.chatSocket.close();
+    }
+    
+    window.chatSocket = new WebSocket(wsUrl);
+    
+    window.chatSocket.onopen = function(e) {
+        console.log(`⚡ Chat WebSocket connecté pour conversation ${conversationId}`);
+    };
+    
+    window.chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        
+        switch(data.type) {
+            case 'message':
+                displayMessageFast(data.data);
+                break;
+            case 'typing':
+                handleTypingIndicatorFast(data.data, conversationId);
+                break;
+            case 'messages_read':
+                handleMessagesReadFast(data.data);
+                break;
+        }
+    };
+    
+    window.chatSocket.onclose = function(e) {
+        console.log(`🔌 Chat WebSocket fermé pour conversation ${conversationId}`);
+    };
+}
+
+async function loadMessagesFast(conversationId) {
+    try {
+        const response = await fetch(`/chat/api/conversation/${conversationId}/messages/ultra/`);
+        const data = await response.json();
+        
+        const container = document.getElementById('messages-container');
+        container.innerHTML = '';
+        
+        if (data.messages && data.messages.length > 0) {
+            data.messages.forEach(message => displayMessageFast(message));
+        } else {
+            container.innerHTML = `
+                <div class="flex justify-center items-center h-32">
+                    <div class="text-center text-gray-500">
+                        <i class="fas fa-comment-dots text-3xl mb-2"></i>
+                        <div>Aucun message pour l'instant</div>
+                        <div class="text-sm">Commencez la conversation !</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        scrollToBottom();
+        
+    } catch (error) {
+        console.error('❌ Erreur lors du chargement des messages:', error);
+        showError('Impossible de charger les messages');
+    }
+}
+
+function displayMessageFast(message) {
+    const container = document.getElementById('messages-container');
+    
+    // Récupérer l'ID utilisateur depuis le meta tag
+    const currentUserId = parseInt(document.querySelector('meta[name="user-id"]')?.getAttribute('content') || '0');
+    const isCurrentUser = message.sender_id === currentUserId;
+    
+    // Créer le message de manière optimisée
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-3`;
+    
+    const timeString = new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const bgClass = isCurrentUser ? 'bg-blue-600 text-white' : 'bg-white text-gray-800 border';
+    const avatarIcon = message.sender_role === 'agent' ? 'fas fa-user-shield text-blue-500' : 'fas fa-user text-green-500';
+    
+    let content = '';
+    if (message.type_message === 'fichier') {
+        if (message.is_image) {
+            content = `
+                <div class="mb-2">
+                    <img src="${message.fichier_url}" alt="${message.file_name}" 
+                         class="max-w-64 max-h-64 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                         onclick="openImageModal('${message.fichier_url}', '${message.file_name}')">
+                </div>
+                <div class="text-xs opacity-75">
+                    <i class="fas fa-image mr-1"></i>${message.file_name}
+                </div>
+            `;
+        } else {
+            const linkClass = isCurrentUser ? 'text-blue-100 hover:text-white' : 'text-blue-600 hover:text-blue-800';
+            content = `
+                <div class="text-sm">
+                    <a href="${message.fichier_url}" target="_blank" 
+                       class="flex items-center space-x-2 ${linkClass} transition-colors">
+                        <i class="fas fa-download"></i>
+                        <span>${message.file_name}</span>
+                    </a>
+                </div>
+            `;
+        }
+    } else {
+        content = `<div class="text-sm leading-relaxed">${message.contenu.replace(/\n/g, '<br>')}</div>`;
+    }
+    
+    messageDiv.innerHTML = `
+        <div class="flex items-start space-x-2 max-w-xs lg:max-w-md">
+            ${!isCurrentUser ? `<i class="${avatarIcon} text-lg"></i>` : ''}
+            <div class="flex-1">
+                <div class="${bgClass} px-4 py-3 rounded-lg shadow-sm">
+                    <div class="text-xs opacity-75 mb-1 font-medium">
+                        ${message.sender_name}
+                        ${message.sender_role === 'agent' ? '<i class="fas fa-shield-alt ml-1"></i>' : ''}
+                    </div>
+                    ${content}
+                    <div class="text-xs opacity-60 mt-2">
+                        ${timeString}
+                        ${isCurrentUser ? 
+                            `<i class="fas fa-${message.is_read ? 'check-double' : 'check'} ml-1" 
+                                title="${message.is_read ? 'Lu' : 'Envoyé'}"></i>` : 
+                            ''
+                        }
+                    </div>
+                </div>
+            </div>
+            ${isCurrentUser ? `<i class="${avatarIcon} text-lg"></i>` : ''}
+        </div>
+    `;
+    
+    container.appendChild(messageDiv);
+    scrollToBottom();
+}
+
+function sendMessageFast(conversationId) {
+    const input = document.getElementById(`message-input-${conversationId}`);
+    const sendBtn = document.getElementById(`send-btn-${conversationId}`);
+    const message = input.value.trim();
+    
+    if (!message || !window.chatSocket) return;
+    
+    // Feedback visuel immédiat
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    sendBtn.disabled = true;
+    
+    window.chatSocket.send(JSON.stringify({
+        'action': 'send_message',
+        'message': message
+    }));
+    
+    input.value = '';
+    
+    // Restaurer le bouton après un délai
+    setTimeout(() => {
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane group-hover:scale-110 transition-transform"></i>';
+        sendBtn.disabled = false;
+        input.focus();
+    }, 500);
+}
+
+function handleKeyPressFast(event, conversationId) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        sendMessageFast(conversationId);
+    }
+}
+
+let typingTimer;
+function handleTypingFast(conversationId) {
+    if (!window.chatSocket) return;
+    
+    window.chatSocket.send(JSON.stringify({
+        'action': 'typing',
+        'is_typing': true
+    }));
+    
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+        window.chatSocket.send(JSON.stringify({
+            'action': 'typing',
+            'is_typing': false
+        }));
+    }, 1500);
+}
+
+function handleTypingIndicatorFast(data, conversationId) {
+    const indicator = document.getElementById(`typing-indicator-${conversationId}`);
+    if (indicator) {
+        indicator.style.display = data.is_typing ? 'block' : 'none';
+    }
+}
+
+async function markAsReadFast(conversationId) {
+    try {
+        await fetch(`/chat/api/conversation/${conversationId}/mark-read/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        // Mettre à jour l'interface immédiatement
+        const convEl = document.querySelector(`[data-conversation-id="${conversationId}"]`);
+        if (convEl) {
+            const badge = convEl.querySelector('.unread-badge');
+            if (badge) badge.remove();
+            convEl.classList.remove('bg-blue-50');
+        }
+        
+        // Mettre à jour les compteurs
+        updateCounters();
+        
+    } catch (error) {
+        console.error('❌ Erreur lors du marquage comme lu:', error);
+    }
+}
+
+function updateStats(total, unread, totalUnreadMessages) {
+    document.getElementById('total-conversations').textContent = total;
+    document.getElementById('unread-conversations').textContent = unread;
+    document.getElementById('total-unread-messages').textContent = totalUnreadMessages;
+}
+
+function formatTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'À l\'instant';
+    if (diffMins < 60) return `${diffMins}min`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h`;
+    return `${Math.floor(diffMins / 1440)}j`;
+}
+
+function scrollToBottom() {
+    const container = document.getElementById('messages-container');
+    if (container) {
+        setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+    }
+}
+
+function showNotification(message) {
+    const toast = document.getElementById('notification-toast');
+    const messageSpan = document.getElementById('notification-message');
+    
+    messageSpan.textContent = message;
+    toast.classList.remove('translate-x-full');
+    
+    setTimeout(() => {
+        toast.classList.add('translate-x-full');
+    }, 5000);
+}
+
+function showError(message) {
+    console.error('❌', message);
+    // Vous pouvez ajouter une notification d'erreur ici
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    try {
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Accès aux cookies bloqué par tracking prevention:', e);
+        // Fallback: essayer de récupérer le token CSRF depuis un meta tag
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        if (csrfMeta && name === 'csrftoken') {
+            cookieValue = csrfMeta.getAttribute('content');
+        }
+    }
+    return cookieValue;
+}
+
+// Gestion de la fermeture de page avec protection
+window.addEventListener('beforeunload', function() {
+    try {
+        if (notificationSocket) notificationSocket.close();
+        if (window.chatSocket) window.chatSocket.close();
+    } catch (e) {
+        console.warn('Erreur lors de la fermeture des WebSockets:', e);
+    }
+});
+
+// Gestion des erreurs globales JavaScript
+window.addEventListener('error', function(e) {
+    if (e.message.includes('Tracking Prevention')) {
+        console.warn('Tracking Prevention détecté, mode dégradé activé');
+        // Désactiver les fonctionnalités qui nécessitent le stockage
+        return true; // Empêche l'affichage de l'erreur
+    }
+    return false;
+});
+
+// Auto-focus et autres améliorations UX avec protection
+document.addEventListener('keydown', function(e) {
+    try {
+        // Raccourci clavier pour actualiser (Ctrl+R)
+        if (e.ctrlKey && e.key === 'r') {
+            e.preventDefault();
+            refreshConversations();
+        }
+    } catch (error) {
+        console.warn('Erreur raccourci clavier:', error);
+    }
+});
+</script>
+{% endblock %}

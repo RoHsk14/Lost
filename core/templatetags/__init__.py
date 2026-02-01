@@ -1,0 +1,1 @@
+# Création du fichier __init__.py pour le package templatetags

@@ -1,0 +1,343 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Créer un Utilisateur - TogoRetrouvé Admin{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+    .form-container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        padding: 2rem;
+    }
+    .role-selector {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .role-selector:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    .role-selector.selected {
+        border-color: #007bff;
+        background-color: #e7f3ff;
+    }
+    .role-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0"><i class="fas fa-user-plus"></i> Créer un Nouvel Utilisateur</h1>
+                    <p class="text-muted">Ajoutez un nouvel utilisateur au système TogoRetrouvé</p>
+                </div>
+                <a href="{% url 'togo_admin:users' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <form method="post" id="userForm">
+            {% csrf_token %}
+            
+            <!-- Sélection du rôle -->
+            <div class="mb-4">
+                <h5 class="text-primary mb-3"><i class="fas fa-user-tag"></i> Type d'Utilisateur</h5>
+                <div class="row">
+                    {% for value, label in role_choices %}
+                    <div class="col-md-4">
+                        <div class="role-selector text-center" onclick="selectRole('{{ value }}')">
+                            {% if value == 'citoyen' %}
+                                <i class="fas fa-user role-icon text-success"></i>
+                                <h6>Citoyen</h6>
+                                <p class="small text-muted mb-0">Utilisateur standard qui peut faire des déclarations</p>
+                            {% elif value == 'agent' %}
+                                <i class="fas fa-user-tie role-icon text-primary"></i>
+                                <h6>Agent</h6>
+                                <p class="small text-muted mb-0">Gestionnaire qui valide les déclarations</p>
+                            {% elif value == 'admin' %}
+                                <i class="fas fa-user-shield role-icon text-warning"></i>
+                                <h6>Administrateur</h6>
+                                <p class="small text-muted mb-0">Superviseur avec accès complet</p>
+                            {% endif %}
+                        </div>
+                        <input type="radio" name="role" value="{{ value }}" id="role_{{ value }}" class="d-none">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Informations personnelles -->
+                <div class="col-md-6">
+                    <h5 class="text-primary mb-3"><i class="fas fa-user"></i> Informations Personnelles</h5>
+                    
+                    <div class="mb-3">
+                        <label for="first_name" class="form-label">Prénom <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="last_name" class="form-label">Nom <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="telephone" class="form-label">Téléphone</label>
+                        <input type="tel" class="form-control" id="telephone" name="telephone" 
+                               placeholder="+228 XX XX XX XX">
+                    </div>
+                </div>
+                
+                <!-- Informations de connexion -->
+                <div class="col-md-6">
+                    <h5 class="text-primary mb-3"><i class="fas fa-key"></i> Informations de Connexion</h5>
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Nom d'utilisateur <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                        <div class="form-text">Identifiant unique de connexion</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Mot de passe <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                <i class="fas fa-eye" id="passwordIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Affectation géographique -->
+            <div class="row mt-4" id="geoSection">
+                <div class="col-12">
+                    <h5 class="text-primary mb-3"><i class="fas fa-map-marker-alt"></i> Affectation Géographique</h5>
+                </div>
+                
+                {% if is_superadmin %}
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="region" class="form-label">Région</label>
+                        <select class="form-select" id="region" name="region" onchange="loadPrefectures()">
+                            <option value="">Sélectionner une région</option>
+                            {% for region in regions %}
+                                <option value="{{ region.id }}">{{ region.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <strong>Région assignée :</strong> {{ user_region.nom }}
+                        <input type="hidden" name="region" value="{{ user_region.id }}">
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="prefecture" class="form-label">Préfecture</label>
+                        <select class="form-select" id="prefecture" name="prefecture">
+                            <option value="">Toute la région</option>
+                            {% for prefecture in prefectures %}
+                                <option value="{{ prefecture.id }}">{{ prefecture.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permissions selon le rôle -->
+            <div class="row mt-4" id="permissionsInfo">
+                <div class="col-12">
+                    <div id="citoyenPermissions" class="alert alert-success d-none">
+                        <h6><i class="fas fa-user"></i> Permissions Citoyen :</h6>
+                        <ul class="mb-0">
+                            <li>Créer des déclarations d'objets perdus/trouvés</li>
+                            <li>Réclamer des objets</li>
+                            <li>Consulter ses déclarations</li>
+                            <li>Recevoir des notifications</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="agentPermissions" class="alert alert-primary d-none">
+                        <h6><i class="fas fa-user-tie"></i> Permissions Agent :</h6>
+                        <ul class="mb-0">
+                            <li>Valider et publier les déclarations</li>
+                            <li>Traiter les réclamations d'objets</li>
+                            <li>Gérer la restitution d'objets</li>
+                            <li>Accéder aux statistiques de sa zone</li>
+                            <li>Communiquer avec les utilisateurs</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="adminPermissions" class="alert alert-warning d-none">
+                        <h6><i class="fas fa-user-shield"></i> Permissions Administrateur :</h6>
+                        <ul class="mb-0">
+                            <li>Gérer tous les utilisateurs et agents</li>
+                            <li>Superviser toutes les déclarations</li>
+                            <li>Accéder aux statistiques complètes</li>
+                            <li>Configurer le système</li>
+                            <li>Gérer les régions et préfectures</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <button type="button" class="btn btn-outline-secondary me-3" onclick="history.back()">
+                        <i class="fas fa-times"></i> Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary px-5">
+                        <i class="fas fa-user-plus"></i> Créer l'Utilisateur
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Sélection du rôle
+function selectRole(role) {
+    // Désélectionner tous les rôles
+    document.querySelectorAll('.role-selector').forEach(el => {
+        el.classList.remove('selected');
+    });
+    
+    // Sélectionner le rôle cliqué
+    event.currentTarget.classList.add('selected');
+    document.getElementById('role_' + role).checked = true;
+    
+    // Afficher les permissions correspondantes
+    showPermissions(role);
+    
+    // Masquer/afficher la section géographique selon le rôle
+    const geoSection = document.getElementById('geoSection');
+    if (role === 'citoyen') {
+        geoSection.style.display = 'none';
+    } else {
+        geoSection.style.display = 'block';
+    }
+}
+
+function showPermissions(role) {
+    // Masquer toutes les permissions
+    document.querySelectorAll('[id$="Permissions"]').forEach(el => {
+        el.classList.add('d-none');
+    });
+    
+    // Afficher les permissions du rôle sélectionné
+    const permissionDiv = document.getElementById(role + 'Permissions');
+    if (permissionDiv) {
+        permissionDiv.classList.remove('d-none');
+    }
+}
+
+// Basculer la visibilité du mot de passe
+function togglePassword() {
+    const passwordInput = document.getElementById('password');
+    const passwordIcon = document.getElementById('passwordIcon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        passwordIcon.className = 'fas fa-eye-slash';
+    } else {
+        passwordInput.type = 'password';
+        passwordIcon.className = 'fas fa-eye';
+    }
+}
+
+// Charger les préfectures selon la région (pour superadmin)
+function loadPrefectures() {
+    const regionId = document.getElementById('region').value;
+    const prefectureSelect = document.getElementById('prefecture');
+    
+    // Réinitialiser la liste des préfectures
+    prefectureSelect.innerHTML = '<option value="">Toute la région</option>';
+    
+    if (regionId) {
+        // Ici vous pourriez faire un appel AJAX pour charger les préfectures
+        // Pour l'instant, nous gardons la fonctionnalité simple
+    }
+}
+
+// Validation du formulaire
+document.getElementById('userForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Vérifier qu'un rôle est sélectionné
+    const selectedRole = document.querySelector('input[name="role"]:checked');
+    if (!selectedRole) {
+        alert('Veuillez sélectionner un type d\'utilisateur');
+        return;
+    }
+    
+    // Validation des champs obligatoires
+    const requiredFields = ['first_name', 'last_name', 'username', 'email', 'password'];
+    let isValid = true;
+    
+    requiredFields.forEach(fieldName => {
+        const field = document.getElementById(fieldName);
+        if (!field.value.trim()) {
+            field.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    });
+    
+    // Validation email
+    const email = document.getElementById('email').value;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        document.getElementById('email').classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    if (isValid) {
+        this.submit();
+    }
+});
+
+// Validation temps réel
+document.getElementById('username').addEventListener('input', function() {
+    this.classList.remove('is-invalid');
+});
+
+document.getElementById('email').addEventListener('input', function() {
+    this.classList.remove('is-invalid');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+{
+    "version": 2,
+    "builds": [
+      { "src": "lostfound/wsgi.py", "use": "@vercel/python" }
+    ],
+    "routes": [
+      { "src": "/(.*)", "dest": "lostfound/wsgi.py" }
+    ]
+  }
+  

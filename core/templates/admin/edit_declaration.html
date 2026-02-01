@@ -1,0 +1,784 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block page_title %}Modifier Déclaration - TogoRetrouvé Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Reset spécifique pour cette page */
+    .edit-page {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+        min-height: calc(100vh - 100px) !important;
+        padding: 2rem 0 !important;
+    }
+
+    .edit-page .page-header {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        border-radius: 20px !important;
+        padding: 2.5rem !important;
+        margin-bottom: 2rem !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    .edit-page .page-header::before {
+        content: '' !important;
+        position: absolute !important;
+        top: -50% !important;
+        right: -50px !important;
+        width: 200px !important;
+        height: 200px !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-radius: 50% !important;
+    }
+
+    .edit-page .page-header h1 {
+        color: white !important;
+        font-size: 2.5rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.5rem !important;
+        position: relative !important;
+        z-index: 2 !important;
+    }
+
+    .edit-page .page-header p {
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-size: 1.1rem !important;
+        margin-bottom: 0 !important;
+        position: relative !important;
+        z-index: 2 !important;
+    }
+
+    .edit-page .form-card {
+        background: white !important;
+        border-radius: 20px !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid #e2e8f0 !important;
+        overflow: hidden !important;
+    }
+
+    .edit-page .form-card .card-header {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+        color: white !important;
+        border: none !important;
+        padding: 2rem !important;
+    }
+
+    .edit-page .form-card .card-body {
+        padding: 2.5rem !important;
+    }
+
+    .edit-page .section-title {
+        font-size: 1.25rem !important;
+        font-weight: 600 !important;
+        color: #1e293b !important;
+        margin-bottom: 1.5rem !important;
+        padding-bottom: 0.75rem !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+    }
+
+    .edit-page .section-title.readonly {
+        color: #3b82f6 !important;
+        border-bottom-color: #3b82f6 !important;
+    }
+
+    .edit-page .section-title.editable {
+        color: #f59e0b !important;
+        border-bottom-color: #f59e0b !important;
+    }
+
+    .edit-page .section-title.categorization {
+        color: #10b981 !important;
+        border-bottom-color: #10b981 !important;
+    }
+
+    .edit-page .form-label {
+        font-weight: 600 !important;
+        color: #374151 !important;
+        margin-bottom: 0.5rem !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+
+    .edit-page .form-control, .edit-page .form-select {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 0.875rem 1rem !important;
+        font-size: 0.95rem !important;
+        transition: all 0.2s ease !important;
+        background: #f8fafc !important;
+    }
+
+    .edit-page .form-control:focus, .edit-page .form-select:focus {
+        border-color: #3b82f6 !important;
+        background: white !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+        outline: none !important;
+    }
+
+    .edit-page .form-control[readonly] {
+        background: #f1f5f9 !important;
+        color: #64748b !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    .edit-page .form-text {
+        font-size: 0.875rem !important;
+        margin-top: 0.5rem !important;
+    }
+
+    .edit-page .form-text.text-success {
+        color: #16a34a !important;
+        font-weight: 500 !important;
+    }
+
+    .edit-page .form-text.text-warning {
+        color: #d97706 !important;
+        font-weight: 500 !important;
+    }
+
+    .edit-page .actions-section {
+        background: #f8fafc !important;
+        border-top: 1px solid #e2e8f0 !important;
+        padding: 2rem !important;
+        margin: 0 -2.5rem -2.5rem !important;
+        border-radius: 0 0 20px 20px !important;
+    }
+
+    .edit-page .btn-modern {
+        padding: 0.875rem 1.75rem !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        border: none !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        text-decoration: none !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    .edit-page .btn-modern::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        width: 0 !important;
+        height: 0 !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-radius: 50% !important;
+        transition: all 0.5s ease !important;
+        transform: translate(-50%, -50%) !important;
+    }
+
+    .edit-page .btn-modern:hover::before {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .edit-page .btn-secondary {
+        background: linear-gradient(135deg, #64748b, #475569) !important;
+        color: white !important;
+        box-shadow: 0 4px 14px 0 rgba(100, 116, 139, 0.3) !important;
+    }
+
+    .edit-page .btn-secondary:hover {
+        background: linear-gradient(135deg, #475569, #334155) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px 0 rgba(100, 116, 139, 0.4) !important;
+        color: white !important;
+    }
+
+    .edit-page .btn-warning {
+        background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+        color: white !important;
+        box-shadow: 0 4px 14px 0 rgba(245, 158, 11, 0.3) !important;
+    }
+
+    .edit-page .btn-warning:hover {
+        background: linear-gradient(135deg, #d97706, #b45309) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px 0 rgba(245, 158, 11, 0.4) !important;
+        color: white !important;
+    }
+
+    .edit-page .btn-success {
+        background: linear-gradient(135deg, #10b981, #059669) !important;
+        color: white !important;
+        box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.3) !important;
+    }
+
+    .edit-page .btn-success:hover {
+        background: linear-gradient(135deg, #059669, #047857) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px 0 rgba(16, 185, 129, 0.4) !important;
+        color: white !important;
+    }
+
+    .edit-page .photo-preview-card {
+        background: white !important;
+        border-radius: 16px !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid #e2e8f0 !important;
+        overflow: hidden !important;
+        margin-top: 2rem !important;
+    }
+
+    .edit-page .photo-preview-header {
+        background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+        color: white !important;
+        padding: 1.25rem 1.5rem !important;
+        font-weight: 600 !important;
+    }
+
+    .edit-page .photo-preview-body {
+        padding: 2rem !important;
+        text-align: center !important;
+    }
+
+    .edit-page .photo-preview-body img {
+        max-height: 300px !important;
+        border-radius: 12px !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .edit-page .input-group {
+        position: relative !important;
+    }
+
+    .edit-page .input-icon {
+        position: absolute !important;
+        left: 1rem !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        color: #64748b !important;
+        z-index: 3 !important;
+    }
+
+    .edit-page .form-control.with-icon {
+        padding-left: 2.75rem !important;
+    }
+
+    .edit-page .required-field::after {
+        content: '*' !important;
+        color: #ef4444 !important;
+        margin-left: 0.25rem !important;
+    }
+
+    .edit-page .form-section {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+        padding: 2rem !important;
+        margin-bottom: 2rem !important;
+    }
+
+    @media (max-width: 768px) {
+        .edit-page .page-header {
+            padding: 1.5rem !important;
+        }
+
+        .edit-page .page-header h1 {
+            font-size: 2rem !important;
+        }
+
+        .edit-page .form-card .card-body {
+            padding: 1.5rem !important;
+        }
+
+        .edit-page .actions-section {
+            margin: 0 -1.5rem -1.5rem !important;
+            flex-direction: column !important;
+            gap: 1rem !important;
+        }
+
+        .edit-page .btn-modern {
+            width: 100% !important;
+            justify-content: center !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-page">
+    <div class="container-fluid px-4">
+        <!-- En-tête moderne -->
+        <div class="page-header">
+            <h1><i class="fas fa-edit me-3"></i>Modifier la Déclaration</h1>
+            <p>Complétez les informations manquantes pour valider la déclaration #{{ declaration.id }}</p>
+        </div>
+
+        <!-- Formulaire principal -->
+        <div class="form-card">
+            <div class="card-header">
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-clipboard-list me-3"></i>
+                    Édition de la Déclaration #{{ declaration.id }}
+                </h4>
+            </div>
+            
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Section Déclarant (lecture seule) -->
+                    <div class="form-section">
+                        <h3 class="section-title readonly">
+                            <i class="fas fa-user"></i>
+                            Informations du Déclarant
+                            <span class="badge badge-secondary ms-2">Lecture seule</span>
+                        </h3>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-user-circle text-primary"></i>
+                                    Nom complet
+                                </label>
+                                <input type="text" class="form-control" value="{{ declaration.declarant.get_full_name|default:declaration.declarant.username }}" readonly>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-envelope text-primary"></i>
+                                    Email
+                                </label>
+                                <input type="text" class="form-control" value="{{ declaration.declarant.email }}" readonly>
+                            </div>
+
+                            {% if declaration.declarant.telephone %}
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-phone text-primary"></i>
+                                    Téléphone
+                                </label>
+                                <input type="text" class="form-control" value="{{ declaration.declarant.telephone }}" readonly>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar text-primary"></i>
+                                    Date de déclaration
+                                </label>
+                                <input type="text" class="form-control" value="{{ declaration.date_declaration|date:'d/m/Y à H:i' }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section Informations modifiables -->
+                    <div class="form-section">
+                        <h3 class="section-title editable">
+                            <i class="fas fa-edit"></i>
+                            Informations à Compléter
+                        </h3>
+                        
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <label for="description" class="form-label required-field">
+                                    <i class="fas fa-file-alt text-warning"></i>
+                                    Description détaillée
+                                </label>
+                                <textarea class="form-control" 
+                                         id="description" 
+                                         name="description" 
+                                         rows="5" 
+                                         required
+                                         placeholder="Décrivez en détail l'objet perdu ou trouvé...">{{ declaration.description }}</textarea>
+                                <div class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Incluez tous les détails pertinents : couleur, marque, caractéristiques particulières, etc.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-8">
+                                <label for="lieu_precis" class="form-label required-field">
+                                    <i class="fas fa-map-marker-alt text-danger"></i>
+                                    Lieu précis de l'incident
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="lieu_precis" 
+                                       name="lieu_precis" 
+                                       value="{{ declaration.lieu_precis }}" 
+                                       required
+                                       placeholder="Adresse précise ou point de repère...">
+                                <div class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Indiquez l'adresse exacte ou des points de repère précis
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="date_incident" class="form-label">
+                                    <i class="fas fa-calendar-alt text-info"></i>
+                                    Date de l'incident
+                                </label>
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="date_incident" 
+                                       name="date_incident" 
+                                       value="{{ declaration.date_incident|date:'Y-m-d' }}">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="photo" class="form-label">
+                                    <i class="fas fa-camera text-success"></i>
+                                    Photo de l'objet
+                                </label>
+                                <input type="file" 
+                                       class="form-control" 
+                                       id="photo" 
+                                       name="photo" 
+                                       accept="image/*">
+                                {% if declaration.photo %}
+                                    <div class="form-text text-success">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Photo actuelle présente - Une nouvelle photo remplacera l'actuelle
+                                    </div>
+                                {% else %}
+                                    <div class="form-text text-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        Aucune photo attachée - Ajoutez une photo pour améliorer les chances de retrouvaille
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="nom_objet" class="form-label required-field">
+                                    <i class="fas fa-tag text-primary"></i>
+                                    Nom de l'objet
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="nom_objet" 
+                                       name="nom_objet" 
+                                       value="{{ declaration.nom_objet }}" 
+                                       required
+                                       placeholder="Ex: iPhone 14, Portefeuille en cuir, Clés de voiture...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section Catégorisation -->
+                    <div class="form-section">
+                        <h3 class="section-title categorization">
+                            <i class="fas fa-tags"></i>
+                            Catégorisation et Priorité
+                        </h3>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="categorie" class="form-label">
+                                    <i class="fas fa-list text-success"></i>
+                                    Catégorie
+                                </label>
+                                <select class="form-select" id="categorie" name="categorie">
+                                    <option value="">Sélectionnez une catégorie</option>
+                                    {% for categorie in categories %}
+                                    <option value="{{ categorie.id }}" {% if categorie.id == declaration.categorie_id %}selected{% endif %}>
+                                        {{ categorie.nom }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Choisissez la catégorie la plus appropriée pour faciliter les recherches
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="priorite" class="form-label">
+                                    <i class="fas fa-exclamation-circle text-warning"></i>
+                                    Niveau de priorité
+                                </label>
+                                <select class="form-select" id="priorite" name="priorite">
+                                    <option value="normale" {% if declaration.priorite == 'normale' %}selected{% endif %}>
+                                        🟢 Normale
+                                    </option>
+                                    <option value="haute" {% if declaration.priorite == 'haute' %}selected{% endif %}>
+                                        🟡 Haute
+                                    </option>
+                                    <option value="urgente" {% if declaration.priorite == 'urgente' %}selected{% endif %}>
+                                        🔴 Urgente
+                                    </option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="commentaire_agent" class="form-label">
+                                    <i class="fas fa-comment-alt text-info"></i>
+                                    Commentaire administratif
+                                </label>
+                                <textarea class="form-control" 
+                                         id="commentaire_agent" 
+                                         name="commentaire_agent" 
+                                         rows="3"
+                                         placeholder="Notes internes pour l'équipe administrative...">{{ declaration.commentaire_agent }}</textarea>
+                                <div class="form-text text-muted">
+                                    <i class="fas fa-lock me-1"></i>
+                                    Ce commentaire est visible uniquement par l'équipe administrative
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="actions-section">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <a href="{% url 'togo_admin:pending_declarations' %}" class="btn-modern btn-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Retour aux déclarations
+                            </a>
+                            
+                            <div class="d-flex gap-3 flex-wrap">
+                                <button type="submit" name="action" value="save" class="btn-modern btn-warning">
+                                    <i class="fas fa-save"></i>
+                                    Sauvegarder les modifications
+                                </button>
+                                <button type="submit" name="action" value="validate" class="btn-modern btn-success">
+                                    <i class="fas fa-check"></i>
+                                    Sauvegarder et valider
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Aperçu photo actuelle -->
+        {% if declaration.photo %}
+        <div class="photo-preview-card">
+            <div class="photo-preview-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-image me-2"></i>
+                    Photo actuelle de la déclaration
+                </h6>
+            </div>
+            <div class="photo-preview-body">
+                <img src="{{ declaration.photo.url }}" 
+                     alt="Photo de la déclaration" 
+                     class="img-fluid"
+                     onclick="viewFullImage('{{ declaration.photo.url }}')">
+                <div class="mt-3">
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="viewFullImage('{{ declaration.photo.url }}')">
+                        <i class="fas fa-expand me-1"></i>Voir en grand
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal pour l'aperçu de l'image -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border: none; border-radius: 16px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; border: none;">
+                <h5 class="modal-title">Aperçu de l'image</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <img id="fullImage" src="" alt="Aperçu" class="img-fluid" style="border-radius: 12px;">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Vue d'image en plein écran
+    function viewFullImage(imageUrl) {
+        document.getElementById('fullImage').src = imageUrl;
+        var modal = new bootstrap.Modal(document.getElementById('imageModal'));
+        modal.show();
+    }
+
+    // Prévisualisation de l'image sélectionnée
+    document.getElementById('photo').addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                // Créer un conteneur de prévisualisation s'il n'existe pas
+                let previewContainer = document.getElementById('imagePreviewContainer');
+                if (!previewContainer) {
+                    previewContainer = document.createElement('div');
+                    previewContainer.id = 'imagePreviewContainer';
+                    previewContainer.className = 'mt-3 p-3 border rounded bg-light';
+                    previewContainer.innerHTML = `
+                        <div class="d-flex align-items-center justify-content-between">
+                            <small class="text-muted fw-bold">
+                                <i class="fas fa-eye me-1"></i>Aperçu de la nouvelle image
+                            </small>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearImagePreview()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="text-center mt-2">
+                            <img id="previewImage" src="" alt="Aperçu" class="img-fluid" style="max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                    `;
+                    
+                    // Insérer après le champ file
+                    e.target.parentNode.appendChild(previewContainer);
+                }
+                
+                document.getElementById('previewImage').src = e.result;
+                previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+
+    // Effacer l'aperçu
+    function clearImagePreview() {
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        const fileInput = document.getElementById('photo');
+        
+        if (previewContainer) {
+            previewContainer.style.display = 'none';
+        }
+        
+        fileInput.value = '';
+    }
+
+    // Animation sur focus des champs requis
+    document.addEventListener('DOMContentLoaded', function() {
+        const requiredFields = document.querySelectorAll('input[required], textarea[required], select[required]');
+        
+        requiredFields.forEach(field => {
+            field.addEventListener('focus', function() {
+                this.style.transform = 'scale(1.02)';
+                this.style.transition = 'all 0.3s ease';
+            });
+            
+            field.addEventListener('blur', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+
+        // Validation en temps réel
+        const descriptionField = document.getElementById('description');
+        if (descriptionField) {
+            descriptionField.addEventListener('input', function() {
+                const wordCount = this.value.trim().split(/\s+/).length;
+                let feedback = this.parentNode.querySelector('.description-feedback');
+                
+                if (!feedback) {
+                    feedback = document.createElement('div');
+                    feedback.className = 'description-feedback form-text mt-1';
+                    this.parentNode.appendChild(feedback);
+                }
+                
+                if (this.value.trim().length < 20) {
+                    feedback.innerHTML = '<i class="fas fa-exclamation-triangle text-warning me-1"></i>Description trop courte (minimum 20 caractères)';
+                    feedback.className = 'description-feedback form-text text-warning mt-1';
+                } else if (wordCount < 5) {
+                    feedback.innerHTML = '<i class="fas fa-info-circle text-info me-1"></i>Ajoutez plus de détails pour une meilleure description';
+                    feedback.className = 'description-feedback form-text text-info mt-1';
+                } else {
+                    feedback.innerHTML = '<i class="fas fa-check-circle text-success me-1"></i>Bonne description détaillée';
+                    feedback.className = 'description-feedback form-text text-success mt-1';
+                }
+            });
+        }
+        
+        // Confirmation avant validation
+        const validateBtn = document.querySelector('button[value="validate"]');
+        if (validateBtn) {
+            validateBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                Swal.fire({
+                    title: 'Confirmer la validation',
+                    text: 'Cette action va valider définitivement la déclaration. Êtes-vous sûr ?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Oui, valider',
+                    cancelButtonText: 'Annuler',
+                    background: '#fff',
+                    backdrop: 'rgba(0,0,0,0.4)',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.closest('form').submit();
+                    }
+                });
+            });
+        }
+
+        // Animation d'entrée
+        const formCard = document.querySelector('.form-card');
+        if (formCard) {
+            formCard.style.opacity = '0';
+            formCard.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                formCard.style.transition = 'all 0.6s ease';
+                formCard.style.opacity = '1';
+                formCard.style.transform = 'translateY(0)';
+            }, 100);
+        }
+    });
+
+    // Validation du formulaire
+    function validateForm() {
+        let isValid = true;
+        const requiredFields = document.querySelectorAll('input[required], textarea[required]');
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+                
+                // Ajouter message d'erreur si pas présent
+                if (!field.parentNode.querySelector('.invalid-feedback')) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    errorDiv.textContent = 'Ce champ est obligatoire';
+                    field.parentNode.appendChild(errorDiv);
+                }
+            } else {
+                field.classList.remove('is-invalid');
+                const errorDiv = field.parentNode.querySelector('.invalid-feedback');
+                if (errorDiv) {
+                    errorDiv.remove();
+                }
+            }
+        });
+        
+        if (!isValid) {
+            Swal.fire({
+                title: 'Formulaire incomplet',
+                text: 'Veuillez remplir tous les champs obligatoires',
+                icon: 'warning',
+                confirmButtonColor: '#f59e0b'
+            });
+        }
+        
+        return isValid;
+    }
+
+    // Attacher la validation aux boutons de soumission
+    document.querySelectorAll('button[type="submit"]').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            if (this.value !== 'validate' && !validateForm()) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+{% endblock %}

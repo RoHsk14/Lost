@@ -1,0 +1,22 @@
+{% extends 'admin_base.html' %}
+{% block title %}Objets retrouvés{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Objets retrouvés</h1>
+
+<div class="grid grid-cols-3 gap-4">
+    {% for objet in objets %}
+    <div class="p-4 bg-white shadow rounded-xl">
+        {% if objet.photo %}
+            <img src="{{ objet.photo.url }}" alt="{{ objet.nom }}" class="w-full h-40 object-cover rounded-lg mb-2">
+        {% endif %}
+        <h3 class="text-lg font-semibold">{{ objet.nom }}</h3>
+        <p class="text-sm text-gray-500">{{ objet.description|truncatewords:10 }}</p>
+        <p class="text-sm mt-1 text-blue-600">📍 {{ objet.lieu_trouve }}</p>
+        <p class="text-xs text-gray-400">{{ objet.date_trouve|date:"d/m/Y" }}</p>
+    </div>
+    {% empty %}
+    <p class="col-span-3 text-gray-500">Aucun objet trouvé.</p>
+    {% endfor %}
+</div>
+{% endblock %}

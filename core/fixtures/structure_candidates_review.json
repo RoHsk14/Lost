@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Commissariat - Amou",
+    "pref_id": 32,
+    "type": "commissariat",
+    "source": "structure_model",
+    "context": "{\n  \"model\": \"core.structurelocale\",\n  \"pk\": 2,\n  \"fields\": {\n    \"nom\": \"Commissariat - Amou\",\n    \"type_structure\": \"commissariat\",\n    \"prefecture\": 32,\n    \"adresse\": \"Test Address\",\n    \"telephone\": \"+228 11223344\",\n    \"email\": \"\",\n    \"actif\": true,\n    \"date_creation\": \"2025-11-24T17:59:27.3",
+    "already_in_db": true,
+    "pref_name": "Amou",
+    "confidence": "id_or_exact"
+  },
+  {
+    "name": "Commissariat Central de LomÚ",
+    "pref_id": 58,
+    "type": "commissariat",
+    "source": "structure_model",
+    "context": "{\n  \"model\": \"core.structurelocale\",\n  \"pk\": 3,\n  \"fields\": {\n    \"nom\": \"Commissariat Central de LomÚ\",\n    \"type_structure\": \"commissariat\",\n    \"prefecture\": 58,\n    \"adresse\": \"Boulevard du 13 Janvier, LomÚ\",\n    \"telephone\": \"+228 22 21 22 22\",\n    \"email\": \"commissariat.central@securite.tg\",\n ",
+    "already_in_db": true,
+    "pref_name": "PrÚfecture de LomÚ",
+    "confidence": "id_or_exact"
+  },
+  {
+    "name": "Mairie de LomÚ",
+    "pref_id": 58,
+    "type": "mairie",
+    "source": "structure_model",
+    "context": "{\n  \"model\": \"core.structurelocale\",\n  \"pk\": 4,\n  \"fields\": {\n    \"nom\": \"Mairie de LomÚ\",\n    \"type_structure\": \"mairie\",\n    \"prefecture\": 58,\n    \"adresse\": \"Place de l'IndÚpendance, LomÚ\",\n    \"telephone\": \"+228 22 21 77 77\",\n    \"email\": \"contact@mairie-lome.tg\",\n    \"actif\": true,\n    \"date_cr",
+    "already_in_db": true,
+    "pref_name": "PrÚfecture de LomÚ",
+    "confidence": "id_or_exact"
+  },
+  {
+    "name": "Commissariat de Legbassito",
+    "pref_id": 58,
+    "type": "autre",
+    "source": "structure_model",
+    "context": "{\n  \"model\": \"core.structurelocale\",\n  \"pk\": 5,\n  \"fields\": {\n    \"nom\": \"Commissariat de Legbassito\",\n    \"type_structure\": \"autre\",\n    \"prefecture\": 58,\n    \"adresse\": \"\",\n    \"telephone\": \"\",\n    \"email\": \"\",\n    \"actif\": true,\n    \"date_creation\": \"2025-12-08T21:10:13.391Z\"\n  }\n}",
+    "already_in_db": true,
+    "pref_name": "PrÚfecture de LomÚ",
+    "confidence": "id_or_exact"
+  },
+  {
+    "name": "commissariat",
+    "pref_id": null,
+    "type": null,
+    "source": "keyword",
+    "context": "\"pk\": 2,\n  \"fields\": {\n    \"nom\": \"Commissariat - Amou\",\n    \"type_structure\": \"commissariat\",\n    \"prefecture\": 32,\n    \"adresse\": \"Test Address\",\n    \"telephone\": \"+228 1",
+    "already_in_db": false
+  },
+  {
+    "name": "commissariat.central@securite.tg",
+    "pref_id": null,
+    "type": null,
+    "source": "keyword",
+    "context": "levard du 13 Janvier, LomÚ\",\n    \"telephone\": \"+228 22 21 22 22\",\n    \"email\": \"commissariat.central@securite.tg\",\n    \"actif\": true,\n    \"date_creation\": \"2025-12-02T11:36",
+    "already_in_db": false
+  },
+  {
+    "name": "mairie",
+    "pref_id": null,
+    "type": null,
+    "source": "keyword",
+    "context": "\",\n  \"pk\": 4,\n  \"fields\": {\n    \"nom\": \"Mairie de LomÚ\",\n    \"type_structure\": \"mairie\",\n    \"prefecture\": 58,\n    \"adresse\": \"Place de l'IndÚpendance, LomÚ\",\n    \"te",
+    "already_in_db": false
+  },
+  {
+    "name": "contact@mairie-lome.tg",
+    "pref_id": null,
+    "type": null,
+    "source": "keyword",
+    "context": "IndÚpendance, LomÚ\",\n    \"telephone\": \"+228 22 21 77 77\",\n    \"email\": \"contact@mairie-lome.tg\",\n    \"actif\": true,\n    \"date_creation\": \"2025-12-02T11:36:31.083Z\"\n  ",
+    "already_in_db": false
+  }
+]

@@ -1,0 +1,416 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Utilisateurs{% endblock %}
+{% block admin_title %}Gestion des Utilisateurs{% endblock %}
+
+{% block extra_head %}
+<style>
+.user-card {
+    border-left: 4px solid #007bff;
+    transition: all 0.2s;
+}
+
+.user-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.role-badge {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+}
+
+.role-citoyen { background-color: #6c757d; }
+.role-agent { background-color: #28a745; }
+.role-admin { background-color: #dc3545; }
+.role-superadmin { background-color: #6f42c1; }
+
+.avatar-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">
+        <i class="fas fa-users me-2 text-primary"></i>
+        Gestion des Utilisateurs
+    </h4>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filtersModal">
+            <i class="fas fa-filter"></i> Filtres
+        </button>
+                        <a href="{% url 'togo_admin:create_user' %}" class="btn btn-outline-primary btn-sm me-2">
+                            <i class="fas fa-user-plus me-1"></i>Nouvel Utilisateur
+                        </a>
+                        <button class="btn btn-secondary btn-sm me-2" disabled>
+                            <i class="fas fa-user-shield me-1"></i>Nouvel Agent (Indisponible)
+                        </button>
+                        <a href="{% url 'togo_admin:pending_declarations' %}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-clipboard-check me-1"></i>Validation ({{ pending_count|default:0 }})
+                        </a>
+    </div>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.total_users }}</h5>
+                <small>Total Utilisateurs</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.active_users }}</h5>
+                <small>Actifs</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.new_today }}</h5>
+                <small>Nouveaux Aujourd'hui</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5 class="mb-0">{{ stats.agents_count }}</h5>
+                <small>Agents</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres rapides -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form class="row g-3" method="GET">
+            <div class="col-md-3">
+                <select name="role" class="form-select form-select-sm">
+                    <option value="">Tous les rôles</option>
+                    <option value="citoyen" {% if request.GET.role == 'citoyen' %}selected{% endif %}>Citoyen</option>
+                    <option value="agent" {% if request.GET.role == 'agent' %}selected{% endif %}>Agent</option>
+                    <option value="admin" {% if request.GET.role == 'admin' %}selected{% endif %}>Admin</option>
+                    <option value="superadmin" {% if request.GET.role == 'superadmin' %}selected{% endif %}>Super Admin</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">Tous les statuts</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Actif</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactif</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="search" placeholder="Rechercher nom, email..." class="form-control form-control-sm" value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="fas fa-search"></i> Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Liste des utilisateurs -->
+<div class="card">
+    <div class="card-body">
+        {% if users %}
+        <div class="row">
+            {% for user in users %}
+            <div class="col-lg-6 mb-4">
+                <div class="card user-card position-relative">
+                    <!-- Badge rôle -->
+                    <span class="badge role-badge role-{{ user.role }}">
+                        {{ user.get_role_display }}
+                    </span>
+
+                    <div class="card-body">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="avatar-circle bg-{{ user.role|default:'secondary' }} me-3">
+                                {{ user.get_full_name|first|upper|default:'U' }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-1">
+                                    {{ user.get_full_name|default:user.username }}
+                                    {% if not user.is_active %}
+                                    <i class="fas fa-ban text-danger" title="Compte désactivé"></i>
+                                    {% endif %}
+                                </h5>
+                                <p class="text-muted mb-1">{{ user.email }}</p>
+                                {% if user.telephone %}
+                                <small class="text-muted">
+                                    <i class="fas fa-phone"></i> {{ user.telephone }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Informations supplémentaires -->
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <div class="metric-small">
+                                    <div class="number">{{ user.declarations_count|default:0 }}</div>
+                                    <div class="label">Déclarations</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="metric-small">
+                                    <div class="number">{{ user.date_joined|timesince }}</div>
+                                    <div class="label">Membre depuis</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="metric-small">
+                                    {% if user.last_login %}
+                                    <div class="number">{{ user.last_login|timesince }}</div>
+                                    <div class="label">Dernière connexion</div>
+                                    {% else %}
+                                    <div class="number">Jamais</div>
+                                    <div class="label">Connexion</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Localisation -->
+                        {% if user.region or user.prefecture %}
+                        <p class="text-muted mb-3">
+                            <i class="fas fa-map-marker-alt"></i>
+                            {% if user.prefecture %}{{ user.prefecture.nom }}, {% endif %}
+                            {% if user.region %}{{ user.region.nom }}{% endif %}
+                        </p>
+                        {% endif %}
+
+                        <!-- Actions -->
+                        <div class="btn-group w-100" role="group">
+                            <button class="btn btn-outline-primary btn-sm" onclick="viewUser({{ user.id }})">
+                                <i class="fas fa-eye"></i> Voir
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="editUser({{ user.id }})">
+                                <i class="fas fa-edit"></i> Modifier
+                            </button>
+                            {% if user.is_active %}
+                            <button class="btn btn-outline-warning btn-sm" onclick="toggleUserStatus({{ user.id }}, false)">
+                                <i class="fas fa-ban"></i> Désactiver
+                            </button>
+                            {% else %}
+                            <button class="btn btn-outline-success btn-sm" onclick="toggleUserStatus({{ user.id }}, true)">
+                                <i class="fas fa-check"></i> Activer
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Pagination des utilisateurs" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Précédent
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Suivant
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucun utilisateur trouvé</h5>
+            <p class="text-muted">Utilisez les filtres pour affiner votre recherche</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Nouvel Utilisateur -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Créer un Nouvel Utilisateur
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addUserForm" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prénom *</label>
+                            <input type="text" name="first_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" name="last_name" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email *</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nom d'utilisateur *</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rôle *</label>
+                        <select name="role" class="form-select" required>
+                            <option value="">Sélectionner...</option>
+                            <option value="citoyen">Citoyen</option>
+                            <option value="agent">Agent</option>
+                            <option value="admin">Administrateur</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe temporaire *</label>
+                        <input type="password" name="password" class="form-control" value="temp123" required>
+                        <small class="text-muted">L'utilisateur devra changer ce mot de passe à la première connexion</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Créer l'Utilisateur
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Fonctions de gestion des utilisateurs
+function viewUser(userId) {
+    // Afficher les détails de l'utilisateur
+    console.log('Voir utilisateur:', userId);
+}
+
+function editUser(userId) {
+    // Modifier l'utilisateur
+    console.log('Modifier utilisateur:', userId);
+}
+
+function toggleUserStatus(userId, activate) {
+    const action = activate ? 'activer' : 'désactiver';
+    if (confirm(`Confirmer ${action} cet utilisateur ?`)) {
+        fetch(`/admin/api/users/${userId}/toggle/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({activate})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+                showAlert(`Utilisateur ${action} avec succès`, 'success');
+            } else {
+                showAlert(`Erreur lors de l'${action}ion`, 'danger');
+            }
+        });
+    }
+}
+
+// Fonctions utilitaires
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// Style pour les métriques
+document.head.insertAdjacentHTML('beforeend', `
+<style>
+.metric-small .number {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.metric-small .label {
+    font-size: 0.7rem;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+</style>
+`);
+</script>
+{% endblock %}

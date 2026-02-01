@@ -1,0 +1,361 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Paramètres système{% endblock %}
+{% block page_heading %}Paramètres{% endblock %}
+{% block page_description %}Configuration et paramètres du système TogoRetrouvé{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Configuration générale -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-cog me-2"></i>Configuration générale</h6>
+            </div>
+            <div class="card-body">
+                <form id="generalSettingsForm" method="POST">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="site_name" class="form-label">Nom du site</label>
+                            <input type="text" class="form-control" id="site_name" name="site_name" 
+                                   value="{{ settings.site_name|default:'TogoRetrouvé' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="site_url" class="form-label">URL du site</label>
+                            <input type="url" class="form-control" id="site_url" name="site_url" 
+                                   value="{{ settings.site_url|default:'https://togoretrouve.tg' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="contact_email" class="form-label">Email de contact</label>
+                            <input type="email" class="form-control" id="contact_email" name="contact_email" 
+                                   value="{{ settings.contact_email|default:'contact@togoretrouve.tg' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="support_phone" class="form-label">Téléphone support</label>
+                            <input type="tel" class="form-control" id="support_phone" name="support_phone" 
+                                   value="{{ settings.support_phone|default:'+228 XX XX XX XX' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="site_description" class="form-label">Description du site</label>
+                        <textarea class="form-control" id="site_description" name="site_description" rows="3">{{ settings.site_description|default:'Plateforme nationale de gestion des objets trouvés et perdus au Togo' }}</textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="max_file_size" class="form-label">Taille max fichiers (MB)</label>
+                            <input type="number" class="form-control" id="max_file_size" name="max_file_size" 
+                                   value="{{ settings.max_file_size|default:5 }}" min="1" max="50">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="max_photos_per_declaration" class="form-label">Photos max par déclaration</label>
+                            <input type="number" class="form-control" id="max_photos_per_declaration" 
+                                   name="max_photos_per_declaration" value="{{ settings.max_photos_per_declaration|default:5 }}" min="1" max="10">
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <h6><i class="fas fa-clock me-2"></i>Délais et temporisation</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="validation_timeout" class="form-label">Délai validation (heures)</label>
+                            <input type="number" class="form-control" id="validation_timeout" name="validation_timeout" 
+                                   value="{{ settings.validation_timeout|default:48 }}" min="1" max="168">
+                            <small class="text-muted">Temps avant expiration automatique</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="publication_duration" class="form-label">Durée publication (jours)</label>
+                            <input type="number" class="form-control" id="publication_duration" name="publication_duration" 
+                                   value="{{ settings.publication_duration|default:90 }}" min="7" max="365">
+                            <small class="text-muted">Temps avant archivage automatique</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Configuration email -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-envelope me-2"></i>Configuration email</h6>
+            </div>
+            <div class="card-body">
+                <form id="emailSettingsForm" method="POST" action="{% url 'togo_admin:settings' %}?section=email">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="smtp_host" class="form-label">Serveur SMTP</label>
+                            <input type="text" class="form-control" id="smtp_host" name="smtp_host" 
+                                   value="{{ email_settings.smtp_host|default:'smtp.gmail.com' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="smtp_port" class="form-label">Port SMTP</label>
+                            <input type="number" class="form-control" id="smtp_port" name="smtp_port" 
+                                   value="{{ email_settings.smtp_port|default:587 }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="smtp_username" class="form-label">Nom d'utilisateur</label>
+                            <input type="text" class="form-control" id="smtp_username" name="smtp_username" 
+                                   value="{{ email_settings.smtp_username }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="smtp_password" class="form-label">Mot de passe</label>
+                            <input type="password" class="form-control" id="smtp_password" name="smtp_password" 
+                                   placeholder="{% if email_settings.smtp_password %}••••••••{% endif %}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="smtp_use_tls" name="smtp_use_tls" 
+                               {% if email_settings.smtp_use_tls %}checked{% endif %}>
+                        <label class="form-check-label" for="smtp_use_tls">
+                            Utiliser TLS/SSL
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                        <button type="button" class="btn btn-outline-info" onclick="testEmailConfig()">
+                            <i class="fas fa-paper-plane me-2"></i>Tester configuration
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions et informations -->
+    <div class="col-lg-4">
+        <!-- Informations système -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations système</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Version</small>
+                    <span class="fw-bold">TogoRetrouvé v2.0.0</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Base de données</small>
+                    <span class="fw-bold">{{ system_info.database_type }}</span>
+                    <small class="text-success d-block">
+                        <i class="fas fa-check-circle me-1"></i>Connectée
+                    </small>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Espace disque</small>
+                    <div class="progress mt-1" style="height: 6px;">
+                        <div class="progress-bar bg-info" style="width: {{ system_info.disk_usage }}%"></div>
+                    </div>
+                    <small class="text-muted">{{ system_info.disk_used }} / {{ system_info.disk_total }} utilisé</small>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Dernière sauvegarde</small>
+                    <span class="fw-bold">{{ system_info.last_backup|default:'Jamais' }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions de maintenance -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-tools me-2"></i>Maintenance</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="clearCache()">
+                        <i class="fas fa-broom me-2"></i>Vider le cache
+                    </button>
+                    <button class="btn btn-outline-success" onclick="createBackup()">
+                        <i class="fas fa-download me-2"></i>Créer sauvegarde
+                    </button>
+                    <button class="btn btn-outline-info" onclick="checkUpdates()">
+                        <i class="fas fa-sync-alt me-2"></i>Vérifier mises à jour
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="optimizeDatabase()">
+                        <i class="fas fa-database me-2"></i>Optimiser BDD
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Logs système -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-list me-2"></i>Logs récents</h6>
+                <a href="/togoretrouve-admin/logs/" class="btn btn-sm btn-outline-secondary">Voir tout</a>
+            </div>
+            <div class="card-body p-0">
+                <div style="max-height: 300px; overflow-y: auto;">
+                    {% for log in recent_logs %}
+                    <div class="border-bottom p-2">
+                        <div class="d-flex justify-content-between">
+                            <small class="fw-bold">{{ log.action }}</small>
+                            <small class="text-muted">{{ log.date_creation|timesince }}</small>
+                        </div>
+                        <small class="text-muted d-block">{{ log.description|truncatechars:50 }}</small>
+                        <small class="badge bg-light text-dark">{{ log.utilisateur.username }}</small>
+                    </div>
+                    {% empty %}
+                    <div class="p-3 text-center text-muted">
+                        <i class="fas fa-file-alt fa-2x mb-2"></i>
+                        <div>Aucun log disponible</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Soumission du formulaire général
+document.getElementById('generalSettingsForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    try {
+        const response = await fetch(this.action || window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCsrfToken()
+            }
+        });
+        
+        if (response.ok) {
+            showAlert('Paramètres enregistrés avec succès', 'success');
+        } else {
+            throw new Error('Erreur serveur');
+        }
+    } catch (error) {
+        showAlert('Erreur lors de l\'enregistrement', 'error');
+    }
+});
+
+// Soumission du formulaire email
+document.getElementById('emailSettingsForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    try {
+        const response = await fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCsrfToken()
+            }
+        });
+        
+        if (response.ok) {
+            showAlert('Configuration email enregistrée', 'success');
+        } else {
+            throw new Error('Erreur serveur');
+        }
+    } catch (error) {
+        showAlert('Erreur lors de l\'enregistrement', 'error');
+    }
+});
+
+// Actions de maintenance
+async function clearCache() {
+    if (!confirm('Vider le cache du système ?')) return;
+    
+    try {
+        const response = await makeRequest('/api/admin/maintenance/clear-cache/', 'POST');
+        if (response.success) {
+            showAlert('Cache vidé avec succès', 'success');
+        } else {
+            showAlert(response.error || 'Erreur', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication', 'error');
+    }
+}
+
+async function createBackup() {
+    if (!confirm('Créer une sauvegarde de la base de données ?')) return;
+    
+    try {
+        showAlert('Création de la sauvegarde en cours...', 'info');
+        const response = await makeRequest('/api/admin/maintenance/backup/', 'POST');
+        if (response.success) {
+            showAlert('Sauvegarde créée avec succès', 'success');
+            if (response.download_url) {
+                window.open(response.download_url, '_blank');
+            }
+        } else {
+            showAlert(response.error || 'Erreur lors de la sauvegarde', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication', 'error');
+    }
+}
+
+async function checkUpdates() {
+    try {
+        showAlert('Vérification des mises à jour...', 'info');
+        const response = await makeRequest('/api/admin/maintenance/check-updates/', 'GET');
+        if (response.updates_available) {
+            showAlert(`${response.updates_count} mise(s) à jour disponible(s)`, 'warning');
+        } else {
+            showAlert('Système à jour', 'success');
+        }
+    } catch (error) {
+        showAlert('Erreur lors de la vérification', 'error');
+    }
+}
+
+async function optimizeDatabase() {
+    if (!confirm('Optimiser la base de données ? Cette opération peut prendre du temps.')) return;
+    
+    try {
+        showAlert('Optimisation en cours...', 'info');
+        const response = await makeRequest('/api/admin/maintenance/optimize-db/', 'POST');
+        if (response.success) {
+            showAlert(`Base optimisée. ${response.space_saved} d'espace récupéré`, 'success');
+        } else {
+            showAlert(response.error || 'Erreur lors de l\'optimisation', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de communication', 'error');
+    }
+}
+
+async function testEmailConfig() {
+    try {
+        showAlert('Test de la configuration email...', 'info');
+        const response = await makeRequest('/api/admin/test-email/', 'POST');
+        if (response.success) {
+            showAlert('Configuration email fonctionnelle', 'success');
+        } else {
+            showAlert(response.error || 'Échec du test email', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur lors du test', 'error');
+    }
+}
+</script>
+{% endblock %}

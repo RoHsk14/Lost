@@ -1,0 +1,37 @@
+{
+  "created": [],
+  "skipped": [
+    {
+      "name": "Commissariat - Amou",
+      "reason": "exists_or_empty"
+    },
+    {
+      "name": "Commissariat Central de LomÚ",
+      "reason": "exists_or_empty"
+    },
+    {
+      "name": "Mairie de LomÚ",
+      "reason": "exists_or_empty"
+    },
+    {
+      "name": "Commissariat de Legbassito",
+      "reason": "exists_or_empty"
+    },
+    {
+      "name": "commissariat",
+      "reason": "no_pref_mapping"
+    },
+    {
+      "name": "commissariat.central@securite.tg",
+      "reason": "no_pref_mapping"
+    },
+    {
+      "name": "mairie",
+      "reason": "no_pref_mapping"
+    },
+    {
+      "name": "contact@mairie-lome.tg",
+      "reason": "no_pref_mapping"
+    }
+  ]
+}

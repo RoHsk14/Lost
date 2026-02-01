@@ -132,6 +132,7 @@ urlpatterns = [
     path('signalement/<int:pk>/modifier/', views.signalement_edit, name='signalement_edit'),
     path('signalement/<int:pk>/supprimer/', views.signalement_delete, name='signalement_delete'),
     path('api/signalement/<int:signalement_id>/commentaire/', views.ajouter_commentaire_ajax, name='ajouter_commentaire_ajax'),
+    path('api/signalements/map-data/', views.signalements_map_data, name='signalements_map_data'),
     
     # ===== OBJETS =====
     path('objets/', views.objets_list, name='objets_list'),

@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifier un signalement{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-800">✏️ Modifier un signalement</h1>
+            <a href="{% url 'signalement_detail' signalement.pk %}" class="text-blue-600 hover:underline font-medium">Retour</a>
+        </div>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-4 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700 border border-red-300{% else %}bg-green-100 text-green-700 border border-green-300{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Section type de déclaration -->
+            <div class="border-b pb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">🔖 Type de déclaration</h2>
+                {{ form.type_declaration }}
+                {% if form.type_declaration.errors %}
+                    <div class="mt-2 text-red-500 text-sm">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.type_declaration.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Section informations de base -->
+            <div class="border-b pb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">📋 Informations de base</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="id_nom_objet" class="block text-sm font-medium text-gray-700 mb-1">
+                            Nom de l'objet <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.nom_objet }}
+                        {% if form.nom_objet.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.nom_objet.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="id_date_incident" class="block text-sm font-medium text-gray-700 mb-1">
+                                Date de perte <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.date_incident }}
+                            {% if form.date_incident.errors %}
+                                <p class="text-red-500 text-sm mt-1">{{ form.date_incident.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="id_lieu_precis" class="block text-sm font-medium text-gray-700 mb-1">
+                                Lieu précis <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.lieu_precis }}
+                            {% if form.lieu_precis.errors %}
+                                <p class="text-red-500 text-sm mt-1">{{ form.lieu_precis.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <label for="id_description" class="block text-sm font-medium text-gray-700 mb-1">
+                            Description détaillée
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.description.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section localisation -->
+            <div class="border-b pb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">📍 Localisation</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="id_region" class="block text-sm font-medium text-gray-700 mb-1">Région</label>
+                        {{ form.region }}
+                        {% if form.region.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.region.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="id_prefecture" class="block text-sm font-medium text-gray-700 mb-1">Préfecture</label>
+                        {{ form.prefecture }}
+                        {% if form.prefecture.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.prefecture.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="id_structure_locale" class="block text-sm font-medium text-gray-700 mb-1">Structure locale</label>
+                        {{ form.structure_locale }}
+                        {% if form.structure_locale.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.structure_locale.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section photo -->
+            <div class="border-b pb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">📸 Photo</h2>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors" id="dropzone">
+                    <div id="upload-content">
+                        <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
+                        <p class="text-lg font-medium text-gray-600 mb-2">Cliquez ici ou glissez votre photo</p>
+                        <p class="text-sm text-gray-500 mb-4">PNG, JPG, GIF (max 5MB)</p>
+                        <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" onclick="document.getElementById('id_photo_principale').click()">
+                            Choisir un fichier
+                        </button>
+                        {{ form.photo_principale }}
+                    </div>
+                    <!-- Aperçu et messages d'erreur peuvent être ajoutés ici avec JS si besoin -->
+                </div>
+                {% if form.photo_principale.errors %}
+                    <div class="mt-2 text-red-500 text-sm">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.photo_principale.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Section commentaires -->
+            <div>
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">💬 Commentaires supplémentaires</h2>
+                <div>
+                    <label for="id_commentaire_declarant" class="block text-sm font-medium text-gray-700 mb-1">
+                        Informations supplémentaires
+                    </label>
+                    {{ form.commentaire_declarant }}
+                </div>
+            </div>
+
+            <!-- Boutons -->
+            <div class="flex flex-col sm:flex-row gap-4 pt-6">
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition duration-200">
+                    💾 Enregistrer les modifications
+                </button>
+                <a href="{% url 'signalement_detail' signalement.pk %}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-6 rounded-lg font-medium transition duration-200 text-center">
+                    ↩️ Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

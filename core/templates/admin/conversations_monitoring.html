@@ -1,0 +1,315 @@
+{% extends "admin/base_modern.html" %}
+
+{% block page_title %}Suivi des Conversations{% endblock %}
+{% block page_heading %}Monitoring des Conversations{% endblock %}
+{% block page_description %}Vue d'ensemble des échanges agents-citoyens (métadonnées uniquement){% endblock %}
+
+{% block extra_css %}
+<style>
+.conversation-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.conversation-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.user-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: white;
+}
+
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.filter-btn {
+    border-radius: 20px;
+    padding: 0.5rem 1.5rem;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.filter-btn:not(.active) {
+    background: white;
+    color: #6b7280;
+    border-color: #e5e7eb;
+}
+
+.filter-btn:not(.active):hover {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.stat-box {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-box .stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.metadata-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.metadata-item:last-child {
+    border-bottom: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Statistiques globales -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="stat-box">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="text-muted mb-1">Total Conversations</p>
+                    <h2 class="fw-bold mb-0">{{ total_conversations }}</h2>
+                </div>
+                <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <i class="fas fa-comments fa-2x text-white"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="stat-box">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="text-muted mb-1">Conversations Actives (7 derniers jours)</p>
+                    <h2 class="fw-bold mb-0">{{ conversations_actives }}</h2>
+                </div>
+                <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <i class="fas fa-bolt fa-2x text-white"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres et recherche -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Filtrer par statut</label>
+                <div class="btn-group w-100" role="group">
+                    <a href="?statut=all{% if search_query %}&search={{ search_query }}{% endif %}" 
+                       class="filter-btn {% if statut_filter == 'all' or not statut_filter %}active{% endif %}">
+                        <i class="fas fa-list me-2"></i>Toutes
+                    </a>
+                    <a href="?statut=active{% if search_query %}&search={{ search_query }}{% endif %}" 
+                       class="filter-btn {% if statut_filter == 'active' %}active{% endif %}">
+                        <i class="fas fa-check-circle me-2"></i>Actives
+                    </a>
+                    <a href="?statut=inactive{% if search_query %}&search={{ search_query }}{% endif %}" 
+                       class="filter-btn {% if statut_filter == 'inactive' %}active{% endif %}">
+                        <i class="fas fa-pause-circle me-2"></i>Inactives
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Rechercher</label>
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Agent, citoyen ou N° déclaration..." 
+                           value="{{ search_query }}">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Liste des conversations -->
+{% if error %}
+<div class="alert alert-warning border-0">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <strong>Module conversations non disponible.</strong> Le système de chat n'est pas encore configuré.
+</div>
+{% elif conversations %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 py-3">
+        <h5 class="mb-0 fw-bold">
+            <i class="fas fa-list me-2 text-primary"></i>
+            Conversations ({{ conversations.paginator.count }})
+        </h5>
+        <small class="text-muted">Affichage des métadonnées uniquement - Respect de la confidentialité</small>
+    </div>
+    <div class="card-body p-0">
+        {% for conversation in conversations %}
+        <div class="conversation-card p-4 mx-3 my-3">
+            <div class="row align-items-center">
+                <!-- Agent -->
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <div class="user-avatar me-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            {{ conversation.agent.first_name|first|upper|default:conversation.agent.username|first|upper }}
+                        </div>
+                        <div>
+                            <div class="fw-bold">{{ conversation.agent.get_full_name|default:conversation.agent.username }}</div>
+                            <small class="text-muted">
+                                <i class="fas fa-shield-alt me-1"></i>Agent
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-1 text-center">
+                    <i class="fas fa-exchange-alt fa-2x text-muted"></i>
+                </div>
+
+                <!-- Citoyen -->
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <div class="user-avatar me-3" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            {{ conversation.declarant.first_name|first|upper|default:conversation.declarant.username|first|upper }}
+                        </div>
+                        <div>
+                            <div class="fw-bold">{{ conversation.declarant.get_full_name|default:conversation.declarant.username }}</div>
+                            <small class="text-muted">
+                                <i class="fas fa-user me-1"></i>Citoyen
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Métadonnées -->
+                <div class="col-md-5">
+                    <div class="metadata-item">
+                        <i class="fas fa-file-alt text-primary"></i>
+                        <span class="small">
+                            <strong>Déclaration:</strong> 
+                            {% if conversation.signalement and conversation.signalement.id %}
+                                <a href="{% url 'togo_admin:declaration_detail' conversation.signalement.id %}" class="text-decoration-none">
+                                    {{ conversation.signalement.numero_declaration }}
+                                </a>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="metadata-item">
+                        <i class="fas fa-comment-dots text-success"></i>
+                        <span class="small">
+                            <strong>Messages:</strong> {{ conversation.message_count }}
+                        </span>
+                    </div>
+                    <div class="metadata-item">
+                        <i class="fas fa-clock text-warning"></i>
+                        <span class="small">
+                            <strong>Dernière activité:</strong> {{ conversation.updated_at|timesince }} ago
+                        </span>
+                    </div>
+                    <div class="metadata-item">
+                        <i class="fas fa-calendar text-info"></i>
+                        <span class="small">
+                            <strong>Créé le:</strong> {{ conversation.created_at|date:"d/m/Y H:i" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if conversations.has_other_pages %}
+    <div class="card-footer bg-white border-0">
+        <nav>
+            <ul class="pagination justify-content-center mb-0">
+                {% if conversations.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ conversations.previous_page_number }}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in conversations.paginator.page_range %}
+                    {% if conversations.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > conversations.number|add:'-3' and num < conversations.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if conversations.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ conversations.next_page_number }}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-comments fa-4x text-muted mb-3 opacity-25"></i>
+        <h5 class="text-muted">Aucune conversation trouvée</h5>
+        <p class="text-muted">Les conversations entre agents et citoyens apparaîtront ici.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Note sur la confidentialité -->
+<div class="alert alert-info border-0 mt-4">
+    <div class="d-flex align-items-start">
+        <i class="fas fa-info-circle fa-2x me-3"></i>
+        <div>
+            <h6 class="fw-bold mb-2">Note sur la confidentialité</h6>
+            <p class="mb-0">
+                Cette interface affiche uniquement les métadonnées des conversations (participants, dates, nombre de messages) 
+                pour le monitoring de l'activité de la plateforme. Le contenu des messages n'est pas accessible depuis cette page 
+                afin de respecter la confidentialité des échanges entre agents et citoyens.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

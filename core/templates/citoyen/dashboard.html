@@ -1,0 +1,349 @@
+{% extends 'citoyen/base.html' %}
+
+{% block title %}Tableau de Bord - TogoRetrouvé{% endblock %}
+
+{% block content %}
+<div class="p-6 space-y-8 animate-slide-up">
+    
+    <!-- Welcome Section -->
+    <div class="gradient-bg rounded-2xl p-8 text-white relative overflow-hidden">
+        <div class="relative z-10">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold mb-2">
+                        👋 Bonjour, {{ user.get_full_name|default:user.username }}
+                    </h1>
+                    <p class="text-lg opacity-90 mb-6 md:mb-0">
+                        Voici un aperçu de vos activités récentes
+                    </p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="{% url 'signalement_add' %}" class="bg-white text-indigo-600 px-6 py-3 rounded-xl font-medium hover:bg-gray-50 transition-all hover-scale flex items-center">
+                        <i class="fas fa-plus mr-2"></i>
+                        Déclarer un objet
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Background decoration -->
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full"></div>
+        <div class="absolute bottom-0 right-20 -mb-8 w-20 h-20 bg-white opacity-5 rounded-full"></div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Signalements -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover-scale">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ total_declarations }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Signalements</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clipboard-list text-xl text-blue-600 dark:text-blue-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Objets Perdus -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover-scale">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Perdus</p>
+                    <p class="text-3xl font-bold text-red-600 dark:text-red-400">{{ objets_perdus }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Non retrouvés</p>
+                </div>
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-search text-xl text-red-600 dark:text-red-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Objets Trouvés -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover-scale">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Trouvés</p>
+                    <p class="text-3xl font-bold text-green-600 dark:text-green-400">{{ objets_trouves }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">En attente</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-xl text-green-600 dark:text-green-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Objets Restitués -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover-scale">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Restitués</p>
+                    <p class="text-3xl font-bold text-purple-600 dark:text-purple-400">{{ objets_restitues }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Succès</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-handshake text-xl text-purple-600 dark:text-purple-400"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Commentaires reçus -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover-scale">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Commentaires</p>
+                    <p class="text-3xl font-bold text-orange-600 dark:text-orange-400">{{ total_commentaires }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Reçus</p>
+                </div>
+                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-comments text-xl text-orange-600 dark:text-orange-400"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        
+        <!-- Left Column: Recent Activity & Quick Actions -->
+        <div class="xl:col-span-2 space-y-8">
+            
+            <!-- Quick Actions -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+                    <i class="fas fa-rocket text-indigo-600 mr-3"></i>
+                    Actions rapides
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <a href="{% url 'signalement_add' %}" class="group flex items-center p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
+                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-plus text-xl text-blue-600 dark:text-blue-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white">Nouveau signalement</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Déclarer un objet perdu/trouvé</p>
+                        </div>
+                    </a>
+                    
+                    <a href="{% url 'mes_signalements' %}" class="group flex items-center p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all">
+                        <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-list text-xl text-green-600 dark:text-green-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white">Mes signalements</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Voir tous mes objets</p>
+                        </div>
+                    </a>
+                    
+                    <a href="{% url 'messagerie' %}" class="group flex items-center p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all">
+                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-comments text-xl text-purple-600 dark:text-purple-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white">Messagerie</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Contacter les agents</p>
+                        </div>
+                    </a>
+                    
+                    <a href="{% url 'utilisateur_profil' %}" class="group flex items-center p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all">
+                        <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-user text-xl text-orange-600 dark:text-orange-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white">Mon profil</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Gérer mes informations</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Signalements -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+                        <i class="fas fa-clock text-indigo-600 mr-3"></i>
+                        Activité récente
+                    </h2>
+                    <a href="{% url 'mes_signalements' %}" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium text-sm">
+                        Voir tout →
+                    </a>
+                </div>
+                
+                <div class="space-y-4">
+                    {% for declaration in recent_declarations %}
+                    <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                        <div class="w-12 h-12 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas {% if declaration.type_declaration == 'perdu' %}fa-search{% else %}fa-check-circle{% endif %} text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-medium text-gray-900 dark:text-white">{{ declaration.nom_objet }}</h3>
+                                {% if declaration.nb_commentaires > 0 %}
+                                <span class="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 px-2 py-1 rounded-full text-xs font-medium ml-2">
+                                    <i class="fas fa-comments mr-1"></i>{{ declaration.nb_commentaires }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mr-2
+                                    {% if declaration.type_declaration == 'perdu' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
+                                    {% else %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% endif %}">
+                                    {% if declaration.type_declaration == 'perdu' %}Perdu{% else %}Trouvé{% endif %}
+                                </span>
+                                {{ declaration.date_declaration|date:"d M Y" }}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                                {% if declaration.statut == 'cree' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                                {% elif declaration.statut == 'valide' %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                                {% elif declaration.statut == 'publie' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                                {% elif declaration.statut == 'restitue' %}bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200
+                                {% else %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200{% endif %}">
+                                {{ declaration.get_statut_display }}
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-inbox text-4xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                        <p class="text-gray-500 dark:text-gray-400">Aucune activité récente</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Stats Chart & Timeline -->
+        <div class="space-y-8">
+            
+            <!-- Statistics Chart -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+                    <i class="fas fa-chart-pie text-indigo-600 mr-3"></i>
+                    Statistiques
+                </h2>
+                
+                <div class="relative h-64">
+                    <canvas id="statsChart"></canvas>
+                </div>
+                
+                <div class="mt-6 space-y-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                            <span class="text-gray-600 dark:text-gray-400">Objets perdus</span>
+                        </div>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ objets_perdus }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                            <span class="text-gray-600 dark:text-gray-400">Objets trouvés</span>
+                        </div>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ objets_trouves }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                            <span class="text-gray-600 dark:text-gray-400">Objets restitués</span>
+                        </div>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ objets_restitues }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Commentaires récents -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+                    <i class="fas fa-comments text-orange-600 mr-3"></i>
+                    Commentaires récents
+                </h2>
+                
+                <div class="space-y-4">
+                    {% for commentaire in commentaires_recents %}
+                    <div class="flex items-start p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors">
+                        <div class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center mr-3 text-sm font-medium flex-shrink-0">
+                            {{ commentaire.get_display_name|slice:":1"|upper }}
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ commentaire.get_display_name }}</p>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ commentaire.date_creation|timesince }}</span>
+                            </div>
+                            <p class="text-sm text-gray-700 dark:text-gray-300 mb-1">{{ commentaire.contenu|truncatewords:10 }}</p>
+                            <p class="text-xs text-orange-600 dark:text-orange-400">
+                                Sur: <a href="{% url 'signalement_detail' commentaire.declaration.pk %}" class="font-medium hover:underline">{{ commentaire.declaration.nom_objet }}</a>
+                            </p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-comments text-4xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                        <p class="text-gray-500 dark:text-gray-400">Aucun commentaire reçu</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if commentaires_recents %}
+                <div class="mt-4 text-center">
+                    <a href="{% url 'mes_signalements' %}" class="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 text-sm font-medium">
+                        Voir tous mes signalements →
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart.js configuration
+    const ctx = document.getElementById('statsChart').getContext('2d');
+    const isDark = document.documentElement.classList.contains('dark');
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Objets perdus', 'Objets trouvés', 'Objets restitués'],
+            datasets: [{
+                data: [{{ objets_perdus }}, {{ objets_trouves }}, {{ objets_restitues }}],
+                backgroundColor: [
+                    '#ef4444', // red-500
+                    '#10b981', // green-500
+                    '#8b5cf6', // purple-500
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            cutout: '70%'
+        }
+    });
+    
+    // Update chart colors on dark mode toggle
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('darkMode', {
+            on: localStorage.getItem('darkMode') === 'true',
+            toggle() {
+                this.on = !this.on;
+                localStorage.setItem('darkMode', this.on);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

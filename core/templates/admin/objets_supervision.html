@@ -1,0 +1,339 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Supervision des Objets{% endblock %}
+{% block page_heading %}Supervision Avancée des Objets{% endblock %}
+{% block page_description %}Filtres avancés et gestion complète des déclarations{% endblock %}
+
+{% block extra_css %}
+<style>
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid;
+}
+
+.stat-card.purple { border-left-color: #667eea; }
+.stat-card.blue { border-left-color: #4facfe; }
+.stat-card.pink { border-left-color: #ff9a9e; }
+.stat-card.orange { border-left-color: #fcb69f; }
+.stat-card.green { border-left-color: #a8edea; }
+.stat-card.red { border-left-color: #ef4444; }
+.stat-card.yellow { border-left-color: #fbbf24; }
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.filters-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.filter-group {
+    margin-bottom: 1rem;
+}
+
+.filter-group label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.declarations-table {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+}
+
+.badge-status {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Statistiques globales -->
+<div class="stats-grid">
+    <div class="stat-card purple">
+        <div class="stat-label">TOTAL DÉCLARATIONS</div>
+        <div class="stat-value">{{ stats.total }}</div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-label">OBJETS PERDUS</div>
+        <div class="stat-value">{{ stats.perdus }}</div>
+    </div>
+    <div class="stat-card pink">
+        <div class="stat-label">OBJETS TROUVÉS</div>
+        <div class="stat-value">{{ stats.trouves }}</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-label">VALIDÉES</div>
+        <div class="stat-value">{{ stats.valides }}</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-label">PUBLIÉES</div>
+        <div class="stat-value">{{ stats.publies }}</div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-label">RESTITUÉES</div>
+        <div class="stat-value">{{ stats.restitues }}</div>
+    </div>
+    <div class="stat-card yellow">
+        <div class="stat-label">EN ATTENTE</div>
+        <div class="stat-value">{{ stats.en_attente }}</div>
+    </div>
+</div>
+
+<!-- Section des filtres -->
+<div class="filters-section">
+    <h5 class="mb-4"><i class="fas fa-filter me-2"></i>Filtres Avancés</h5>
+    <form method="get" id="filterForm">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="filter-group">
+                    <label>Recherche</label>
+                    <input type="text" name="search" class="form-control" placeholder="Nom, description, n°..." value="{{ search }}">
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <div class="filter-group">
+                    <label>Type</label>
+                    <select name="type" class="form-select">
+                        <option value="">Tous</option>
+                        {% for value, label in type_choices %}
+                        <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <div class="filter-group">
+                    <label>Statut</label>
+                    <select name="statut" class="form-select">
+                        <option value="">Tous</option>
+                        {% for value, label in statuts_choices %}
+                        <option value="{{ value }}" {% if statut_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <div class="filter-group">
+                    <label>Catégorie</label>
+                    <select name="categorie" class="form-select">
+                        <option value="">Toutes</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if categorie_filter == cat.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cat.nom }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            {% if regions %}
+            <div class="col-md-3">
+                <div class="filter-group">
+                    <label>Région</label>
+                    <select name="region" class="form-select">
+                        <option value="">Toutes</option>
+                        {% for region in regions %}
+                        <option value="{{ region.id }}" {% if region_filter == region.id|stringformat:"s" %}selected{% endif %}>
+                            {{ region.nom }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="col-md-3">
+                <div class="filter-group">
+                    <label>Préfecture</label>
+                    <select name="prefecture" class="form-select">
+                        <option value="">Toutes</option>
+                        {% for pref in prefectures %}
+                        <option value="{{ pref.id }}" {% if prefecture_filter == pref.id|stringformat:"s" %}selected{% endif %}>
+                            {{ pref.nom }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="filter-group">
+                    <label>Agent</label>
+                    <select name="agent" class="form-select">
+                        <option value="">Tous</option>
+                        {% for agent in agents %}
+                        <option value="{{ agent.id }}" {% if agent_filter == agent.id|stringformat:"s" %}selected{% endif %}>
+                            {{ agent.get_full_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="filter-group">
+                    <label>Date début</label>
+                    <input type="date" name="date_debut" class="form-control" value="{{ date_debut }}">
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="filter-group">
+                    <label>Date fin</label>
+                    <input type="date" name="date_fin" class="form-control" value="{{ date_fin }}">
+                </div>
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-2"></i>Filtrer
+                </button>
+                <a href="{% url 'togo_admin:objets_supervision' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-redo me-2"></i>Réinitialiser
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Tableau des déclarations -->
+<div class="declarations-table">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Type</th>
+                    <th>Objet</th>
+                    <th>Déclarant</th>
+                    <th>Catégorie</th>
+                    <th>Région</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for declaration in page_obj %}
+                <tr>
+                    <td><strong>{{ declaration.numero_declaration }}</strong></td>
+                    <td>
+                        {% if declaration.type_declaration == 'perdu' %}
+                            <span class="badge bg-danger">Perdu</span>
+                        {% else %}
+                            <span class="badge bg-success">Trouvé</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ declaration.nom_objet|truncatechars:30 }}</td>
+                    <td>{{ declaration.declarant.get_full_name|default:declaration.declarant.username }}</td>
+                    <td>{{ declaration.categorie.nom|default:"N/A" }}</td>
+                    <td>{{ declaration.region.nom|default:"N/A" }}</td>
+                    <td>{{ declaration.date_declaration|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if declaration.statut == 'cree' %}
+                            <span class="badge badge-status" style="background: #fbbf24; color: #000;">Créée</span>
+                        {% elif declaration.statut == 'valide' %}
+                            <span class="badge badge-status" style="background: #10b981; color: #fff;">Validée</span>
+                        {% elif declaration.statut == 'publie' %}
+                            <span class="badge badge-status" style="background: #3b82f6; color: #fff;">Publiée</span>
+                        {% elif declaration.statut == 'restitue' %}
+                            <span class="badge badge-status" style="background: #8b5cf6; color: #fff;">Restituée</span>
+                        {% elif declaration.statut == 'rejete' %}
+                            <span class="badge badge-status" style="background: #ef4444; color: #fff;">Rejetée</span>
+                        {% else %}
+                            <span class="badge badge-status" style="background: #6b7280; color: #fff;">{{ declaration.get_statut_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'togo_admin:declaration_detail' declaration.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Aucune déclaration trouvée avec ces critères</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="d-flex justify-content-between align-items-center p-3 border-top">
+        <div class="text-muted small">
+            Affichage de {{ page_obj.start_index }} à {{ page_obj.end_index }} sur {{ page_obj.paginator.count }} déclarations
+        </div>
+        <nav>
+            <ul class="pagination mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}">«</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}">‹</a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">{{ page_obj.number }}</span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}">›</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}">»</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

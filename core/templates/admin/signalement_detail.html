@@ -1,0 +1,507 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Détails du Signalement{% endblock %}
+
+{% block extra_head %}
+<style>
+    .signalement-detail-page {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+
+    .page-header {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 24px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        color: white;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .detail-card {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 16px 16px 0 0;
+        padding: 1.5rem 2rem;
+        margin: -2rem -2rem 2rem -2rem;
+        border: none;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-item {
+        padding: 1.5rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        border-left: 4px solid #667eea;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #4b5563;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-value {
+        font-size: 1.1rem;
+        color: #1f2937;
+        word-break: break-word;
+    }
+
+    .status-badge {
+        padding: 0.75rem 1.5rem;
+        border-radius: 20px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-perdu {
+        background: linear-gradient(135deg, #fca5a5, #ef4444);
+        color: white;
+    }
+
+    .status-trouve {
+        background: linear-gradient(135deg, #86efac, #22c55e);
+        color: white;
+    }
+
+    .status-retourne {
+        background: linear-gradient(135deg, #a78bfa, #7c3aed);
+        color: white;
+    }
+
+    .photo-preview {
+        max-width: 100%;
+        height: auto;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+
+    .photo-preview:hover {
+        transform: scale(1.05);
+    }
+
+    .btn-modern {
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        color: white;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+
+    .actions-section {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        padding: 2rem 0;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 2rem;
+    }
+
+    .user-card {
+        background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1.5rem;
+    }
+
+    .user-info h5 {
+        margin: 0;
+        color: #1f2937;
+    }
+
+    .user-info p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .commentaires-section {
+        margin-top: 2rem;
+    }
+
+    .commentaire-item {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #667eea;
+    }
+
+    .commentaire-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .commentaire-author {
+        font-weight: 600;
+        color: #4b5563;
+    }
+
+    .commentaire-date {
+        font-size: 0.8rem;
+        color: #9ca3af;
+    }
+
+    .commentaire-content {
+        color: #1f2937;
+        line-height: 1.6;
+    }
+
+    .modal-content {
+        border: none;
+        border-radius: 16px;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .full-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="signalement-detail-page">
+    <div class="container-fluid px-4">
+        <!-- En-tête -->
+        <div class="page-header">
+            <h1><i class="fas fa-search me-3"></i>Détails du Signalement #{{ signalement.id }}</h1>
+            <p class="mb-0">Informations complètes du signalement</p>
+        </div>
+
+        <!-- Informations principales -->
+        <div class="detail-card">
+            <div class="card-header">
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Informations du Signalement
+                </h4>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-box text-primary"></i>
+                        Objet
+                    </div>
+                    <div class="info-value">{{ signalement.objet.nom|default:"Non spécifié" }}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-tag text-success"></i>
+                        Statut
+                    </div>
+                    <div class="info-value">
+                        <span class="status-badge status-{{ signalement.statut }}">
+                            {% if signalement.statut == 'perdu' %}
+                                <i class="fas fa-search"></i> Objet Perdu
+                            {% elif signalement.statut == 'trouve' %}
+                                <i class="fas fa-check-circle"></i> Objet Trouvé
+                            {% elif signalement.statut == 'retourne' %}
+                                <i class="fas fa-trophy"></i> Retourné au Propriétaire
+                            {% else %}
+                                {{ signalement.get_statut_display }}
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-map-marker-alt text-danger"></i>
+                        Lieu du Signalement
+                    </div>
+                    <div class="info-value">{{ signalement.lieu|default:"Non spécifié" }}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-calendar text-info"></i>
+                        Date du Signalement
+                    </div>
+                    <div class="info-value">{{ signalement.date_signalement|date:"d F Y à H:i" }}</div>
+                </div>
+
+                {% if signalement.region %}
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-globe text-secondary"></i>
+                        Région
+                    </div>
+                    <div class="info-value">
+                        {{ signalement.region.nom }}
+                        {% if signalement.prefecture %} - {{ signalement.prefecture.nom }}{% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if signalement.structure_locale %}
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-building text-warning"></i>
+                        Structure Locale
+                    </div>
+                    <div class="info-value">{{ signalement.structure_locale.nom }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Description de l'objet -->
+            {% if signalement.objet.description %}
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-file-alt text-primary"></i>
+                    Description de l'Objet
+                </div>
+                <div class="info-value">{{ signalement.objet.description }}</div>
+            </div>
+            {% endif %}
+
+            <!-- Commentaires du signalement -->
+            {% if signalement.commentaire %}
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-comment text-info"></i>
+                    Commentaires et Circonstances
+                </div>
+                <div class="info-value">{{ signalement.commentaire }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Informations sur l'utilisateur -->
+        <div class="detail-card">
+            <div class="card-header">
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-user me-2"></i>
+                    Informations du Déclarant
+                </h4>
+            </div>
+
+            <div class="user-card">
+                <div class="user-avatar">
+                    {{ signalement.utilisateur.first_name|first|default:signalement.utilisateur.username|first|upper }}
+                </div>
+                <div class="user-info">
+                    <h5>{{ signalement.utilisateur.get_full_name|default:signalement.utilisateur.username }}</h5>
+                    <p><i class="fas fa-envelope me-1"></i> {{ signalement.utilisateur.email }}</p>
+                    {% if signalement.utilisateur.telephone %}
+                    <p><i class="fas fa-phone me-1"></i> {{ signalement.utilisateur.telephone }}</p>
+                    {% endif %}
+                    <p><i class="fas fa-user-tag me-1"></i> {{ signalement.utilisateur.get_role_display }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Photo du signalement -->
+        {% if signalement.photo %}
+        <div class="detail-card">
+            <div class="card-header">
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-camera me-2"></i>
+                    Photo du Signalement
+                </h4>
+            </div>
+
+            <div class="text-center">
+                <img src="{{ signalement.photo.url }}" 
+                     alt="Photo du signalement" 
+                     class="photo-preview"
+                     onclick="viewFullImage('{{ signalement.photo.url }}')"
+                     style="max-height: 400px;">
+                <p class="text-muted mt-2">
+                    <i class="fas fa-expand me-1"></i>
+                    Cliquez sur l'image pour l'agrandir
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Commentaires anonymes -->
+        {% if commentaires %}
+        <div class="detail-card">
+            <div class="card-header">
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-comments me-2"></i>
+                    Commentaires Publics ({{ commentaires.count }})
+                </h4>
+            </div>
+
+            <div class="commentaires-section">
+                {% for commentaire in commentaires %}
+                <div class="commentaire-item">
+                    <div class="commentaire-header">
+                        <div class="commentaire-author">
+                            <i class="fas fa-user-circle me-1"></i>
+                            {{ commentaire.get_display_name }}
+                        </div>
+                        <div class="commentaire-date">
+                            {{ commentaire.date_creation|date:"d/m/Y à H:i" }}
+                        </div>
+                    </div>
+                    <div class="commentaire-content">
+                        {{ commentaire.contenu }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="actions-section">
+            <a href="{% url 'togo_admin:signalements_list' %}" class="btn-modern btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Retour à la Liste
+            </a>
+
+            {% if can_edit %}
+            <a href="{% url 'togo_admin:signalement_edit' signalement.id %}" class="btn-modern btn-success">
+                <i class="fas fa-edit"></i>
+                Modifier le Signalement
+            </a>
+            {% endif %}
+
+            {% if can_delete %}
+            <a href="{% url 'togo_admin:signalement_delete' signalement.id %}" 
+               class="btn-modern btn-danger"
+               onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce signalement ? Cette action est irréversible.')">
+                <i class="fas fa-trash"></i>
+                Supprimer
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour l'aperçu de l'image -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Aperçu de l'Image</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="fullImage" src="" alt="Aperçu" class="full-image">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function viewFullImage(imageUrl) {
+        document.getElementById('fullImage').src = imageUrl;
+        var modal = new bootstrap.Modal(document.getElementById('imageModal'));
+        modal.show();
+    }
+
+    // Animation d'entrée
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.detail-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 150);
+        });
+    });
+</script>
+{% endblock %}

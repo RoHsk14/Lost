@@ -1,0 +1,501 @@
+{% extends "agent/base.html" %}
+{% load static %}
+
+{% block title %}Chat temps réel - TogoRetrouve{% endblock %}
+{% block page_title %}Chat temps réel{% endblock %}
+
+{% block extra_head %}
+<!-- Meta CSRF token pour JavaScript -->
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
+{% block content %}
+<!-- Chat Dashboard dans l'espace agent -->
+{% csrf_token %}
+<div class="space-y-6">
+    <!-- Test simple d'affichage -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <i class="fas fa-comments text-blue-600 mr-2"></i>
+            Interface de Chat Agent
+        </h2>
+        <p class="text-gray-600">Interface de messagerie prête à utiliser</p>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="grid grid-cols-3 gap-4 text-center">
+            <div>
+                <div class="text-2xl font-bold text-blue-600" id="total-conversations">0</div>
+                <div class="text-sm text-gray-500">Conversations</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-orange-600" id="unread-conversations">0</div>
+                <div class="text-sm text-gray-500">Non lues</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-red-600" id="total-unread-messages">0</div>
+                <div class="text-sm text-gray-500">Messages</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interface principale -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
+            
+            <!-- Liste des conversations -->
+            <div class="lg:col-span-1">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Conversations</h3>
+                    <button onclick="loadConversations()" 
+                            class="p-2 text-gray-500 hover:text-blue-600 transition-colors"
+                            title="Actualiser">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                
+                <!-- Loading -->
+                <div id="conversations-loading" class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-2xl text-blue-500 mb-2"></i>
+                    <p class="text-gray-600">Chargement...</p>
+                </div>
+                
+                <!-- Liste -->
+                <div id="conversations-list" style="display: none;" class="space-y-3 max-h-96 overflow-y-auto">
+                    <!-- Conversations seront chargées ici -->
+                </div>
+                
+                <!-- Vide -->
+                <div id="conversations-empty" style="display: none;" class="text-center py-8 text-gray-500">
+                    <i class="fas fa-comments text-4xl mb-2"></i>
+                    <p>Aucune conversation</p>
+                </div>
+            </div>
+            
+            <!-- Zone de chat -->
+            <div class="lg:col-span-3">
+                <!-- État initial -->
+                <div id="chat-placeholder" class="text-center py-12 text-gray-500">
+                    <i class="fas fa-comment-alt text-6xl mb-4"></i>
+                    <h3 class="text-lg font-medium mb-2">Sélectionnez une conversation</h3>
+                    <p class="text-sm">Choisissez une conversation pour commencer à échanger</p>
+                </div>
+                
+                <!-- Interface de chat -->
+                <div id="chat-interface" style="display: none;" class="flex flex-col h-[600px]">
+                    <!-- Header -->
+                    <div class="border-b p-4 bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 id="chat-title" class="font-semibold">Conversation</h3>
+                                <p id="chat-subtitle" class="text-sm text-gray-600">Signalement #</p>
+                            </div>
+                            <button onclick="closeChat()" class="text-gray-500 hover:text-red-500">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Messages -->
+                    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 bg-gray-50">
+                        <!-- Messages ici -->
+                    </div>
+                    
+                    <!-- Input -->
+                    <div class="border-t p-4 bg-white">
+                        <div class="flex space-x-2">
+                            <!-- Bouton fichier caché -->
+                            <input type="file" id="chat-file-input" accept="image/*,.pdf,.doc,.docx,.txt" style="display: none;" onchange="handleFileSelect()">
+                            <!-- Bouton pour sélectionner fichier -->
+                            <button onclick="document.getElementById('chat-file-input').click()" 
+                                    class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700"
+                                    title="Joindre un fichier">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <!-- Input texte -->
+                            <input type="text" id="chat-input" 
+                                   placeholder="Tapez votre message..." 
+                                   class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   onkeypress="if(event.key==='Enter') sendMessage()">
+                            <!-- Bouton envoyer -->
+                            <button onclick="sendMessage()" id="send-button"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                    title="Envoyer le message">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <!-- Zone d'aperçu fichier -->
+                        <div id="file-preview" style="display: none;" class="mt-2 p-2 bg-gray-50 rounded border">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <i class="fas fa-file mr-2 text-gray-500"></i>
+                                    <span id="file-name" class="text-sm text-gray-700"></span>
+                                </div>
+                                <button onclick="removeFile()" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+console.log('🚀 Chat Agent - Version Simple Fonctionnelle');
+let currentConversationId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM chargé, initialisation...');
+    
+    // Debug CSRF
+    const csrfCookie = getCookie('csrftoken');
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    
+    console.log('🔐 Debug CSRF:');
+    console.log('  Cookie csrftoken:', csrfCookie ? '✅ Présent' : '❌ Manquant');
+    console.log('  Meta csrf-token:', csrfMeta ? '✅ Présent' : '❌ Manquant');
+    console.log('  Input csrfmiddlewaretoken:', csrfInput ? '✅ Présent' : '❌ Manquant');
+    
+    loadConversations();
+    
+    // Auto-ouverture de conversation sélectionnée ou depuis URL
+    {% if selected_conversation %}
+    // Conversation sélectionnée depuis la vue (réclamation/document)
+    setTimeout(() => {
+        selectConversation({{ selected_conversation.id }});
+    }, 500);
+    {% else %}
+    // Auto-ouverture si URL contient openChat
+    const urlParams = new URLSearchParams(window.location.search);
+    const openChatId = urlParams.get('openChat');
+    if (openChatId) {
+        console.log('Auto-ouverture conversation:', openChatId);
+        setTimeout(() => selectConversation(openChatId), 1500);
+    }
+    {% endif %}
+});
+
+async function loadConversations() {
+    console.log('Chargement des conversations...');
+    const loadingEl = document.getElementById('conversations-loading');
+    const listEl = document.getElementById('conversations-list');
+    const emptyEl = document.getElementById('conversations-empty');
+    
+    try {
+        loadingEl.style.display = 'block';
+        listEl.style.display = 'none';
+        emptyEl.style.display = 'none';
+        
+        const response = await fetch('/api/conversations/');
+        const conversations = await response.json();
+        
+        console.log('Conversations reçues:', conversations);
+        
+        // Mettre à jour les stats
+        document.getElementById('total-conversations').textContent = conversations.length;
+        const unreadConv = conversations.filter(c => c.unread_count > 0).length;
+        document.getElementById('unread-conversations').textContent = unreadConv;
+        const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+        document.getElementById('total-unread-messages').textContent = totalUnread;
+        
+        if (conversations.length === 0) {
+            loadingEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+            return;
+        }
+        
+        // Afficher les conversations
+        listEl.innerHTML = conversations.map(conv => `
+            <div class="conversation-item p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${currentConversationId == conv.id ? 'bg-blue-50 border-blue-300' : ''}"
+                 onclick="selectConversation(${conv.id})" data-id="${conv.id}">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-semibold text-gray-900 truncate">${conv.citoyen_nom || conv.declarant_nom || 'Déclarant inconnu'}</h4>
+                        <p class="text-sm text-blue-600 font-medium truncate mt-1">${conv.objet_signalement || conv.signalement_objet || 'Objet non spécifié'}</p>
+                        <p class="text-xs text-gray-500 truncate mt-1">Signalement #${conv.signalement_numero || 'N/A'}</p>
+                        <p class="text-xs text-gray-400 mt-1">${conv.derniere_activite ? new Date(conv.derniere_activite).toLocaleDateString() : 'Nouveau'}</p>
+                    </div>
+                    ${conv.unread_count > 0 ? `
+                        <span class="ml-2 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                            ${conv.unread_count}
+                        </span>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+        
+        loadingEl.style.display = 'none';
+        listEl.style.display = 'block';
+        
+    } catch (error) {
+        console.error('Erreur chargement conversations:', error);
+        loadingEl.innerHTML = '<div class="text-red-500 text-center p-4">Erreur: ' + error.message + '</div>';
+    }
+}
+
+function selectConversation(conversationId) {
+    console.log('Sélection conversation:', conversationId);
+    currentConversationId = conversationId;
+    
+    // Mettre à jour la sélection visuelle
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('bg-blue-50', 'border-blue-300');
+    });
+    const selectedItem = document.querySelector(`[data-id="${conversationId}"]`);
+    if (selectedItem) {
+        selectedItem.classList.add('bg-blue-50', 'border-blue-300');
+    }
+    
+    // Masquer placeholder, afficher chat
+    document.getElementById('chat-placeholder').style.display = 'none';
+    document.getElementById('chat-interface').style.display = 'flex';
+    
+    // Mettre à jour le titre
+    document.getElementById('chat-title').textContent = `Conversation ${conversationId}`;
+    document.getElementById('chat-subtitle').textContent = `ID: ${conversationId}`;
+    
+    // Charger les messages
+    loadMessages(conversationId);
+}
+
+async function loadMessages(conversationId) {
+    console.log('Chargement messages pour conversation:', conversationId);
+    
+    try {
+        const response = await fetch(`/api/conversations/${conversationId}/messages/`);
+        const messages = await response.json();
+        
+        console.log('Messages reçus:', messages);
+        
+        const messagesEl = document.getElementById('chat-messages');
+        
+        if (messages.length === 0) {
+            messagesEl.innerHTML = '<div class="text-center text-gray-500 p-4">Aucun message dans cette conversation</div>';
+            return;
+        }
+        
+        messagesEl.innerHTML = messages.map(msg => {
+            // Déterminer si c'est l'utilisateur actuel (agent) qui a envoyé le message
+            const currentUserId = {{ request.user.id }};
+            const isCurrentUser = msg.expediteur === currentUserId;
+            const time = new Date(msg.date_envoi).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+            
+            // Gestion des fichiers
+            let fileHtml = '';
+            if (msg.fichier_joint) {
+                const fileName = msg.fichier_joint.split('/').pop();
+                const fileExtension = fileName.split('.').pop().toLowerCase();
+                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
+                
+                if (isImage) {
+                    fileHtml = `
+                        <div class="mb-2">
+                            <img src="${msg.fichier_joint}" alt="${fileName}" 
+                                 class="max-w-xs rounded-lg cursor-pointer"
+                                 onclick="window.open('${msg.fichier_joint}', '_blank')">
+                        </div>
+                    `;
+                } else {
+                    fileHtml = `
+                        <div class="mb-2">
+                            <a href="${msg.fichier_joint}" target="_blank" 
+                               class="inline-flex items-center px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-gray-700">
+                                <i class="fas fa-file mr-2"></i>
+                                ${fileName}
+                            </a>
+                        </div>
+                    `;
+                }
+            }
+            
+            return `
+                <div class="mb-4 ${isCurrentUser ? 'text-right' : 'text-left'}">
+                    <div class="inline-block max-w-sm lg:max-w-md">
+                        ${fileHtml}
+                        ${msg.contenu ? `
+                            <div class="px-4 py-3 rounded-lg ${isCurrentUser ? 'bg-blue-600 text-white' : 'bg-white border shadow-sm'}">
+                                <div class="text-sm whitespace-pre-wrap">${msg.contenu}</div>
+                            </div>
+                        ` : ''}
+                        <div class="text-xs mt-1 ${isCurrentUser ? 'text-right' : 'text-left'} text-gray-500">
+                            <span class="font-medium">${isCurrentUser ? 'Vous' : msg.expediteur_nom || 'Citoyen'}</span>
+                            • ${time}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Scroll vers le bas
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        
+    } catch (error) {
+        console.error('Erreur chargement messages:', error);
+        document.getElementById('chat-messages').innerHTML = '<div class="text-red-500 p-4">Erreur: ' + error.message + '</div>';
+    }
+}
+
+async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const fileInput = document.getElementById('chat-file-input');
+    const sendButton = document.getElementById('send-button');
+    const message = input.value.trim();
+    
+    if ((!message && !fileInput.files[0]) || !currentConversationId) {
+        console.log('Message vide ou pas de conversation sélectionnée');
+        return;
+    }
+    
+    console.log('Envoi message:', message);
+    
+    // Désactiver le bouton pendant l'envoi
+    sendButton.disabled = true;
+    sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    try {
+        // Si on a juste un message texte, utiliser JSON
+        if (message && !fileInput.files[0]) {
+            const response = await fetch(`/api/conversations/${currentConversationId}/messages/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    contenu: message
+                })
+            });
+            
+            if (response.ok) {
+                input.value = '';
+                loadMessages(currentConversationId);
+                loadConversations();
+            } else {
+                const errorText = await response.text();
+                throw new Error(`Erreur ${response.status}: ${errorText}`);
+            }
+        } else {
+            // Si on a un fichier, utiliser FormData
+            const formData = new FormData();
+            
+            if (message) {
+                formData.append('contenu', message);
+            }
+            
+            if (fileInput.files[0]) {
+                formData.append('fichier', fileInput.files[0]);
+            }
+            
+            const response = await fetch(`/api/conversations/${currentConversationId}/messages/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+            
+            if (response.ok) {
+                input.value = '';
+                removeFile();
+                loadMessages(currentConversationId);
+                loadConversations();
+            } else {
+                const errorText = await response.text();
+                throw new Error(`Erreur ${response.status}: ${errorText}`);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Erreur envoi message:', error);
+        alert('Erreur envoi: ' + error.message);
+    } finally {
+        // Réactiver le bouton
+        sendButton.disabled = false;
+        sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+    }
+}
+
+function handleFileSelect() {
+    const fileInput = document.getElementById('chat-file-input');
+    const filePreview = document.getElementById('file-preview');
+    const fileName = document.getElementById('file-name');
+    
+    if (fileInput.files[0]) {
+        const file = fileInput.files[0];
+        fileName.textContent = file.name + ' (' + formatFileSize(file.size) + ')';
+        filePreview.style.display = 'block';
+    }
+}
+
+function removeFile() {
+    const fileInput = document.getElementById('chat-file-input');
+    const filePreview = document.getElementById('file-preview');
+    
+    fileInput.value = '';
+    filePreview.style.display = 'none';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function getCSRFToken() {
+    // Essayer d'abord le meta tag
+    const metaToken = document.querySelector('meta[name="csrf-token"]');
+    if (metaToken) {
+        return metaToken.getAttribute('content');
+    }
+    
+    // Fallback sur les cookies
+    return getCookie('csrftoken');
+}
+
+function closeChat() {
+    currentConversationId = null;
+    document.getElementById('chat-interface').style.display = 'none';
+    document.getElementById('chat-placeholder').style.display = 'block';
+    
+    // Retirer la sélection
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('bg-blue-50', 'border-blue-300');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Est-ce que ce cookie commence par le nom recherché ?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    if (!cookieValue) {
+        console.warn('Cookie CSRF non trouvé, tentative via input hidden...');
+        // Tentative de récupération via un input CSRF si présent
+        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfInput) {
+            cookieValue = csrfInput.value;
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

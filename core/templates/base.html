@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TogoRetrouve{% endblock %}</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Glassmorphism Utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .glass-dark {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #F1F5F9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="h-full bg-slate-50 flex flex-col">
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-40 w-full glass shadow-sm transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <!-- Logo -->
+                <a href="{% url 'index' %}" class="flex items-center gap-3 group">
+                    <div
+                        class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-search-location text-lg"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-slate-800"><span
+                            class="text-blue-600">Togo</span>Retrouve</span>
+                </a>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-1">
+                    <a href="{% url 'objets_list' %}"
+                        class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-blue-600 rounded-xl hover:bg-blue-50 transition-all">Objets
+                        Trouvés</a>
+                    <a href="{% url 'objets_perdus_list' %}"
+                        class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-red-600 rounded-xl hover:bg-red-50 transition-all">Objets
+                        Perdus</a>
+                    <a href="{% url 'signalements_list' %}"
+                        class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-purple-600 rounded-xl hover:bg-purple-50 transition-all">Tous
+                        les Signalements</a>
+                </div>
+
+                <!-- Right Actions -->
+                <div class="hidden md:flex items-center gap-4">
+                    {% if user.is_authenticated %}
+                    <div class="relative group" id="userMenuBtn">
+                        <button
+                            class="flex items-center gap-3 pl-4 pr-2 py-1.5 bg-white border border-gray-200 rounded-full hover:border-blue-200 transition-all shadow-sm group-hover:shadow-md">
+                            <span class="text-sm font-bold text-slate-700">{{ user.username }}</span>
+                            <div
+                                class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold text-xs shadow-inner">
+                                {{ user.username|first|upper }}
+                            </div>
+                        </button>
+
+                        <!-- Dropdown -->
+                        <div id="userMenuDropdown"
+                            class="absolute right-0 mt-2 w-56 sm:w-64 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 invisible transform scale-95 transition-all duration-200 origin-top-right z-50">
+                            <div class="py-2">
+                                <div class="px-4 py-2 border-b border-gray-100">
+                                    <p class="text-sm font-medium text-gray-700">{{ user.get_full_name|default:user.username }}</p>
+                                    <p class="text-xs text-gray-500">{{ user.email }}</p>
+                                </div>
+                                <a href="{% url 'utilisateur_dashboard' %}"
+                                    class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                    <i class="fas fa-tachometer-alt mr-3 text-blue-500"></i>
+                                    Tableau de bord
+                                </a>
+                                <a href="{% url 'utilisateur_profil' %}"
+                                    class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition text-sm">
+                                    <i class="fas fa-user mr-3 text-green-500"></i>
+                                    Mon profil
+                                </a>
+                                <div class="border-t border-gray-100 mt-1">
+                                    <a href="{% url 'logout' %}"
+                                        class="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100 transition text-sm">
+                                        <i class="fas fa-sign-out-alt mr-3"></i>
+                                        Déconnexion
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'login' %}"
+                        class="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">Connexion</a>
+                    <a href="{% url 'register' %}"
+                        class="px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all">S'inscrire</a>
+                    {% endif %}
+
+                    <a href="{% url 'signalement_add' %}"
+                        class="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-slate-800 transition-colors shadow-lg"
+                        title="Signaler un objet">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button class="md:hidden text-slate-600 hover:text-blue-600 transition-colors p-2"
+                    onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobileMenu"
+            class="hidden md:hidden border-t border-gray-100 bg-white/95 backdrop-blur-xl absolute w-full left-0 shadow-xl">
+            <div class="px-4 py-6 space-y-4">
+                <a href="{% url 'objets_list' %}"
+                    class="block px-4 py-3 rounded-xl bg-slate-50 text-slate-700 font-semibold hover:bg-blue-50 hover:text-blue-600 transition-all">Objets
+                    trouvés</a>
+                <a href="{% url 'objets_perdus_list' %}"
+                    class="block px-4 py-3 rounded-xl bg-slate-50 text-slate-700 font-semibold hover:bg-red-50 hover:text-red-600 transition-all">Objets
+                    perdus</a>
+                <div class="border-t border-gray-100 pt-4">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'utilisateur_dashboard' %}" class="block px-4 py-3 text-slate-700 font-semibold">Mon
+                        Compte</a>
+                    <a href="{% url 'logout' %}" class="block px-4 py-3 text-red-600 font-semibold">Déconnexion</a>
+                    {% else %}
+                    <div class="grid grid-cols-2 gap-4">
+                        <a href="{% url 'login' %}"
+                            class="flex justify-center py-3 rounded-xl border border-gray-200 font-bold text-slate-700">Connexion</a>
+                        <a href="{% url 'register' %}"
+                            class="flex justify-center py-3 rounded-xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/30">Inscription</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% if messages %}
+        <div class="mb-8 space-y-4 max-w-3xl mx-auto">
+            {% for message in messages %}
+            <div
+                class="p-4 rounded-2xl flex items-start gap-3 shadow-sm border animate-fade-in-down {% if message.tags == 'success' %}bg-emerald-50 border-emerald-100 text-emerald-800{% elif message.tags == 'error' %}bg-rose-50 border-rose-100 text-rose-800{% else %}bg-blue-50 border-blue-100 text-blue-800{% endif %}">
+                <i
+                    class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mt-0.5 text-lg"></i>
+                <span class="font-medium text-sm">{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-100 py-12 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div class="col-span-1 md:col-span-2">
+                    <a href="{% url 'index' %}" class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                            <i class="fas fa-search-location text-sm"></i>
+                        </div>
+                        <span class="font-bold text-lg text-slate-800">TogoRetrouve</span>
+                    </a>
+                    <p class="text-slate-500 text-sm leading-relaxed max-w-xs">
+                        La plateforme de référence pour retrouver vos objets perdus au Togo. Simple, rapide et
+                        communautaire.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-800 mb-4">Liens Rapides</h4>
+                    <ul class="space-y-2 text-sm text-slate-500">
+                        <li><a href="{% url 'index' %}" class="hover:text-blue-600 transition-colors">Accueil</a></li>
+                        <li><a href="{% url 'objets_list' %}" class="hover:text-blue-600 transition-colors">Objets
+                                trouvés</a></li>
+                        <li><a href="{% url 'objets_perdus_list' %}"
+                                class="hover:text-blue-600 transition-colors">Objets perdus</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-800 mb-4">Légal</h4>
+                    <ul class="space-y-2 text-sm text-slate-500">
+                        <li><a href="#" class="hover:text-blue-600 transition-colors">Confidentialité</a></li>
+                        <li><a href="#" class="hover:text-blue-600 transition-colors">Conditions d'utilisation</a></li>
+                        <li><a href="#" class="hover:text-blue-600 transition-colors">Nous contacter</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-xs text-slate-400 font-medium">© 2024 TogoRetrouve Project. Tous droits réservés.</p>
+                <div class="flex gap-4">
+                    <a href="#"
+                        class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all"><i
+                            class="fab fa-facebook-f text-xs"></i></a>
+                    <a href="#"
+                        class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-sky-50 hover:text-sky-500 transition-all"><i
+                            class="fab fa-twitter text-xs"></i></a>
+                    <a href="#"
+                        class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-pink-50 hover:text-pink-600 transition-all"><i
+                            class="fab fa-instagram text-xs"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // User Menu Dropdown Logic
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userMenuDropdown = document.getElementById('userMenuDropdown');
+
+        if (userMenuBtn && userMenuDropdown) {
+            userMenuBtn.addEventListener('mouseenter', () => {
+                userMenuDropdown.classList.remove('invisible', 'opacity-0', 'scale-95');
+                userMenuDropdown.classList.add('visible', 'opacity-100', 'scale-100');
+            });
+
+            // Keep visible when hovering dropdown
+            userMenuDropdown.addEventListener('mouseenter', () => {
+                userMenuDropdown.classList.remove('invisible', 'opacity-0', 'scale-95');
+                userMenuDropdown.classList.add('visible', 'opacity-100', 'scale-100');
+            });
+
+            // Hide when leaving both
+            userMenuBtn.addEventListener('mouseleave', (e) => {
+                setTimeout(() => {
+                    if (!userMenuDropdown.matches(':hover')) {
+                        userMenuDropdown.classList.add('invisible', 'opacity-0', 'scale-95');
+                        userMenuDropdown.classList.remove('visible', 'opacity-100', 'scale-100');
+                    }
+                }, 200);
+            });
+            userMenuDropdown.addEventListener('mouseleave', () => {
+                userMenuDropdown.classList.add('invisible', 'opacity-0', 'scale-95');
+                userMenuDropdown.classList.remove('visible', 'opacity-100', 'scale-100');
+            });
+        }
+    </script>
+</body>
+
+</html>

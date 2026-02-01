@@ -1,3 +1,12 @@
+def get_or_create_conversation(signalement, agent, declarant):
+    """Récupère ou crée une conversation unique pour un signalement, un agent et un déclarant."""
+    from core.models import Conversation
+    conv, created = Conversation.objects.get_or_create(
+        signalement=signalement,
+        agent=agent,
+        declarant=declarant
+    )
+    return conv
 # core/api_views.py
 import json
 from django.http import JsonResponse
@@ -406,13 +415,14 @@ def _agent_peut_acceder_signalement(agent, signalement):
 @api_view(['GET', 'POST'])
 def api_conversation_messages(request, conversation_id):
     """API pour récupérer (GET) et envoyer (POST) des messages"""
+    from core.models import Declaration, Utilisateur, Conversation
     conversation = get_object_or_404(Conversation, id=conversation_id)
     user = request.user
-    
+
     # Vérifier les permissions
     if not (conversation.agent == user or conversation.declarant == user):
         return Response({'error': 'Accès non autorisé'}, status=403)
-    
+
     if request.method == 'GET':
         # Logique existante pour récupérer les messages
         page = int(request.GET.get('page', 1))
@@ -444,21 +454,26 @@ def api_conversation_messages(request, conversation_id):
             })
         
         return Response(data)
-    
     elif request.method == 'POST':
         # Créer un nouveau message
         try:
             # Récupérer le contenu et le fichier
             contenu = request.data.get('contenu', '').strip()
             fichier = request.FILES.get('fichier')
-            
+
             # Valider qu'il y a au moins un contenu ou un fichier
             if not contenu and not fichier:
                 return Response({'error': 'Message vide'}, status=400)
-            
+
+            # S'assurer que la conversation est bien unique pour ce signalement/agent/déclarant
+            signalement = conversation.signalement
+            agent = conversation.agent
+            declarant = conversation.declarant
+            conversation = get_or_create_conversation(signalement, agent, declarant)
+
             # Déterminer le destinataire
             destinataire = conversation.declarant if user == conversation.agent else conversation.agent
-            
+
             # Créer le message
             message = Message.objects.create(
                 conversation=conversation,
@@ -467,12 +482,12 @@ def api_conversation_messages(request, conversation_id):
                 contenu=contenu,
                 fichier=fichier
             )
-            
+
             # Mettre à jour la conversation
             conversation.derniere_activite = message.created_at
             conversation.dernier_message = contenu or "Fichier joint"
             conversation.save()
-            
+
             # Réponse avec les détails du message créé
             return Response({
                 'id': message.id,
@@ -485,7 +500,7 @@ def api_conversation_messages(request, conversation_id):
                 'fichier_joint': message.fichier.url if message.fichier else None,
                 'status': 'success'
             }, status=201)
-            
+
         except Exception as e:
             print(f"Erreur création message: {e}")
             return Response({'error': f'Erreur interne: {str(e)}'}, status=500)

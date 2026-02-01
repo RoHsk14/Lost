@@ -1,0 +1,571 @@
+{% extends 'base.html' %}
+{% load l10n %}
+
+{% block title %}{{ signalement.nom_objet }} - Détails TogoRetrouve{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#F8FAFC]">
+    <!-- Custom CSS for advanced effects -->
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.7));
+        }
+
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .info-card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+
+    <!-- Top Navigation / Breadcrumb -->
+    <div class="bg-white border-b border-gray-100">
+        <div class="container mx-auto px-4 py-4">
+            <nav class="flex items-center space-x-3 text-sm">
+                <a href="{% url 'index' %}"
+                    class="text-gray-500 hover:text-blue-600 font-medium transition-colors flex items-center">
+                    <i class="fas fa-home mr-2 text-xs"></i> Accueil
+                </a>
+                <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
+                <a href="{% url 'signalements_list' %}"
+                    class="text-gray-500 hover:text-blue-600 font-medium transition-colors">Signalements</a>
+                <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
+                <span class="text-blue-900 font-semibold truncate">{{ signalement.nom_objet }}</span>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 lg:py-12">
+        <div class="grid lg:grid-cols-12 gap-8 items-start">
+
+            <!-- Left Column: Visuals & Main Info (Lg: 8 cols) -->
+            <div class="lg:col-span-8 space-y-8">
+
+                <!-- Main Header Card -->
+                <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                    <!-- Hero Visual Area -->
+                    <div
+                        class="relative h-[400px] lg:h-[500px] group overflow-hidden bg-gray-50 flex items-center justify-center p-8">
+                        {% if signalement.photo_principale %}
+                        <div
+                            class="relative w-64 h-64 lg:w-80 h-80 rounded-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] border-8 border-white group-hover:scale-105 transition-transform duration-700 ring-4 ring-blue-50/50">
+                            <img src="{{ signalement.photo_principale.url }}" alt="{{ signalement.nom_objet }}"
+                                class="w-full h-full object-cover">
+                        </div>
+                        {% else %}
+                        <div
+                            class="w-64 h-64 lg:w-80 h-80 rounded-full bg-gradient-to-br {% if signalement.type_declaration == 'trouve' %}from-emerald-400 to-teal-600{% else %}from-red-400 to-rose-600{% endif %} flex items-center justify-center shadow-2xl shadow-blue-900/10 border-8 border-white ring-4 ring-blue-50/50">
+                            <div class="text-center floating">
+                                <div class="text-7xl lg:text-8xl mb-4 drop-shadow-2xl">
+                                    {% if signalement.categorie == 'electronique' %}📱
+                                    {% elif signalement.categorie == 'accessoire' %}👜
+                                    {% elif signalement.categorie == 'cles' %}🔑
+                                    {% elif signalement.categorie == 'vetement' %}👕
+                                    {% elif signalement.categorie == 'document' %}📄
+                                    {% else %}📦{% endif %}
+                                </div>
+                                <span
+                                    class="px-5 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-white font-bold uppercase tracking-widest text-[10px] border border-white/30">
+                                    {{ signalement.categorie }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Subtle Background Pattern -->
+                        <div class="absolute inset-0 opacity-[0.03] pointer-events-none"
+                            style="background-image: radial-gradient(#1E3A8A 1px, transparent 1px); background-size: 20px 20px;">
+                        </div>
+
+                        <div class="absolute top-8 left-8 flex flex-col gap-3">
+                            <div
+                                class="{% if signalement.type_declaration == 'trouve' %}bg-emerald-500{% else %}bg-rose-500{% endif %} text-white px-6 py-2.5 rounded-2xl font-black text-sm tracking-tighter shadow-xl flex items-center border border-white/20">
+                                <span class="w-2.5 h-2.5 bg-white rounded-full mr-3 animate-ping"></span>
+                                {% if signalement.type_declaration == 'trouve' %}✨ OBJET TROUVÉ{% else %}🔍 OBJET
+                                PERDU{% endif %}
+                            </div>
+                            <div
+                                class="bg-white/90 backdrop-blur-md text-gray-900 px-5 py-2 rounded-2xl font-bold text-xs shadow-lg inline-flex items-center self-start border border-gray-100/50">
+                                <i class="far fa-clock mr-2 text-blue-600"></i>
+                                <!-- {{
+                                signalement.date_declaration|timesince }} -->
+                            </div>
+                        </div>
+
+                        {% if photos_supplementaires %}
+                        <div
+                            class="absolute bottom-6 right-8 flex -space-x-3 hover:space-x-2 transition-all duration-300">
+                            {% for photo in photos_supplementaires|slice:":3" %}
+                            <div
+                                class="w-16 h-16 rounded-xl border-4 border-white shadow-xl overflow-hidden cursor-pointer hover:z-10 transition-all">
+                                <img src="{{ photo.photo.url }}" class="w-full h-full object-cover">
+                            </div>
+                            {% endfor %}
+                            {% if photos_supplementaires|length > 3 %}
+                            <div
+                                class="w-16 h-16 rounded-xl border-4 border-white bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xl cursor-pointer">
+                                +{{ photos_supplementaires|length|add:"-3" }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Main Info Content -->
+                    <div class="p-8 lg:p-12">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                            <div>
+                                <h1 class="text-4xl lg:text-5xl font-black text-gray-900 mb-4 tracking-tight">
+                                    {{ signalement.nom_objet }}
+                                </h1>
+                                <div class="flex flex-wrap gap-3">
+                                    <span
+                                        class="inline-flex items-center px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-bold ring-1 ring-inset ring-blue-700/10">
+                                        Ref: #{{ signalement.id }}
+                                    </span>
+                                    {% if signalement.statut == 'cree' %}
+                                    <span
+                                        class="inline-flex items-center px-4 py-1.5 bg-amber-50 text-amber-700 rounded-full text-xs font-bold ring-1 ring-inset ring-amber-700/10">
+                                        Vérification en cours
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-3xl border border-gray-100">
+                                <div
+                                    class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm text-2xl font-black text-blue-600">
+                                    {{ signalement.declarant.username|first|upper }}
+                                </div>
+                                <div>
+                                    <p
+                                        class="text-[10px] uppercase font-bold text-gray-400 tracking-widest leading-none mb-1">
+                                        Publié par</p>
+                                    <p class="text-sm font-bold text-gray-900">{{ signalement.declarant.username }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Grid Details -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                            <div
+                                class="p-6 rounded-3xl bg-gray-50/50 border border-gray-100 info-card-hover transition-all duration-300">
+                                <div
+                                    class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mb-4">
+                                    <i class="fas fa-tag"></i>
+                                </div>
+                                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">Catégorie
+                                </p>
+                                <p class="font-bold text-gray-900">{{ signalement.categorie }}</p>
+                            </div>
+
+                            <div
+                                class="p-6 rounded-3xl bg-gray-50/50 border border-gray-100 info-card-hover transition-all duration-300">
+                                <div
+                                    class="w-10 h-10 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mb-4">
+                                    <i class="fas fa-location-dot"></i>
+                                </div>
+                                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">Lieu</p>
+                                <p class="font-bold text-gray-900">{{ signalement.lieu_precis }}</p>
+                            </div>
+
+                            <div
+                                class="p-6 rounded-3xl bg-gray-50/50 border border-gray-100 info-card-hover transition-all duration-300">
+                                <div
+                                    class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
+                                    <i class="fas fa-calendar"></i>
+                                </div>
+                                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">Date</p>
+                                <p class="font-bold text-gray-900">{{ signalement.date_declaration|date:"d M Y" }}</p>
+                            </div>
+
+                            {% if signalement.prefecture %}
+                            <div
+                                class="p-6 rounded-3xl bg-gray-50/50 border border-gray-100 info-card-hover transition-all duration-300">
+                                <div
+                                    class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4">
+                                    <i class="fas fa-city"></i>
+                                </div>
+                                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">Préfecture
+                                </p>
+                                <p class="font-bold text-gray-900">{{ signalement.prefecture.nom }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description Block -->
+                        {% if signalement.description %}
+                        <div class="relative p-10 rounded-[2.5rem] bg-blue-900 text-white overflow-hidden shadow-2xl">
+                            <!-- Background Decoration -->
+                            <div class="absolute -top-20 -right-20 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl">
+                            </div>
+
+                            <div class="relative">
+                                <div class="flex items-center gap-4 mb-8">
+                                    <div
+                                        class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20">
+                                        <i class="fas fa-quote-left text-xl"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-black">Description détaillée</h3>
+                                </div>
+                                <p class="text-blue-100 text-lg leading-relaxed font-light">
+                                    {{ signalement.description }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Secondary Info (Commentaire déclarant) -->
+                        {% if signalement.commentaire_declarant %}
+                        <div
+                            class="mt-8 p-8 border-2 border-dashed border-gray-100 rounded-[2rem] bg-gray-50/30 flex items-start gap-6">
+                            <div class="text-4xl text-gray-200"><i class="fas fa-comment-dots"></i></div>
+                            <div>
+                                <h4 class="text-xs uppercase font-black text-gray-400 tracking-widest mb-2">Note du
+                                    déclarant</h4>
+                                <p class="text-gray-600 italic">"{{ signalement.commentaire_declarant }}"</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Unified Comments Section -->
+                <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 lg:p-12">
+                    <div class="flex items-center justify-between mb-12">
+                        <div class="flex items-center gap-6">
+                            <div
+                                class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[1.5rem] flex items-center justify-center shadow-lg shadow-indigo-100">
+                                <i class="fas fa-comments text-white text-2xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-3xl font-black text-gray-900 tracking-tight">Espace Communautaire</h2>
+                                <p class="text-gray-500 font-medium">Partagez vos indices de manière sécurisée</p>
+                            </div>
+                        </div>
+                        <div
+                            class="hidden sm:block px-6 py-2 bg-gray-100 rounded-full text-xs font-black text-gray-600">
+                            {{ nb_commentaires }} INDICE{{ nb_commentaires|pluralize|upper }}
+                        </div>
+                    </div>
+
+                    <!-- Modern Comment Form -->
+                    <div
+                        class="bg-indigo-50/50 rounded-[2rem] p-8 mb-12 border border-indigo-100/50 transition-all hover:bg-indigo-50">
+                        <form method="post" id="commentaireForm" class="space-y-6">
+                            {% csrf_token %}
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="space-y-3">
+                                    <label
+                                        class="text-xs font-black text-indigo-900/40 uppercase tracking-widest pl-2">Pseudonyme</label>
+                                    <input type="text" name="{{ form.pseudo.name }}" id="{{ form.pseudo.id_for_label }}"
+                                        placeholder="Ex: Koffi T."
+                                        class="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium placeholder-gray-300 shadow-sm">
+                                </div>
+                                <div class="space-y-3">
+                                    <label
+                                        class="text-xs font-black text-indigo-900/40 uppercase tracking-widest pl-2">Contact
+                                        (Optionnel)</label>
+                                    <input type="text" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}"
+                                        placeholder="Email ou téléphone"
+                                        class="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium placeholder-gray-300 shadow-sm">
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <label
+                                    class="text-xs font-black text-indigo-900/40 uppercase tracking-widest pl-2">Votre
+                                    indice ou information</label>
+                                <textarea name="{{ form.contenu.name }}" id="{{ form.contenu.id_for_label }}" rows="4"
+                                    placeholder="Apportez toute information utile à la communauté..."
+                                    class="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium placeholder-gray-300 shadow-sm resize-none"></textarea>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit"
+                                    class="group bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-2xl font-black text-sm tracking-tight transition-all transform hover:scale-105 shadow-xl shadow-indigo-100 flex items-center">
+                                    <i
+                                        class="fas fa-paper-plane mr-3 group-hover:translate-x-1 transition-transform"></i>
+                                    PUBLIER L'INDICE
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Comment List -->
+                    {% if commentaires %}
+                    <div class="space-y-6">
+                        {% for commentaire in commentaires %}
+                        <div
+                            class="group bg-white border border-gray-100 hover:border-blue-200 rounded-3xl p-8 transition-all hover:shadow-xl hover:shadow-blue-50/50">
+                            <div class="flex items-start gap-6">
+                                <div
+                                    class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl font-black flex-shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                                    {{ commentaire.get_display_name|slice:":1"|upper }}
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div>
+                                            <h4 class="font-black text-gray-900 tracking-tight">{{
+                                                commentaire.get_display_name }}</h4>
+                                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{{
+                                                commentaire.date_creation|date:"d M Y • H:i" }}</p>
+                                        </div>
+                                        {% if commentaire.email %}
+                                        <span
+                                            class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"
+                                            title="Contact disponible">
+                                            <i class="fas fa-id-card"></i>
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-gray-600 leading-relaxed font-medium">{{ commentaire.contenu }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-20 border-2 border-dashed border-gray-100 rounded-[2rem]">
+                        <div
+                            class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-8 text-gray-300">
+                            <i class="fas fa-search text-3xl"></i>
+                        </div>
+                        <h3 class="text-xl font-black text-gray-400">Aucun indice partagé pour l'instant</h3>
+                        <p class="text-gray-400 mt-2 font-medium">Soyez le premier à apporter votre aide</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Column: Quick Actions & Stats (Lg: 4 cols) -->
+            <div class="lg:col-span-4 space-y-8 sticky top-32">
+
+                <!-- Main Quick Action Card -->
+                <div
+                    class="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden">
+                    <div
+                        class="{% if signalement.type_declaration == 'trouve' %}bg-emerald-600{% else %}bg-blue-600{% endif %} p-8 text-white text-center">
+                        <div
+                            class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 border border-white/30 floating">
+                            <i
+                                class="fas {% if signalement.type_declaration == 'trouve' %}fa-hand-paper{% else %}fa-binoculars{% endif %} text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-black tracking-tight mb-2">
+                            {% if signalement.type_declaration == 'trouve' %}C'est votre objet ?{% else %}L'avez-vous
+                            trouvé ?{% endif %}
+                        </h3>
+                        <p class="text-[11px] font-black uppercase tracking-[0.2em] text-white/60">Agir maintenant</p>
+                    </div>
+
+                    <div class="p-8">
+                        <div class="space-y-4">
+                            {% if signalement.type_declaration == 'trouve' %}
+                            <a href="{% url 'start_claim_object' signalement.pk %}"
+                                class="flex items-center justify-center gap-3 w-full bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-5 rounded-[1.5rem] font-black text-sm tracking-tight transition-all transform hover:scale-[1.02] shadow-xl shadow-emerald-200">
+                                <i class="fas fa-hand-paper"></i> RÉCLAMER L'OBJET
+                            </a>
+                            {% else %}
+                            <a href="{% url 'start_found_object' signalement.pk %}"
+                                class="flex items-center justify-center gap-3 w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-5 rounded-[1.5rem] font-black text-sm tracking-tight transition-all transform hover:scale-[1.02] shadow-xl shadow-blue-200">
+                                <i class="fas fa-bullhorn rotate-12"></i> JE L'AI TROUVÉ !
+                            </a>
+                            {% endif %}
+
+                            <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-2xl justify-center">
+                                <i class="fas fa-shield-halved text-emerald-500 text-[10px]"></i>
+                                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Processus
+                                    sécurisé</span>
+                            </div>
+                        </div>
+
+                        <!-- User Management Actions (if owner) -->
+                        {% if user == signalement.declarant %}
+                        <div class="mt-8 pt-8 border-t border-gray-100 grid grid-cols-2 gap-4">
+                            <a href="{% url 'signalement_edit' signalement.pk %}"
+                                class="flex items-center justify-center gap-2 py-4 bg-amber-50 text-amber-600 rounded-2xl font-black text-[10px] hover:bg-amber-100 transition-colors uppercase tracking-widest">
+                                <i class="fas fa-edit"></i> Editer
+                            </a>
+                            <a href="{% url 'signalement_delete' signalement.pk %}"
+                                onclick="return confirm('Confirmer la suppression ?')"
+                                class="flex items-center justify-center gap-2 py-4 bg-rose-50 text-rose-600 rounded-2xl font-black text-[10px] hover:bg-rose-100 transition-colors uppercase tracking-widest">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Sharing Center -->
+                <div class="bg-gray-900 rounded-[2.5rem] p-8 text-white">
+                    <h4 class="text-sm font-black uppercase tracking-[0.3em] text-gray-500 mb-8 flex items-center">
+                        <span class="w-8 h-[1px] bg-gray-800 mr-4"></span> Partage Social
+                    </h4>
+                    <div class="grid grid-cols-4 gap-4">
+                        <button onclick="partagerFacebook()"
+                            class="aspect-square rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl hover:bg-blue-600 hover:border-blue-600 transition-all duration-300">
+                            <i class="fab fa-facebook-f"></i>
+                        </button>
+                        <button onclick="partagerTwitter()"
+                            class="aspect-square rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl hover:bg-sky-500 hover:border-sky-500 transition-all duration-300">
+                            <i class="fab fa-twitter"></i>
+                        </button>
+                        <button onclick="partagerWhatsApp()"
+                            class="aspect-square rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl hover:bg-emerald-500 hover:border-emerald-500 transition-all duration-300">
+                            <i class="fab fa-whatsapp"></i>
+                        </button>
+                        <button onclick="copierLien()"
+                            class="aspect-square rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl hover:bg-white hover:text-black hover:border-white transition-all duration-300">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Location Map (if coordinates available) -->
+                {% if signalement.latitude and signalement.longitude %}
+                <div class="bg-white rounded-[2.5rem] p-8 border border-gray-100 overflow-hidden">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-map-marker-alt text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-black text-gray-900">Localisation GPS</h4>
+                            <p class="text-xs text-gray-500 font-medium">Emplacement précis</p>
+                        </div>
+                    </div>
+                    <div id="detail-map" class="w-full h-64 rounded-2xl border-2 border-gray-100 shadow-sm"></div>
+                    <div class="mt-4 p-3 bg-gray-50 rounded-xl text-xs text-gray-600 font-mono text-center">
+                        📍 {{ signalement.latitude }}, {{ signalement.longitude }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Stats Summary -->
+                <div class="bg-white rounded-[2.5rem] p-8 border border-gray-100">
+                    <div class="flex items-center justify-between mb-6">
+                        <span class="text-xs font-black uppercase text-gray-400 tracking-widest">Engagement</span>
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                    </div>
+                    <div class="flex items-end justify-between">
+                        <div>
+                            <p class="text-3xl font-black text-gray-900">{{ signalement.nb_vues|default:"12" }}</p>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Vues uniques
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-3xl font-black text-blue-600">{{ nb_commentaires }}</p>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Interactions
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="{% url 'signalements_list' %}"
+                    class="flex items-center justify-center gap-3 w-full border-2 border-gray-100 hover:bg-gray-50 text-gray-400 h-16 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all">
+                    <i class="fas fa-long-arrow-left"></i> Voir tout le flux
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Social Sharing Logic
+    function partagerFacebook() {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank', 'width=600,height=400');
+    }
+    function partagerTwitter() {
+        const text = encodeURIComponent('{{ signalement.nom_objet }} {% if signalement.type_declaration == "trouve" %}trouvé{% else %}perdu{% endif %} sur TogoRetrouve');
+        window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(window.location.href)}`, '_blank', 'width=600,height=400');
+    }
+    function partagerWhatsApp() {
+        const text = encodeURIComponent('Regarde ce signalement sur TogoRetrouve: {{ signalement.nom_objet }}\n');
+        window.open(`https://wa.me/?text=${text}${encodeURIComponent(window.location.href)}`, '_blank');
+    }
+    function copierLien() {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            alert('Lien copié dans le presse-papier !');
+        });
+    }
+
+    // Smooth UI Interactions
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('commentaire_ajoute') === 'true') {
+            document.getElementById('commentaireForm')?.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+
+    // Handle Comment Loading State
+    document.getElementById('commentaireForm')?.addEventListener('submit', (e) => {
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-3"></i>TRAITEMENT...';
+        btn.disabled = true;
+    });
+
+    // Initialize map if coordinates are available
+    {% if signalement.latitude and signalement.longitude %}
+    const lat = {{ signalement.latitude| unlocalize }};
+    const lng = {{ signalement.longitude| unlocalize }};
+    const detailMap = L.map('detail-map', {
+        scrollWheelZoom: false,
+        dragging: false,
+        zoomControl: true
+    }).setView([lat, lng], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(detailMap);
+
+    // Add marker with custom icon color based on type
+    const markerIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background-color: {% if signalement.type_declaration == "trouve" %}#10b981{% else %}#f43f5e{% endif %}; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><div style="transform: rotate(45deg); margin-top: 3px; text-align: center; color: white; font-size: 14px;">📍</div></div>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 30]
+    });
+
+    L.marker([{{ signalement.latitude | unlocalize }}, {{ signalement.longitude | unlocalize }}], {
+        icon: markerIcon
+    }).addTo(detailMap)
+        .bindPopup('<strong>{{ signalement.nom_objet }}</strong><br>{{ signalement.lieu_precis }}')
+        .openPopup();
+    {% endif %}
+</script>
+{% endblock %}

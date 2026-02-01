@@ -1,0 +1,150 @@
+{% extends 'agent/base.html' %}
+{% load static %}
+
+{% block title %}Contacter le déclarant - TogoRetrouve{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+    <!-- En-tête -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">
+                    📨 Messagerie avec le déclarant
+                </h1>
+                <p class="text-gray-600">
+                    Communication concernant : <strong>{{ signalement.nom_objet }}</strong> ({{ signalement.numero_declaration }})
+                </p>
+            </div>
+            <a href="{% url 'togo_agent:signalement_detail' signalement.id %}" 
+               class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+                ← Retour au signalement
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Informations du déclarant -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <h3 class="font-semibold text-gray-800 mb-4">👤 Déclarant</h3>
+                
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
+                        {{ declarant.first_name.0|default:'?' }}{{ declarant.last_name.0|default:'' }}
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-800">{{ declarant.get_full_name|default:declarant.username }}</p>
+                        <p class="text-sm text-gray-600">{{ declarant.email }}</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 text-sm">
+                    <p><strong>Téléphone:</strong> {{ declarant.telephone|default:"Non renseigné" }}</p>
+                    <p><strong>Membre depuis:</strong> {{ declarant.date_joined|date:"M Y" }}</p>
+                    <p><strong>Statut:</strong> 
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            🟢 Actif
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Résumé du signalement -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mt-4">
+                <h3 class="font-semibold text-gray-800 mb-4">📋 Signalement</h3>
+                <div class="space-y-2 text-sm">
+                    <p><strong>Objet:</strong> {{ signalement.nom_objet }}</p>
+                    <p><strong>Date:</strong> {{ signalement.date_incident|date:"d/m/Y" }}</p>
+                    <p><strong>Statut:</strong> 
+                        {% if signalement.statut == 'cree' %}
+                            <span class="text-orange-600">🟡 {{ signalement.get_statut_display }}</span>
+                        {% elif signalement.statut == 'valide' %}
+                            <span class="text-green-600">🟢 {{ signalement.get_statut_display }}</span>
+                        {% else %}
+                            <span class="text-blue-600">🔵 {{ signalement.get_statut_display }}</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Lieu:</strong> {{ signalement.lieu_precis }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zone de conversation -->
+        <div class="lg:col-span-3">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-[600px]">
+                <!-- En-tête conversation -->
+                <div class="border-b border-gray-200 p-4">
+                    <h3 class="font-semibold text-gray-800">💬 Communication avec {{ declarant.get_full_name }}</h3>
+                    <p class="text-sm text-gray-600 mt-1">
+                        Concernant la déclaration {{ signalement.numero_declaration }}
+                    </p>
+                </div>
+
+                <!-- Notifications/Messages -->
+                <div class="flex-1 overflow-y-auto p-4 space-y-4" id="messages-container">
+                    {% for notification in notifications %}
+                        <div class="flex justify-start">
+                            <div class="max-w-xs lg:max-w-md">
+                                <!-- Bulle de notification -->
+                                <div class="p-3 rounded-2xl shadow-sm bg-gray-100 text-gray-800 rounded-bl-sm">
+                                    <p class="text-sm font-medium">{{ notification.titre }}</p>
+                                    <p class="text-sm mt-1">{{ notification.message|linebreaksbr }}</p>
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        {{ notification.date_creation|date:"d/m à H:i" }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center text-gray-500 py-8">
+                            <div class="text-4xl mb-2">💭</div>
+                            <p>Aucun message pour le moment.</p>
+                            <p class="text-sm">Envoyez un message au déclarant !</p>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Zone de saisie -->
+                <div class="border-t border-gray-200 p-4">
+                    <form method="post" class="flex gap-2">
+                        {% csrf_token %}
+                        <div class="flex-1">
+                            <textarea 
+                                name="contenu" 
+                                rows="3"
+                                class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                                placeholder="Tapez votre message pour {{ declarant.get_full_name }}..."
+                                required></textarea>
+                        </div>
+                        <div class="flex flex-col justify-end">
+                            <button 
+                                type="submit"
+                                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                </svg>
+                                Envoyer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-scroll vers le bas des messages
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('messages-container');
+    container.scrollTop = container.scrollHeight;
+});
+
+// Auto-resize du textarea
+document.querySelector('textarea[name="contenu"]').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+</script>
+{% endblock %}
