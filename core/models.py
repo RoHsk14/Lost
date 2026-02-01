@@ -157,6 +157,22 @@ class Declaration(models.Model):
     structure_locale = models.ForeignKey(StructureLocale, on_delete=models.SET_NULL, null=True, blank=True)
     lieu_precis = models.CharField(max_length=300, help_text="Lieu précis de perte/découverte")
     
+    # Coordonnées GPS pour géolocalisation
+    latitude = models.DecimalField(
+        max_digits=9, 
+        decimal_places=6, 
+        null=True, 
+        blank=True,
+        help_text="Latitude GPS de l'emplacement"
+    )
+    longitude = models.DecimalField(
+        max_digits=9, 
+        decimal_places=6, 
+        null=True, 
+        blank=True,
+        help_text="Longitude GPS de l'emplacement"
+    )
+    
     # Dates
     date_incident = models.DateField(help_text="Date de perte ou de découverte")
     date_declaration = models.DateTimeField(auto_now_add=True)

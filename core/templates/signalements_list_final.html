@@ -39,7 +39,7 @@
     </style>
 </head>
 
-<body class="font-sans antialiased text-gray-800 bg-gray-50"><!-- FIXED_FOR_REAL -->
+<body class="font-sans antialiased text-gray-800 bg-gray-50"><!-- FIXED_BY_AGENT_V2 -->
     {% if messages %}
     <div class="fixed top-4 right-4 space-y-2 z-50">
         {% for message in messages %}
@@ -94,8 +94,7 @@
                             class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transform scale-95 group-hover:scale-100 transition-all duration-200 origin-top-right z-50">
                             <div class="py-2">
                                 <div class="px-4 py-2 border-b border-gray-100">
-                                    <p class="text-sm font-medium text-gray-700">{{
-                                        user.get_full_name|default:user.username }}</p>
+                                    <p class="text-sm font-medium text-gray-700">{{ user.get_full_name|default:user.username }}</p>
                                     <p class="text-xs text-gray-500">{{ user.email }}</p>
                                 </div>
                                 <a href="{% url 'utilisateur_dashboard' %}"
@@ -196,8 +195,8 @@
                         <select name="type"
                             class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                             <option value="">Tous les types</option>
-                            <option value="perdu" {% if type_filter=='perdu' %}selected{% endif %}>Perdu</option>
-                            <option value="trouve" {% if type_filter=='trouve' %}selected{% endif %}>Trouvé</option>
+                            <option value="perdu" {% if type_filter == 'perdu' %}selected{% endif %}>Perdu</option>
+                            <option value="trouve" {% if type_filter == 'trouve' %}selected{% endif %}>Trouvé</option>
                         </select>
                     </div>
                     <div class="flex items-end">
@@ -261,8 +260,7 @@
                             <div class="space-y-1 mb-3">
                                 <p class="text-xs text-gray-500 flex items-center">
                                     <i class="fas fa-map-marker-alt w-4 text-center mr-1 text-gray-400"></i>
-                                    <span class="truncate">{{ signalement.lieu_precis|default:"Lieu non précisé"
-                                        }}</span>
+                                    <span class="truncate">{{ signalement.lieu_precis|default:"Lieu non précisé" }}</span>
                                 </p>
                                 <p class="text-xs text-gray-500 flex items-center">
                                     <i class="fas fa-calendar w-4 text-center mr-1 text-gray-400"></i>
@@ -399,8 +397,9 @@
                 showCoverageOnHover: false
             });
 
-            // Charger les données depuis l'API
-            fetch('/api/signalements/map-data/')
+            // Charger les données depuis l'API avec les filtres actuels
+            const api_url = '/api/signalements/map-data/' + window.location.search;
+            fetch(api_url)
                 .then(response => response.json())
                 .then(data => {
                     if (data.length === 0) {

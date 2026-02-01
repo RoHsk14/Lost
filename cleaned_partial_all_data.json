@@ -1,0 +1,558 @@
+[
+  {
+    "model": "core.region",
+    "pk": 6,
+    "fields": {
+      "nom": "Maritime",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.771Z"
+    }
+  },
+  {
+    "model": "core.region",
+    "pk": 7,
+    "fields": {
+      "nom": "Plateaux",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.771Z"
+    }
+  },
+  {
+    "model": "core.region",
+    "pk": 8,
+    "fields": {
+      "nom": "Centrale",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.771Z"
+    }
+  },
+  {
+    "model": "core.region",
+    "pk": 9,
+    "fields": {
+      "nom": "Kara",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.771Z"
+    }
+  },
+  {
+    "model": "core.region",
+    "pk": 10,
+    "fields": {
+      "nom": "Savanes",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.771Z"
+    }
+  },
+  {
+    "model": "core.region",
+    "pk": 14,
+    "fields": {
+      "nom": "LomÚ",
+      "code": "LM",
+      "actif": true,
+      "date_creation": "2025-11-25T02:34:56.065Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 27,
+    "fields": {
+      "region": 6,
+      "nom": "Lacs",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 28,
+    "fields": {
+      "region": 6,
+      "nom": "Vo",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 29,
+    "fields": {
+      "region": 6,
+      "nom": "Yoto",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 30,
+    "fields": {
+      "region": 6,
+      "nom": "Zio",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 31,
+    "fields": {
+      "region": 7,
+      "nom": "Haho",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 32,
+    "fields": {
+      "region": 7,
+      "nom": "Amou",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 33,
+    "fields": {
+      "region": 7,
+      "nom": "Wawa",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 34,
+    "fields": {
+      "region": 7,
+      "nom": "Ogou",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 35,
+    "fields": {
+      "region": 7,
+      "nom": "Danyi",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 36,
+    "fields": {
+      "region": 8,
+      "nom": "Blitta",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 37,
+    "fields": {
+      "region": 8,
+      "nom": "Sotouboua",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 38,
+    "fields": {
+      "region": 8,
+      "nom": "Tchamba",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 39,
+    "fields": {
+      "region": 8,
+      "nom": "Tchaoudjo",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 40,
+    "fields": {
+      "region": 9,
+      "nom": "Kozah",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 41,
+    "fields": {
+      "region": 9,
+      "nom": "Assoli",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 42,
+    "fields": {
+      "region": 9,
+      "nom": "Bassar",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 43,
+    "fields": {
+      "region": 9,
+      "nom": "Dankpen",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 44,
+    "fields": {
+      "region": 9,
+      "nom": "KÚran",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 45,
+    "fields": {
+      "region": 9,
+      "nom": "Binah",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 46,
+    "fields": {
+      "region": 10,
+      "nom": "T¶ne",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 47,
+    "fields": {
+      "region": 10,
+      "nom": "CinkassÚ",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 48,
+    "fields": {
+      "region": 10,
+      "nom": "Kpendjal",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 49,
+    "fields": {
+      "region": 10,
+      "nom": "Oti",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 50,
+    "fields": {
+      "region": 10,
+      "nom": "TandjoarÚ",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 52,
+    "fields": {
+      "region": 7,
+      "nom": "KpalimÚ",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 55,
+    "fields": {
+      "region": 7,
+      "nom": "Kloto",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 56,
+    "fields": {
+      "region": 6,
+      "nom": "Golfe",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-11-24T01:03:13.474Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 58,
+    "fields": {
+      "region": 6,
+      "nom": "PrÚfecture de LomÚ",
+      "code": "LOM",
+      "actif": true,
+      "date_creation": "2025-12-02T11:36:30.953Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 60,
+    "fields": {
+      "region": 6,
+      "nom": "AvÚ",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-12-02T14:46:52.907Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 62,
+    "fields": {
+      "region": 7,
+      "nom": "Agou",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-12-02T14:46:53.060Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 63,
+    "fields": {
+      "region": 7,
+      "nom": "Est-Mono",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-12-02T14:46:53.142Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 65,
+    "fields": {
+      "region": 7,
+      "nom": "Moyen-Mono",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-12-02T14:46:53.373Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 66,
+    "fields": {
+      "region": 9,
+      "nom": "Doufelgou",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-12-02T14:46:53.948Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 67,
+    "fields": {
+      "region": 10,
+      "nom": "Kpendjal-Ouest",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-12-02T14:46:54.227Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 68,
+    "fields": {
+      "region": 10,
+      "nom": "Oti-Sud",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-12-02T14:46:54.316Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 69,
+    "fields": {
+      "region": 14,
+      "nom": "Commune du Golfe 1",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-12-02T14:46:54.624Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 70,
+    "fields": {
+      "region": 14,
+      "nom": "Commune du Golfe 2",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-12-02T14:46:54.706Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 71,
+    "fields": {
+      "region": 14,
+      "nom": "Commune du Golfe 3",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-12-02T14:46:54.757Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 72,
+    "fields": {
+      "region": 14,
+      "nom": "Commune du Golfe 4",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-12-02T14:46:54.805Z"
+    }
+  },
+  {
+    "model": "core.prefecture",
+    "pk": 74,
+    "fields": {
+      "region": 14,
+      "nom": "Golfe",
+      "code": null,
+      "actif": true,
+      "date_creation": "2025-12-02T23:36:46.259Z"
+    }
+  },
+  {
+    "model": "core.structurelocale",
+    "pk": 2,
+    "fields": {
+      "nom": "Commissariat - Amou",
+      "type_structure": "commissariat",
+      "prefecture": 32,
+      "adresse": "Test Address",
+      "telephone": "+228 11223344",
+      "email": "",
+      "actif": true,
+      "date_creation": "2025-11-24T17:59:27.346Z"
+    }
+  },
+  {
+    "model": "core.structurelocale",
+    "pk": 3,
+    "fields": {
+      "nom": "Commissariat Central de LomÚ",
+      "type_structure": "commissariat",
+      "prefecture": 58,
+      "adresse": "Boulevard du 13 Janvier, LomÚ",
+      "telephone": "+228 22 21 22 22",
+      "email": "commissariat.central@securite.tg",
+      "actif": true,
+      "date_creation": "2025-12-02T11:36:31.049Z"
+    }
+  },
+  {
+    "model": "core.structurelocale",
+    "pk": 4,
+    "fields": {
+      "nom": "Mairie de LomÚ",
+      "type_structure": "mairie",
+      "prefecture": 58,
+      "adresse": "Place de l'IndÚpendance, LomÚ",
+      "telephone": "+228 22 21 77 77",
+      "email": "contact@mairie-lome.tg",
+      "actif": true,
+      "date_creation": "2025-12-02T11:36:31.083Z"
+    }
+  },
+  {
+    "model": "core.structurelocale",
+    "pk": 5,
+    "fields": {
+      "nom": "Commissariat de Legbassito",
+      "type_structure": "autre",
+      "prefecture": 58,
+      "adresse": "",
+      "telephone": "",
+      "email": "",
+      "actif": true,
+      "date_creation": "2025-12-08T21:10:13.391Z"
+    }
+  }
+]

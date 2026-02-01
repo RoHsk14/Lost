@@ -109,18 +109,28 @@ class DeclarationForm(forms.ModelForm):
             'accept': 'image/*'
         })
     )
+    
+    # Champs de géolocalisation (remplis par JavaScript)
+    latitude = forms.DecimalField(
+        required=False,
+        widget=forms.HiddenInput(attrs={'id': 'id_latitude'})
+    )
+    longitude = forms.DecimalField(
+        required=False,
+        widget=forms.HiddenInput(attrs={'id': 'id_longitude'})
+    )
 
     class Meta:
         model = Declaration
         fields = ['type_declaration', 'nom_objet', 'description', 'date_incident', 'lieu_precis', 
                  'region', 'prefecture', 'structure_locale', 
-                 'commentaire_declarant', 'photo_principale']
+                 'commentaire_declarant', 'photo_principale', 'latitude', 'longitude']
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Tous les champs sont requis sauf commentaire_declarant, photo_principale et champs de localisation
         for field_name, field in self.fields.items():
-            if field_name not in ['commentaire_declarant', 'photo_principale', 'region', 'prefecture', 'structure_locale']:
+            if field_name not in ['commentaire_declarant', 'photo_principale', 'region', 'prefecture', 'structure_locale', 'latitude', 'longitude']:
                 field.required = True
                 
         # Initialiser les queryset pour les champs liés

@@ -716,8 +716,8 @@ def declaration_detail_public(request, pk):
 # ---------------------------
 def signalements_list(request):
     # Récupérer les paramètres de recherche
-    nom = request.GET.get('nom')
-    lieu = request.GET.get('lieu')
+    query = request.GET.get('q')
+    type_filter = request.GET.get('type')
     date_perte = request.GET.get('date_perte')
     
     # On filtre les signalements qui sont soit créés, soit validés, soit publiés
@@ -725,25 +725,29 @@ def signalements_list(request):
         statut__in=['cree', 'valide', 'publie']
     ).select_related('declarant', 'prefecture', 'structure_locale', 'region').order_by('-date_declaration')
 
-    if nom:
-        base_queryset = base_queryset.filter(nom_objet__icontains=nom)
-    if lieu:
+    if query:
         base_queryset = base_queryset.filter(
-            Q(lieu_precis__icontains=lieu) |
-            Q(prefecture__nom__icontains=lieu) |
-            Q(region__nom__icontains=lieu)
+            Q(nom_objet__icontains=query) |
+            Q(description__icontains=query) |
+            Q(lieu_precis__icontains=query) |
+            Q(prefecture__nom__icontains=query) |
+            Q(region__nom__icontains=query)
         )
+    
+    if type_filter in ['perdu', 'trouve']:
+        base_queryset = base_queryset.filter(type_declaration=type_filter)
+        
     if date_perte:
         base_queryset = base_queryset.filter(date_incident=date_perte)
     
     context = {
         'signalements': base_queryset,
-        'nom': nom,
-        'lieu': lieu,
+        'query': query,
+        'type_filter': type_filter,
         'date_perte': date_perte,
         'total_count': base_queryset.count(),
     }
-    return render(request, 'signalements_list.html', context)
+    return render(request, 'signalements_list_final.html', context)
 
 def signalement_detail(request, pk):
     signalement = get_object_or_404(Declaration, pk=pk)
@@ -779,10 +783,41 @@ def signalement_detail(request, pk):
 def signalement_add(request):
     regions = Region.objects.all()
     if request.method == 'POST':
+        # DEBUG: Afficher les coordonnées GPS reçues
+        print(f"🔍 DEBUG GPS - Latitude reçue: {request.POST.get('latitude', 'NON REÇUE')}")
+        print(f"🔍 DEBUG GPS - Longitude reçue: {request.POST.get('longitude', 'NON REÇUE')}")
+        print(f"🔍 DEBUG GPS - Tous les champs POST: {list(request.POST.keys())}")
+        
         form = DeclarationForm(request.POST, request.FILES)
         if form.is_valid():
+            # DEBUG: Afficher les données nettoyées du formulaire
+            print(f"✅ DEBUG GPS - Latitude dans form.cleaned_data: {form.cleaned_data.get('latitude', 'NON PRÉSENTE')}")
+            print(f"✅ DEBUG GPS - Longitude dans form.cleaned_data: {form.cleaned_data.get('longitude', 'NON PRÉSENTE')}")
+            
             # Créer une déclaration avec le nouveau formulaire
             declaration = form.save(commit=False)
+
+            # --- FIX GPS START ---
+            # Force la récupération des coordonnées depuis POST car le formulaire semble les ignorer
+            lat_raw = request.POST.get('latitude')
+            lon_raw = request.POST.get('longitude')
+            
+            if lat_raw and str(lat_raw).strip():
+                try:
+                    # Conversion manuelle sécurisée
+                    from decimal import Decimal
+                    # Remplacer la virgule par un point si nécessaire (gestion locale)
+                    declaration.latitude = Decimal(str(lat_raw).replace(',', '.'))
+                except Exception:
+                    pass
+
+            if lon_raw and str(lon_raw).strip():
+                try:
+                    from decimal import Decimal
+                    declaration.longitude = Decimal(str(lon_raw).replace(',', '.'))
+                except Exception:
+                    pass
+            # --- FIX GPS END ---
 
             if request.user.is_authenticated:
                 declaration.declarant = request.user
@@ -825,8 +860,14 @@ def signalement_add(request):
 
             try:
                 declaration.save()
+                # DEBUG: Vérifier si les coordonnées ont été sauvegardées
+                print(f"💾 DEBUG GPS - Déclaration sauvegardée avec:")
+                print(f"   - Latitude: {declaration.latitude}")
+                print(f"   - Longitude: {declaration.longitude}")
+                
                 messages.success(request, "✅ Déclaration ajoutée avec succès !")
                 return redirect('signalements_list')
+
             except Exception as e:
                 # Log de l'erreur pour debug
                 print(f"❌ Erreur lors de la sauvegarde: {e}")
@@ -912,9 +953,9 @@ def objets_list(request):
     base_queryset = Declaration.objects.filter(
         Q(
             # Objets trouvés à l'origine (seulement les validés, pas les restitués)
-            (Q(type_declaration='trouve') & Q(statut__in=['valide', 'publie'])) |
+            (Q(type_declaration='trouve') & Q(statut__in=['valide', 'publie', 'cree'])) |
             # Objets perdus qui ont été retrouvés (pas les restitués)
-            (Q(type_declaration='perdu') & Q(statut='publie'))
+            (Q(type_declaration='perdu') & Q(statut__in=['publie']))
         )
     ).select_related('declarant', 'prefecture', 'structure_locale', 'region').order_by('-date_declaration')
 
@@ -936,7 +977,7 @@ def objets_list(request):
         'date_perte': date_perte,
         'total_count': base_queryset.count(),
     }
-    return render(request, 'objets_list.html', context)
+    return render(request, 'objets_list_new.html', context)
 
 def objets_perdus_list(request):
     """Vue pour afficher tous les objets perdus qui ne sont pas encore retrouvés"""
@@ -967,7 +1008,7 @@ def objets_perdus_list(request):
         'date_perte': date_perte,
         'total_count': base_queryset.count(),
     }
-    return render(request, 'objets_perdus_list.html', context)
+    return render(request, 'objets_perdus_list_new.html', context)
 
 def objets_recents(request):
     objets = Objet.objects.order_by('-date_creation')[:6]
@@ -1271,6 +1312,56 @@ def api_structures(request):
             })
         
         return JsonResponse(result, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+def signalements_map_data(request):
+    """API pour récupérer les données de géolocalisation des signalements"""
+    try:
+        # Récupérer les paramètres de recherche
+        query = request.GET.get('q')
+        type_filter = request.GET.get('type')
+        date_perte = request.GET.get('date_perte')
+
+        signalements = Declaration.objects.filter(
+            visible_publiquement=True,
+            statut__in=['cree', 'publie', 'valide']  # Inclure aussi 'cree' pour les nouveaux signalements
+        ).exclude(
+            latitude__isnull=True
+        ).exclude(
+            longitude__isnull=True
+        ).select_related('declarant', 'region', 'prefecture')
+
+        # Appliquer les filtres
+        if query:
+            signalements = signalements.filter(
+                Q(nom_objet__icontains=query) |
+                Q(description__icontains=query) |
+                Q(lieu_precis__icontains=query) |
+                Q(prefecture__nom__icontains=query) |
+                Q(region__nom__icontains=query)
+            )
+        
+        if type_filter in ['perdu', 'trouve']:
+            signalements = signalements.filter(type_declaration=type_filter)
+            
+        if date_perte:
+            signalements = signalements.filter(date_incident=date_perte)
+        
+        data = [{
+            'id': s.id,
+            'nom_objet': s.nom_objet,
+            'latitude': float(s.latitude),
+            'longitude': float(s.longitude),
+            'type_declaration': s.type_declaration,
+            'date_incident': s.date_incident.isoformat(),
+            'lieu_precis': s.lieu_precis,
+            'numero_declaration': s.numero_declaration,
+            'photo_url': s.photo_principale.url if s.photo_principale else None,
+        } for s in signalements]
+        
+        return JsonResponse(data, safe=False)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 

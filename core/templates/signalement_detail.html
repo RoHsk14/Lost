@@ -1,6 +1,16 @@
 {% extends 'base.html' %}
+{% load l10n %}
 
 {% block title %}{{ signalement.nom_objet }} - Détails TogoRetrouve{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-[#F8FAFC]">
@@ -94,7 +104,7 @@
                                 </div>
                                 <span
                                     class="px-5 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-white font-bold uppercase tracking-widest text-[10px] border border-white/30">
-                                    {{ signalement.get_categorie_display|default:signalement.categorie }}
+                                    {{ signalement.categorie }}
                                 </span>
                             </div>
                         </div>
@@ -114,7 +124,9 @@
                             </div>
                             <div
                                 class="bg-white/90 backdrop-blur-md text-gray-900 px-5 py-2 rounded-2xl font-bold text-xs shadow-lg inline-flex items-center self-start border border-gray-100/50">
-                                <i class="far fa-clock mr-2 text-blue-600"></i> {{ signalement.date_declaration|timesince }}
+                                <i class="far fa-clock mr-2 text-blue-600"></i>
+                                <!-- {{
+                                signalement.date_declaration|timesince }} -->
                             </div>
                         </div>
 
@@ -166,8 +178,7 @@
                                     <p
                                         class="text-[10px] uppercase font-bold text-gray-400 tracking-widest leading-none mb-1">
                                         Publié par</p>
-                                    <p class="text-sm font-bold text-gray-900">{{ signalement.declarant.get_full_name|default:signalement.declarant.username }}
-                                    </p>
+                                    <p class="text-sm font-bold text-gray-900">{{ signalement.declarant.username }}</p>
                                 </div>
                             </div>
                         </div>
@@ -182,7 +193,7 @@
                                 </div>
                                 <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">Catégorie
                                 </p>
-                                <p class="font-bold text-gray-900">{{ signalement.get_categorie_display|default:signalement.categorie }}</p>
+                                <p class="font-bold text-gray-900">{{ signalement.categorie }}</p>
                             </div>
 
                             <div
@@ -192,7 +203,7 @@
                                     <i class="fas fa-location-dot"></i>
                                 </div>
                                 <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">Lieu</p>
-                                <p class="font-bold text-gray-900">{{ signalement.lieu }}</p>
+                                <p class="font-bold text-gray-900">{{ signalement.lieu_precis }}</p>
                             </div>
 
                             <div
@@ -330,8 +341,10 @@
                                 <div class="flex-1">
                                     <div class="flex items-center justify-between mb-3">
                                         <div>
-                                            <h4 class="font-black text-gray-900 tracking-tight">{{ commentaire.get_display_name }}</h4>
-                                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{{ commentaire.date_creation|date:"d M Y • H:i" }}</p>
+                                            <h4 class="font-black text-gray-900 tracking-tight">{{
+                                                commentaire.get_display_name }}</h4>
+                                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{{
+                                                commentaire.date_creation|date:"d M Y • H:i" }}</p>
                                         </div>
                                         {% if commentaire.email %}
                                         <span
@@ -443,6 +456,25 @@
                     </div>
                 </div>
 
+                <!-- Location Map (if coordinates available) -->
+                {% if signalement.latitude and signalement.longitude %}
+                <div class="bg-white rounded-[2.5rem] p-8 border border-gray-100 overflow-hidden">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-map-marker-alt text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-black text-gray-900">Localisation GPS</h4>
+                            <p class="text-xs text-gray-500 font-medium">Emplacement précis</p>
+                        </div>
+                    </div>
+                    <div id="detail-map" class="w-full h-64 rounded-2xl border-2 border-gray-100 shadow-sm"></div>
+                    <div class="mt-4 p-3 bg-gray-50 rounded-xl text-xs text-gray-600 font-mono text-center">
+                        📍 {{ signalement.latitude }}, {{ signalement.longitude }}
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- Stats Summary -->
                 <div class="bg-white rounded-[2.5rem] p-8 border border-gray-100">
                     <div class="flex items-center justify-between mb-6">
@@ -505,5 +537,35 @@
         btn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-3"></i>TRAITEMENT...';
         btn.disabled = true;
     });
+
+    // Initialize map if coordinates are available
+    {% if signalement.latitude and signalement.longitude %}
+    const lat = {{ signalement.latitude| unlocalize }};
+    const lng = {{ signalement.longitude| unlocalize }};
+    const detailMap = L.map('detail-map', {
+        scrollWheelZoom: false,
+        dragging: false,
+        zoomControl: true
+    }).setView([lat, lng], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(detailMap);
+
+    // Add marker with custom icon color based on type
+    const markerIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background-color: {% if signalement.type_declaration == "trouve" %}#10b981{% else %}#f43f5e{% endif %}; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><div style="transform: rotate(45deg); margin-top: 3px; text-align: center; color: white; font-size: 14px;">📍</div></div>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 30]
+    });
+
+    L.marker([{{ signalement.latitude | unlocalize }}, {{ signalement.longitude | unlocalize }}], {
+        icon: markerIcon
+    }).addTo(detailMap)
+        .bindPopup('<strong>{{ signalement.nom_objet }}</strong><br>{{ signalement.lieu_precis }}')
+        .openPopup();
+    {% endif %}
 </script>
 {% endblock %}
