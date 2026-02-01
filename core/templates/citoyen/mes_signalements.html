@@ -88,8 +88,8 @@
                     <select name="type"
                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
                         <option value="">Tous les types</option>
-                        <option value="perdu" {% if type_filter=='perdu' %}selected{% endif %}>Objets perdus</option>
-                        <option value="trouve" {% if type_filter=='trouve' %}selected{% endif %}>Objets trouvés</option>
+                        <option value="perdu" {% if type_filter == 'perdu' %}selected{% endif %}>Objets perdus</option>
+                        <option value="trouve" {% if type_filter == 'trouve' %}selected{% endif %}>Objets trouvés</option>
                     </select>
                 </div>
 
@@ -98,10 +98,10 @@
                     <select name="statut"
                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
                         <option value="">Tous les statuts</option>
-                        <option value="cree" {% if statut_filter=='cree' %}selected{% endif %}>Créé</option>
-                        <option value="valide" {% if statut_filter=='valide' %}selected{% endif %}>Validé</option>
-                        <option value="publie" {% if statut_filter=='publie' %}selected{% endif %}>Publié</option>
-                        <option value="restitue" {% if statut_filter=='restitue' %}selected{% endif %}>Restitué</option>
+                        <option value="cree" {% if statut_filter == 'cree' %}selected{% endif %}>Créé</option>
+                        <option value="valide" {% if statut_filter == 'valide' %}selected{% endif %}>Validé</option>
+                        <option value="publie" {% if statut_filter == 'publie' %}selected{% endif %}>Publié</option>
+                        <option value="restitue" {% if statut_filter == 'restitue' %}selected{% endif %}>Restitué</option>
                     </select>
                 </div>
 
