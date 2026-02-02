@@ -84,9 +84,9 @@
                     <select name="statut"
                         class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Tous</option>
-                        <option value="perdu" {% if statut_filter=='perdu' %}selected{% endif %}>😞 Perdus</option>
-                        <option value="trouve" {% if statut_filter=='trouve' %}selected{% endif %}>🎉 Trouvés</option>
-                        <option value="retourne" {% if statut_filter=='retourne' %}selected{% endif %}>✅ Retournés
+                        <option value="perdu" {% if statut_filter == 'perdu' %}selected{% endif %}>😞 Perdus</option>
+                        <option value="trouve" {% if statut_filter == 'trouve' %}selected{% endif %}>🎉 Trouvés</option>
+                        <option value="retourne" {% if statut_filter == 'retourne' %}selected{% endif %}>✅ Retournés
                         </option>
                     </select>
                 </div>

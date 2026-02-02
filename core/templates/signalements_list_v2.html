@@ -196,8 +196,8 @@
                         <select name="type"
                             class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                             <option value="">Tous les types</option>
-                            <option value="perdu" {% if type_filter=='perdu' %}selected{% endif %}>Perdu</option>
-                            <option value="trouve" {% if type_filter=='trouve' %}selected{% endif %}>Trouvé</option>
+                            <option value="perdu" {% if type_filter == 'perdu' %}selected{% endif %}>Perdu</option>
+                            <option value="trouve" {% if type_filter == 'trouve' %}selected{% endif %}>Trouvé</option>
                         </select>
                     </div>
                     <div class="flex items-end">
