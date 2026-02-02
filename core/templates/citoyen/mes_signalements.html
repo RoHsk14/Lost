@@ -88,8 +88,8 @@
                     <select name="type"
                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
                         <option value="">Tous les types</option>
-                        <option value="perdu" {% if type_filter == 'perdu' %}selected{% endif %}>Objets perdus</option>
-                        <option value="trouve" {% if type_filter == 'trouve' %}selected{% endif %}>Objets trouvés</option>
+                        <option value="perdu" {% if is_perdu %}selected{% endif %}>Objets perdus</option>
+                        <option value="trouve" {% if is_trouve %}selected{% endif %}>Objets trouvés</option>
                     </select>
                 </div>
 
@@ -98,10 +98,10 @@
                     <select name="statut"
                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
                         <option value="">Tous les statuts</option>
-                        <option value="cree" {% if statut_filter == 'cree' %}selected{% endif %}>Créé</option>
-                        <option value="valide" {% if statut_filter == 'valide' %}selected{% endif %}>Validé</option>
-                        <option value="publie" {% if statut_filter == 'publie' %}selected{% endif %}>Publié</option>
-                        <option value="restitue" {% if statut_filter == 'restitue' %}selected{% endif %}>Restitué</option>
+                        <option value="cree" {% if is_cree %}selected{% endif %}>Créé</option>
+                        <option value="valide" {% if is_valide %}selected{% endif %}>Validé</option>
+                        <option value="publie" {% if is_publie %}selected{% endif %}>Publié</option>
+                        <option value="restitue" {% if is_restitue %}selected{% endif %}>Restitué</option>
                     </select>
                 </div>
 
@@ -176,13 +176,13 @@
                             </p>
                             {% endif %}
 
-                            <!-- Informations sur les commentaires -->
+                            {% comment %}
+                            <!-- Informations sur les commentaires - TEMPORAIREMENT DÉSACTIVÉ POUR DEBUG -->
                             {% if declaration.nb_commentaires > 0 %}
                             <div class="mt-3 flex items-center gap-4 text-xs">
                                 <span class="flex items-center text-blue-600 dark:text-blue-400">
                                     <i class="fas fa-comments mr-1"></i>
-                                    {{ declaration.nb_commentaires }} commentaire{{
-                                    declaration.nb_commentaires|pluralize }}
+                                    {{ declaration.nb_commentaires }} commentaire
                                 </span>
                                 {% if declaration.dernier_commentaire %}
                                 <span class="text-gray-500 dark:text-gray-400">
@@ -193,8 +193,7 @@
                                 {% if declaration.nouveaux_commentaires > 0 %}
                                 <span
                                     class="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-2 py-1 rounded-full">
-                                    {{ declaration.nouveaux_commentaires }} nouveau{{
-                                    declaration.nouveaux_commentaires|pluralize:"x" }}
+                                    {{ declaration.nouveaux_commentaires }} nouveau
                                 </span>
                                 {% endif %}
                             </div>
@@ -213,6 +212,7 @@
                                 </p>
                             </div>
                             {% endif %}
+                            {% endcomment %}
                         </div>
                     </div>
                 </div> <!-- Status and Actions -->

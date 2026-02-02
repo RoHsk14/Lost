@@ -558,13 +558,21 @@ def mes_signalements(request):
         'total_commentaires': sum(d.nb_commentaires for d in declarations_avec_commentaires),
     }
     
+    # Add boolean flags for template to avoid comparison syntax errors
     context = {
         'declarations': declarations_avec_commentaires,
         'stats': stats,
         'type_filter': type_filter,
         'statut_filter': statut_filter,
+        # Boolean flags for type filters
+        'is_perdu': type_filter == 'perdu',
+        'is_trouve': type_filter == 'trouve',
+        # Boolean flags for statut filters
+        'is_cree': statut_filter == 'cree',
+        'is_valide': statut_filter == 'valide',
+        'is_publie': statut_filter == 'publie',
+        'is_restitue': statut_filter == 'restitue',
     }
-    return render(request, 'citoyen/mes_signalements.html', context)
     return render(request, 'citoyen/mes_signalements.html', context)
 
 @login_required
