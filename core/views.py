@@ -773,7 +773,13 @@ def signalement_detail(request, pk):
             messages.success(request, "💬 Votre commentaire a été ajouté avec succès !")
             return redirect('signalement_detail', pk=pk)
         else:
-            messages.error(request, "❌ Erreur lors de l'ajout du commentaire.")
+            # Afficher les erreurs spécifiques du formulaire
+            for field, errors in form.errors.items():
+                for error in errors:
+                    if field == 'contenu':
+                        messages.error(request, f"❌ Commentaire : {error}")
+                    else:
+                        messages.error(request, f"❌ {field.capitalize()} : {error}")
     else:
         form = CommentaireAnonymeForm()
     
