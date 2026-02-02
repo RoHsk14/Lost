@@ -340,12 +340,14 @@
                                 </div>
                                 <div class="flex-1">
                                     <div class="flex items-center justify-between mb-3">
+                                        {% comment %}
                                         <div>
                                             <h4 class="font-black text-gray-900 tracking-tight">{{
                                                 commentaire.get_display_name }}</h4>
                                             <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{{
                                                 commentaire.date_creation|date:"d M Y • H:i" }}</p>
                                         </div>
+                                        {% endcomment %}
                                         {% if commentaire.email %}
                                         <span
                                             class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"
