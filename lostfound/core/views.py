@@ -1881,3 +1881,31 @@ def agent_messagerie(request):
     
     # Sinon, rediriger vers le chat général
     return redirect('/agent/chat/')
+
+def signalements_map_data(request):
+    """API pour récupérer les données de géolocalisation des signalements"""
+    try:
+        signalements = Declaration.objects.filter(
+            visible_publiquement=True,
+            statut__in=['cree', 'publie', 'valide']  # Inclure aussi 'cree' pour les nouveaux signalements
+        ).exclude(
+            latitude__isnull=True
+        ).exclude(
+            longitude__isnull=True
+        ).select_related('declarant', 'region', 'prefecture')
+        
+        data = [{
+            'id': s.id,
+            'nom_objet': s.nom_objet,
+            'latitude': float(s.latitude),
+            'longitude': float(s.longitude),
+            'type_declaration': s.type_declaration,
+            'date_incident': s.date_incident.isoformat(),
+            'lieu_precis': s.lieu_precis,
+            'numero_declaration': s.numero_declaration,
+            'photo_url': s.photo_principale.url if s.photo_principale else None,
+        } for s in signalements]
+        
+        return JsonResponse(data, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)

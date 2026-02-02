@@ -71,6 +71,8 @@ urlpatterns = [
     # Endpoints utilitaires (query params)
     path('api/query/prefectures/', views.api_prefectures, name='api_prefectures_query'),
     path('api/query/structures/', views.api_structures, name='api_structures_query'),
+    # API Géolocalisation (AVANT le router DRF pour éviter les conflits)
+    path('api/signalements/map-data/', views.signalements_map_data, name='signalements_map_data'),
     # Router DRF (list/detail)
     path('api/', include(router.urls)),
     

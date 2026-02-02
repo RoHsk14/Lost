@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="p-6 space-y-8 animate-slide-up">
-    
+
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row md:items-center justify-between">
         <div>
@@ -17,7 +17,8 @@
             </p>
         </div>
         <div class="mt-4 md:mt-0">
-            <a href="{% url 'signalement_add' %}" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-indigo-700 transition-all hover-scale inline-flex items-center">
+            <a href="{% url 'signalement_add' %}"
+                class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-indigo-700 transition-all hover-scale inline-flex items-center">
                 <i class="fas fa-plus mr-2"></i>
                 Nouveau signalement
             </a>
@@ -35,7 +36,7 @@
                 <i class="fas fa-clipboard-list text-2xl text-blue-200"></i>
             </div>
         </div>
-        
+
         <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-xl p-6 hover-scale">
             <div class="flex items-center justify-between">
                 <div>
@@ -45,7 +46,7 @@
                 <i class="fas fa-search text-2xl text-red-200"></i>
             </div>
         </div>
-        
+
         <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-6 hover-scale">
             <div class="flex items-center justify-between">
                 <div>
@@ -55,7 +56,7 @@
                 <i class="fas fa-check-circle text-2xl text-green-200"></i>
             </div>
         </div>
-        
+
         <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-6 hover-scale">
             <div class="flex items-center justify-between">
                 <div>
@@ -66,7 +67,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Carte supplémentaire pour les commentaires -->
     <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-6 hover-scale">
         <div class="flex items-center justify-between">
@@ -84,36 +85,40 @@
             <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type</label>
-                    <select name="type" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
+                    <select name="type"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
                         <option value="">Tous les types</option>
-                        <option value="perdu" {% if type_filter == 'perdu' %}selected{% endif %}>Objets perdus</option>
-                        <option value="trouve" {% if type_filter == 'trouve' %}selected{% endif %}>Objets trouvés</option>
+                        <option value="perdu" {% if is_perdu %}selected{% endif %}>Objets perdus</option>
+                        <option value="trouve" {% if is_trouve %}selected{% endif %}>Objets trouvés</option>
                     </select>
                 </div>
-                
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Statut</label>
-                    <select name="statut" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
+                    <select name="statut"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
                         <option value="">Tous les statuts</option>
-                        <option value="cree" {% if statut_filter == 'cree' %}selected{% endif %}>Créé</option>
-                        <option value="valide" {% if statut_filter == 'valide' %}selected{% endif %}>Validé</option>
-                        <option value="publie" {% if statut_filter == 'publie' %}selected{% endif %}>Publié</option>
-                        <option value="restitue" {% if statut_filter == 'restitue' %}selected{% endif %}>Restitué</option>
+                        <option value="cree" {% if is_cree %}selected{% endif %}>Créé</option>
+                        <option value="valide" {% if is_valide %}selected{% endif %}>Validé</option>
+                        <option value="publie" {% if is_publie %}selected{% endif %}>Publié</option>
+                        <option value="restitue" {% if is_restitue %}selected{% endif %}>Restitué</option>
                     </select>
                 </div>
-                
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Recherche</label>
-                    <input type="text" name="search" placeholder="Nom de l'objet..." 
-                           class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
+                    <input type="text" name="search" placeholder="Nom de l'objet..."
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
                 </div>
             </div>
-            
+
             <div class="flex gap-2">
-                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                <button type="submit"
+                    class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
                     <i class="fas fa-search mr-2"></i>Filtrer
                 </button>
-                <a href="{% url 'mes_signalements' %}" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                <a href="{% url 'mes_signalements' %}"
+                    class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
                     <i class="fas fa-times mr-2"></i>Reset
                 </a>
             </div>
@@ -126,9 +131,9 @@
         <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover-scale border-l-4 
             {% if declaration.type_declaration == 'perdu' %}border-red-500
             {% else %}border-green-500{% endif %}">
-            
+
             <div class="flex flex-col lg:flex-row lg:items-center justify-between">
-                
+
                 <!-- Main Info -->
                 <div class="flex-1 min-w-0">
                     <div class="flex items-start gap-4">
@@ -136,24 +141,26 @@
                         <div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0
                             {% if declaration.type_declaration == 'perdu' %}bg-red-100 dark:bg-red-900
                             {% else %}bg-green-100 dark:bg-green-900{% endif %}">
-                            <i class="fas {% if declaration.type_declaration == 'perdu' %}fa-search text-red-600 dark:text-red-400
+                            <i
+                                class="fas {% if declaration.type_declaration == 'perdu' %}fa-search text-red-600 dark:text-red-400
                                           {% else %}fa-check-circle text-green-600 dark:text-green-400{% endif %} text-xl"></i>
                         </div>
-                        
+
                         <!-- Content -->
                         <div class="flex-1 min-w-0">
                             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                                 {{ declaration.nom_objet }}
                             </h3>
-                            
-                            <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
+
+                            <div
+                                class="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
                                 <span class="flex items-center">
                                     <i class="fas fa-calendar-alt mr-1"></i>
                                     {{ declaration.date_declaration|date:"d M Y" }}
                                 </span>
                                 <span class="flex items-center">
                                     <i class="fas fa-map-marker-alt mr-1"></i>
-                                    {{ declaration.lieu_incident }}
+                                    {{ declaration.lieu_precis|default:"Lieu non précisé" }}
                                 </span>
                                 {% if declaration.prefecture %}
                                 <span class="flex items-center">
@@ -162,51 +169,55 @@
                                 </span>
                                 {% endif %}
                             </div>
-                            
+
                             {% if declaration.description %}
                             <p class="text-gray-700 dark:text-gray-300 text-sm line-clamp-2">
                                 {{ declaration.description|truncatewords:20 }}
                             </p>
                             {% endif %}
-                            
-                            <!-- Informations sur les commentaires -->
-                        {% if declaration.nb_commentaires > 0 %}
-                        <div class="mt-3 flex items-center gap-4 text-xs">
-                            <span class="flex items-center text-blue-600 dark:text-blue-400">
-                                <i class="fas fa-comments mr-1"></i>
-                                {{ declaration.nb_commentaires }} commentaire{{ declaration.nb_commentaires|pluralize }}
-                            </span>
-                            {% if declaration.dernier_commentaire %}
-                            <span class="text-gray-500 dark:text-gray-400">
-                                <i class="far fa-clock mr-1"></i>
-                                Dernier: {{ declaration.dernier_commentaire.date_creation|date:"d/m à H:i" }}
-                            </span>
+
+                            {% comment %}
+                            <!-- Informations sur les commentaires - TEMPORAIREMENT DÉSACTIVÉ POUR DEBUG -->
+                            {% if declaration.nb_commentaires > 0 %}
+                            <div class="mt-3 flex items-center gap-4 text-xs">
+                                <span class="flex items-center text-blue-600 dark:text-blue-400">
+                                    <i class="fas fa-comments mr-1"></i>
+                                    {{ declaration.nb_commentaires }} commentaire
+                                </span>
+                                {% if declaration.dernier_commentaire %}
+                                <span class="text-gray-500 dark:text-gray-400">
+                                    <i class="far fa-clock mr-1"></i>
+                                    Dernier: {{ declaration.dernier_commentaire.date_creation|date:"d/m à H:i" }}
+                                </span>
+                                {% endif %}
+                                {% if declaration.nouveaux_commentaires > 0 %}
+                                <span
+                                    class="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-2 py-1 rounded-full">
+                                    {{ declaration.nouveaux_commentaires }} nouveau
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Aperçu des commentaires -->
+                            <div class="mt-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+                                <p class="text-xs font-medium text-blue-800 dark:text-blue-200 mb-2">
+                                    <i class="fas fa-comment-dots mr-1"></i>Dernier commentaire:
+                                </p>
+                                <p class="text-sm text-gray-700 dark:text-gray-300 italic">
+                                    "{{ declaration.dernier_commentaire.contenu|truncatewords:12 }}"
+                                </p>
+                                <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                    — {{ declaration.dernier_commentaire.get_display_name }} ({{
+                                    declaration.dernier_commentaire.date_creation|timesince }})
+                                </p>
+                            </div>
                             {% endif %}
-                            {% if declaration.nouveaux_commentaires > 0 %}
-                            <span class="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-2 py-1 rounded-full">
-                                {{ declaration.nouveaux_commentaires }} nouveau{{ declaration.nouveaux_commentaires|pluralize:"x" }}
-                            </span>
-                            {% endif %}
+                            {% endcomment %}
                         </div>
-                        
-                        <!-- Aperçu des commentaires -->
-                        <div class="mt-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
-                            <p class="text-xs font-medium text-blue-800 dark:text-blue-200 mb-2">
-                                <i class="fas fa-comment-dots mr-1"></i>Dernier commentaire:
-                            </p>
-                            <p class="text-sm text-gray-700 dark:text-gray-300 italic">
-                                "{{ declaration.dernier_commentaire.contenu|truncatewords:12 }}"
-                            </p>
-                            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                — {{ declaration.dernier_commentaire.get_display_name }} ({{ declaration.dernier_commentaire.date_creation|timesince }})
-                            </p>
-                        </div>
-                        {% endif %}
                     </div>
-                </div>
-            </div>                <!-- Status and Actions -->
+                </div> <!-- Status and Actions -->
                 <div class="mt-4 lg:mt-0 lg:ml-6 flex flex-col lg:items-end gap-4">
-                    
+
                     <!-- Type Badge -->
                     <div class="flex items-center gap-3">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
@@ -214,7 +225,7 @@
                             {% else %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% endif %}">
                             {% if declaration.type_declaration == 'perdu' %}Objet Perdu{% else %}Objet Trouvé{% endif %}
                         </span>
-                        
+
                         <!-- Status Badge -->
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
                             {% if declaration.statut == 'cree' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
@@ -225,22 +236,23 @@
                             {{ declaration.get_statut_display }}
                         </span>
                     </div>
-                    
+
                     <!-- Actions -->
                     <div class="flex gap-2">
-                        <a href="{% url 'signalement_detail' declaration.pk %}" 
-                           class="bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 px-4 py-2 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors text-sm font-medium relative">
+                        <a href="{% url 'signalement_detail' declaration.pk %}"
+                            class="bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 px-4 py-2 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors text-sm font-medium relative">
                             <i class="fas fa-eye mr-1"></i>Voir détails
                             {% if declaration.nb_commentaires > 0 %}
-                            <span class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                            <span
+                                class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                                 {{ declaration.nb_commentaires }}
                             </span>
                             {% endif %}
                         </a>
-                        
+
                         {% if declaration.statut == 'cree' %}
-                        <a href="{% url 'signalement_edit' declaration.pk %}" 
-                           class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium">
+                        <a href="{% url 'signalement_edit' declaration.pk %}"
+                            class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium">
                             <i class="fas fa-edit mr-1"></i>Modifier
                         </a>
                         {% endif %}
@@ -249,7 +261,7 @@
             </div>
         </div>
         {% empty %}
-        
+
         <!-- Empty State -->
         <div class="bg-white dark:bg-gray-800 rounded-xl p-12 shadow-lg text-center">
             <i class="fas fa-inbox text-6xl text-gray-300 dark:text-gray-600 mb-6"></i>
@@ -258,22 +270,22 @@
             </h3>
             <p class="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
                 {% if type_filter or statut_filter %}
-                    Aucun signalement ne correspond à vos critères de recherche.
-                    <br>Essayez de modifier vos filtres.
+                Aucun signalement ne correspond à vos critères de recherche.
+                <br>Essayez de modifier vos filtres.
                 {% else %}
-                    Vous n'avez pas encore fait de signalement.
-                    <br>Commencez par déclarer un objet perdu ou trouvé.
+                Vous n'avez pas encore fait de signalement.
+                <br>Commencez par déclarer un objet perdu ou trouvé.
                 {% endif %}
             </p>
             <div class="flex justify-center gap-4">
-                <a href="{% url 'signalement_add' %}" 
-                   class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center">
+                <a href="{% url 'signalement_add' %}"
+                    class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center">
                     <i class="fas fa-plus mr-2"></i>
                     Nouveau signalement
                 </a>
                 {% if type_filter or statut_filter %}
-                <a href="{% url 'mes_signalements' %}" 
-                   class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors inline-flex items-center">
+                <a href="{% url 'mes_signalements' %}"
+                    class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors inline-flex items-center">
                     <i class="fas fa-times mr-2"></i>
                     Effacer les filtres
                 </a>
@@ -288,25 +300,29 @@
     <div class="flex justify-center mt-8">
         <nav class="flex items-center gap-2">
             {% if declarations.has_previous %}
-                <a href="?page=1" class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-                    <i class="fas fa-angle-double-left"></i>
-                </a>
-                <a href="?page={{ declarations.previous_page_number }}" class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-                    <i class="fas fa-angle-left"></i>
-                </a>
+            <a href="?page=1"
+                class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                <i class="fas fa-angle-double-left"></i>
+            </a>
+            <a href="?page={{ declarations.previous_page_number }}"
+                class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                <i class="fas fa-angle-left"></i>
+            </a>
             {% endif %}
-            
+
             <span class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg">
                 Page {{ declarations.number }} sur {{ declarations.paginator.num_pages }}
             </span>
-            
+
             {% if declarations.has_next %}
-                <a href="?page={{ declarations.next_page_number }}" class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-                    <i class="fas fa-angle-right"></i>
-                </a>
-                <a href="?page={{ declarations.paginator.num_pages }}" class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-                    <i class="fas fa-angle-double-right"></i>
-                </a>
+            <a href="?page={{ declarations.next_page_number }}"
+                class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                <i class="fas fa-angle-right"></i>
+            </a>
+            <a href="?page={{ declarations.paginator.num_pages }}"
+                class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                <i class="fas fa-angle-double-right"></i>
+            </a>
             {% endif %}
         </nav>
     </div>
@@ -316,28 +332,28 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-submit filters after a delay
-    const filterInputs = document.querySelectorAll('select[name="type"], select[name="statut"]');
-    filterInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            // Auto submit after short delay to allow for better UX
-            setTimeout(() => {
-                document.querySelector('form').submit();
-            }, 300);
+    document.addEventListener('DOMContentLoaded', function () {
+        // Auto-submit filters after a delay
+        const filterInputs = document.querySelectorAll('select[name="type"], select[name="statut"]');
+        filterInputs.forEach(input => {
+            input.addEventListener('change', function () {
+                // Auto submit after short delay to allow for better UX
+                setTimeout(() => {
+                    document.querySelector('form').submit();
+                }, 300);
+            });
+        });
+
+        // Smooth animations for hover effects
+        const cards = document.querySelectorAll('.hover-scale');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function () {
+                this.style.transform = 'scale(1.02)';
+            });
+            card.addEventListener('mouseleave', function () {
+                this.style.transform = 'scale(1)';
+            });
         });
     });
-    
-    // Smooth animations for hover effects
-    const cards = document.querySelectorAll('.hover-scale');
-    cards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'scale(1.02)';
-        });
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'scale(1)';
-        });
-    });
-});
 </script>
 {% endblock %}
