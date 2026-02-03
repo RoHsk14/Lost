@@ -5,22 +5,39 @@
 
 {% block extra_css %}
 <style>
-    .chat-container {
-        height: calc(100vh - 120px);
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Override base main padding for full-screen chat */
+    main {
+        padding: 0 !important;
+        min-height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
-    
+
+    .chat-container {
+        height: calc(100vh - 80px);
+        /* Header height is approximately 80px */
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+    }
+
     .chat-sidebar {
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
         border-right: 1px solid rgba(0, 0, 0, 0.1);
+        width: 320px;
+        flex-shrink: 0;
     }
-    
+
     .chat-main {
         background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 100%);
         position: relative;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
     }
-    
+
     .message-bubble-user {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -28,7 +45,7 @@
         box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
         animation: slideInRight 0.3s ease-out;
     }
-    
+
     .message-bubble-agent {
         background: white;
         color: #374151;
@@ -37,24 +54,38 @@
         border: 1px solid #e5e7eb;
         animation: slideInLeft 0.3s ease-out;
     }
-    
+
     @keyframes slideInRight {
-        from { transform: translateX(20px); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+        from {
+            transform: translateX(20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
     }
-    
+
     @keyframes slideInLeft {
-        from { transform: translateX(-20px); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+        from {
+            transform: translateX(-20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
     }
-    
+
     .typing-indicator {
         display: flex;
         align-items: center;
         gap: 4px;
         padding: 12px 16px;
     }
-    
+
     .typing-dot {
         width: 8px;
         height: 8px;
@@ -62,16 +93,32 @@
         background-color: #6b7280;
         animation: typing 1.4s ease-in-out infinite;
     }
-    
-    .typing-dot:nth-child(1) { animation-delay: 0s; }
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-    
-    @keyframes typing {
-        0%, 60%, 100% { transform: translateY(0); }
-        30% { transform: translateY(-10px); }
+
+    .typing-dot:nth-child(1) {
+        animation-delay: 0s;
     }
-    
+
+    .typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+
+        0%,
+        60%,
+        100% {
+            transform: translateY(0);
+        }
+
+        30% {
+            transform: translateY(-10px);
+        }
+    }
+
     .chat-input {
         background: white;
         border: 2px solid #e5e7eb;
@@ -81,13 +128,13 @@
         min-height: 50px;
         max-height: 120px;
     }
-    
+
     .chat-input:focus {
         border-color: #667eea;
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         outline: none;
     }
-    
+
     .send-button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 50%;
@@ -96,18 +143,18 @@
         transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
-    
+
     .send-button:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
     }
-    
+
     .send-button:disabled {
         opacity: 0.5;
         transform: none;
         box-shadow: none;
     }
-    
+
     .conversation-item {
         padding: 12px 16px;
         border-radius: 12px;
@@ -116,18 +163,18 @@
         transition: all 0.3s ease;
         border: 2px solid transparent;
     }
-    
+
     .conversation-item:hover {
         background: rgba(102, 126, 234, 0.1);
         border-color: rgba(102, 126, 234, 0.2);
     }
-    
+
     .conversation-item.active {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border-color: #667eea;
     }
-    
+
     .online-indicator {
         width: 12px;
         height: 12px;
@@ -136,43 +183,50 @@
         border: 2px solid white;
         animation: pulse 2s infinite;
     }
-    
+
     @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
     }
-    
+
     .message-time {
         font-size: 0.75rem;
         opacity: 0.7;
         margin-top: 4px;
     }
-    
+
     .messages-container {
-        height: calc(100% - 100px);
+        flex: 1;
         overflow-y: auto;
         scroll-behavior: smooth;
         padding: 20px;
     }
-    
+
     .messages-container::-webkit-scrollbar {
         width: 6px;
     }
-    
+
     .messages-container::-webkit-scrollbar-track {
         background: rgba(0, 0, 0, 0.1);
         border-radius: 3px;
     }
-    
+
     .messages-container::-webkit-scrollbar-thumb {
         background: rgba(102, 126, 234, 0.3);
         border-radius: 3px;
     }
-    
+
     .messages-container::-webkit-scrollbar-thumb:hover {
         background: rgba(102, 126, 234, 0.5);
     }
-    
+
     .new-message-indicator {
         position: absolute;
         top: 20px;
@@ -187,45 +241,59 @@
         z-index: 10;
         opacity: 0.9;
     }
-    
+
     @keyframes slideInRight {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 0.9; }
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 0.9;
+        }
     }
-    
+
     @keyframes slideOutRight {
-        from { transform: translateX(0); opacity: 0.9; }
-        to { transform: translateX(100%); opacity: 0; }
+        from {
+            transform: translateX(0);
+            opacity: 0.9;
+        }
+
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
     }
-    
+
     .new-message-indicator.hiding {
         animation: slideOutRight 0.3s ease-in forwards;
     }
-    
+
     .file-preview {
         border: 2px dashed #cbd5e1;
         border-radius: 8px;
         transition: all 0.3s ease;
     }
-    
+
     .file-preview:hover {
         border-color: #667eea;
         background-color: rgba(102, 126, 234, 0.05);
     }
-    
+
     .file-item {
         background: rgba(255, 255, 255, 0.9);
         border: 1px solid #e5e7eb;
         border-radius: 8px;
         transition: all 0.2s ease;
     }
-    
+
     .file-item:hover {
         background: white;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         transform: translateY(-1px);
     }
-    
+
     .upload-indicator {
         opacity: 0.8;
     }
@@ -243,306 +311,311 @@
                     <i class="fas fa-comments text-indigo-600 mr-2"></i>
                     Messagerie
                 </h2>
-                <button onclick="refreshConversations()" class="p-2 text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-100 transition-colors">
+                <button onclick="refreshConversations()"
+                    class="p-2 text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-100 transition-colors">
                     <i class="fas fa-sync-alt"></i>
                 </button>
             </div>
         </div>
-        
+
         <!-- Liste des conversations -->
         <div class="flex-1 overflow-y-auto p-4" id="conversations-list">
             {% if conversations %}
-                {% for conversation in conversations %}
-                <div class="conversation-item {% if conversation == conversation_active %}active{% endif %}" 
-                     data-conversation-id="{{ conversation.id }}" onclick="selectConversation({{ conversation.id }})">
-                    <div class="flex items-start gap-3">
-                        <div class="relative">
-                            <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                                {% if conversation.agent %}
-                                    <span class="text-indigo-600 font-semibold">
-                                        {{ conversation.agent.first_name|first|upper }}{{ conversation.agent.last_name|first|upper }}
-                                    </span>
-                                {% else %}
-                                    <i class="fas fa-user-shield text-indigo-600"></i>
-                                {% endif %}
-                            </div>
-                            <div class="online-indicator absolute -bottom-1 -right-1"></div>
+            {% for conversation in conversations %}
+            <div class="conversation-item {% if conversation == conversation_active %}active{% endif %}"
+                data-conversation-id="{{ conversation.id }}" onclick="selectConversation({{ conversation.id }})">
+                <div class="flex items-start gap-3">
+                    <div class="relative">
+                        <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                            {% if conversation.agent %}
+                            <span class="text-indigo-600 font-semibold">
+                                {{ conversation.agent.first_name|first|upper }}{{
+                                conversation.agent.last_name|first|upper }}
+                            </span>
+                            {% else %}
+                            <i class="fas fa-user-shield text-indigo-600"></i>
+                            {% endif %}
                         </div>
-                        
-                        <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-start">
-                                <h4 class="font-medium truncate">
-                                    {% if conversation.agent %}
-                                        {{ conversation.agent.get_full_name|default:conversation.agent.username }}
-                                    {% else %}
-                                        Support
-                                    {% endif %}
-                                </h4>
-                                <span class="text-xs opacity-70">{{ conversation.updated_at|time:"H:i" }}</span>
-                            </div>
-                            <p class="text-sm opacity-70 truncate mt-1">Support général</p>
-                            <div class="flex items-center justify-between mt-2">
-                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                    {{ conversation.statut|default:"Ouverte" }}
-                                </span>
-                            </div>
+                        <div class="online-indicator absolute -bottom-1 -right-1"></div>
+                    </div>
+
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-medium truncate">
+                                {% if conversation.agent %}
+                                {{ conversation.agent.get_full_name|default:conversation.agent.username }}
+                                {% else %}
+                                Support
+                                {% endif %}
+                            </h4>
+                            <span class="text-xs opacity-70">{{ conversation.updated_at|time:"H:i" }}</span>
+                        </div>
+                        <p class="text-sm opacity-70 truncate mt-1">Support général</p>
+                        <div class="flex items-center justify-between mt-2">
+                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                {{ conversation.statut|default:"Ouverte" }}
+                            </span>
                         </div>
                     </div>
                 </div>
-                {% endfor %}
+            </div>
+            {% endfor %}
             {% else %}
-                <div class="text-center text-gray-500 mt-8">
-                    <i class="fas fa-comments text-4xl mb-4 opacity-30"></i>
-                    <p>Aucune conversation</p>
-                    <p class="text-sm">Un agent vous contactera bientôt</p>
-                </div>
+            <div class="text-center text-gray-500 mt-8">
+                <i class="fas fa-comments text-4xl mb-4 opacity-30"></i>
+                <p>Aucune conversation</p>
+                <p class="text-sm">Un agent vous contactera bientôt</p>
+            </div>
             {% endif %}
         </div>
     </div>
-    
+
     <!-- Zone de chat principale -->
     <div class="chat-main flex-1 flex flex-col relative">
         {% if conversation_active %}
-            <!-- Header de la conversation -->
-            <div class="bg-white border-b border-gray-200 p-6 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="relative">
-                            <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                                {% if conversation_active.agent %}
-                                    <span class="text-indigo-600 font-semibold">
-                                        {{ conversation_active.agent.first_name|first|upper }}{{ conversation_active.agent.last_name|first|upper }}
-                                    </span>
-                                {% else %}
-                                    <i class="fas fa-user-shield text-indigo-600"></i>
-                                {% endif %}
-                            </div>
-                            <div class="online-indicator absolute -bottom-1 -right-1"></div>
+        <!-- Header de la conversation -->
+        <div class="bg-white border-b border-gray-200 p-6 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                            {% if conversation_active.agent %}
+                            <span class="text-indigo-600 font-semibold">
+                                {{ conversation_active.agent.first_name|first|upper }}{{
+                                conversation_active.agent.last_name|first|upper }}
+                            </span>
+                            {% else %}
+                            <i class="fas fa-user-shield text-indigo-600"></i>
+                            {% endif %}
                         </div>
-                        
-                        <div>
-                            <h3 class="font-semibold text-gray-900">
-                                {% if conversation_active.agent %}
-                                    {{ conversation_active.agent.get_full_name|default:conversation_active.agent.username }}
-                                {% else %}
-                                    Support TogoRetrouvé
-                                {% endif %}
-                            </h3>
-                            <p class="text-sm text-gray-600">Support général - Toujours disponible</p>
-                        </div>
+                        <div class="online-indicator absolute -bottom-1 -right-1"></div>
                     </div>
-                    
-                    <div class="flex items-center gap-3">
-                        <button onclick="showNewMessageNotification()" class="p-2 text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-100 transition-colors" title="Tester notification">
-                            <i class="fas fa-bell"></i>
-                        </button>
-                        <button class="p-2 text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-100 transition-colors">
-                            <i class="fas fa-refresh"></i>
-                        </button>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-900">
+                            {% if conversation_active.agent %}
+                            {{ conversation_active.agent.get_full_name|default:conversation_active.agent.username }}
+                            {% else %}
+                            Support TogoRetrouvé
+                            {% endif %}
+                        </h3>
+                        <p class="text-sm text-gray-600">Support général - Toujours disponible</p>
                     </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="showNewMessageNotification()"
+                        class="p-2 text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-100 transition-colors"
+                        title="Tester notification">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <button
+                        class="p-2 text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-refresh"></i>
+                    </button>
                 </div>
             </div>
-            
-            <!-- Zone des messages -->
-            <div class="messages-container flex-1" id="messages-container">
-                <!-- Indicateur de nouveau message -->
-                <div id="new-message-indicator" class="new-message-indicator hidden">
-                    <i class="fas fa-bell mr-1"></i>
-                    Nouveau message
-                </div>
-                
-                <!-- Messages -->
-                <div id="messages-list" class="space-y-4">
-                    {% for message in messages %}
-                    <div class="flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %}" 
-                         data-message-id="{{ message.id }}">
-                        
-                        {% if message.sender != request.user %}
-                            <!-- Message de l'agent -->
-                            <div class="flex items-start gap-3 max-w-lg">
-                                <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    {% if message.sender.first_name %}
-                                        {{ message.sender.first_name|first|upper }}
-                                    {% else %}
-                                        <i class="fas fa-user-shield text-indigo-600 text-xs"></i>
-                                    {% endif %}
-                                </div>
-                                <div class="message-bubble-agent p-4">
-                                    <p class="text-sm leading-relaxed">{{ message.contenu|linebreaks }}</p>
-                                    <div class="message-time">{{ message.created_at|time:"H:i" }}</div>
-                                </div>
-                            </div>
-                        {% else %}
-                            <!-- Message de l'utilisateur -->
-                            <div class="flex items-start gap-3 max-w-lg">
-                                <div class="message-bubble-user p-4">
-                                    <p class="text-sm leading-relaxed">{{ message.contenu|linebreaks }}</p>
-                                    <div class="message-time text-right">
-                                        {{ message.created_at|time:"H:i" }}
-                                        {% if message.is_read %}
-                                            <i class="fas fa-check-double ml-1" title="Lu"></i>
-                                        {% else %}
-                                            <i class="fas fa-check ml-1" title="Envoyé"></i>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    {{ request.user.first_name|first|upper|default:"U" }}
-                                </div>
-                            </div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-                
-                <!-- Indicateur de frappe -->
-                <div id="typing-indicator" class="hidden justify-start">
+        </div>
+
+        <!-- Zone des messages -->
+        <div class="messages-container flex-1" id="messages-container">
+            <!-- Indicateur de nouveau message -->
+            <div id="new-message-indicator" class="new-message-indicator hidden">
+                <i class="fas fa-bell mr-1"></i>
+                Nouveau message
+            </div>
+
+            <!-- Messages -->
+            <div id="messages-list" class="space-y-4">
+                {% for message in messages %}
+                <div class="flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %}"
+                    data-message-id="{{ message.id }}">
+
+                    {% if message.sender != request.user %}
+                    <!-- Message de l'agent -->
                     <div class="flex items-start gap-3 max-w-lg">
-                        <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            {% if message.sender.first_name %}
+                            {{ message.sender.first_name|first|upper }}
+                            {% else %}
                             <i class="fas fa-user-shield text-indigo-600 text-xs"></i>
+                            {% endif %}
                         </div>
-                        <div class="message-bubble-agent typing-indicator">
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
+                        <div class="message-bubble-agent p-4">
+                            <p class="text-sm leading-relaxed">{{ message.contenu|linebreaks }}</p>
+                            <div class="message-time">{{ message.created_at|time:"H:i" }}</div>
                         </div>
+                    </div>
+                    {% else %}
+                    <!-- Message de l'utilisateur -->
+                    <div class="flex items-start gap-3 max-w-lg">
+                        <div class="message-bubble-user p-4">
+                            <p class="text-sm leading-relaxed">{{ message.contenu|linebreaks }}</p>
+                            <div class="message-time text-right">
+                                {{ message.created_at|time:"H:i" }}
+                                {% if message.is_read %}
+                                <i class="fas fa-check-double ml-1" title="Lu"></i>
+                                {% else %}
+                                <i class="fas fa-check ml-1" title="Envoyé"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            {{ request.user.first_name|first|upper|default:"U" }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Indicateur de frappe -->
+            <div id="typing-indicator" class="hidden justify-start">
+                <div class="flex items-start gap-3 max-w-lg">
+                    <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user-shield text-indigo-600 text-xs"></i>
+                    </div>
+                    <div class="message-bubble-agent typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Zone de saisie -->
-            <div class="bg-white border-t border-gray-200 p-6">
-                <form id="message-form" class="flex items-end gap-4">
-                    {% csrf_token %}
-                    <input type="hidden" name="conversation_id" value="{{ conversation_active.id }}" id="conversation-id">
-                    
-                    <!-- Bouton d'ajout de fichier -->
-                    <input type="file" id="file-input" class="hidden" accept="image/*,.pdf,.doc,.docx">
-                    <button type="button" onclick="document.getElementById('file-input').click()" class="p-3 text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-100 transition-colors">
-                        <i class="fas fa-paperclip"></i>
-                    </button>
-                    
-                    <!-- Zone de saisie -->
-                    <div class="flex-1">
-                        <textarea id="message-input" 
-                                  placeholder="Tapez votre message..." 
-                                  class="chat-input w-full p-4 pr-12"
-                                  rows="1"></textarea>
-                    </div>
-                    
-                    <!-- Bouton d'envoi -->
-                    <button type="submit" id="send-button" class="send-button text-white flex items-center justify-center">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </form>
-            </div>
-            
+        </div>
+
+        <!-- Zone de saisie -->
+        <div class="bg-white border-t border-gray-200 p-6">
+            <form id="message-form" class="flex items-end gap-4">
+                {% csrf_token %}
+                <input type="hidden" name="conversation_id" value="{{ conversation_active.id }}" id="conversation-id">
+
+                <!-- Bouton d'ajout de fichier -->
+                <input type="file" id="file-input" class="hidden" accept="image/*,.pdf,.doc,.docx">
+                <button type="button" onclick="document.getElementById('file-input').click()"
+                    class="p-3 text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+
+                <!-- Zone de saisie -->
+                <div class="flex-1">
+                    <textarea id="message-input" placeholder="Tapez votre message..."
+                        class="chat-input w-full p-4 pr-12" rows="1"></textarea>
+                </div>
+
+                <!-- Bouton d'envoi -->
+                <button type="submit" id="send-button" class="send-button text-white flex items-center justify-center">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+
         {% elif error_message %}
-            <!-- Affichage d'erreur -->
-            <div class="flex-1 flex items-center justify-center">
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Erreur de chargement</h3>
-                    <p class="text-gray-600 mb-6 max-w-md">{{ error_message }}</p>
-                    <button onclick="window.location.reload()" 
-                            class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                        <i class="fas fa-redo mr-2"></i>
-                        Réessayer
-                    </button>
+        <!-- Affichage d'erreur -->
+        <div class="flex-1 flex items-center justify-center">
+            <div class="text-center">
+                <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
                 </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-3">Erreur de chargement</h3>
+                <p class="text-gray-600 mb-6 max-w-md">{{ error_message }}</p>
+                <button onclick="window.location.reload()"
+                    class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    <i class="fas fa-redo mr-2"></i>
+                    Réessayer
+                </button>
             </div>
+        </div>
         {% else %}
-            <!-- État vide -->
-            <div class="flex-1 flex items-center justify-center">
-                <div class="text-center">
-                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-comments text-gray-400 text-3xl"></i>
-                    </div>
-                    <h3 class="text-2xl font-semibold text-gray-900 mb-3">Bienvenue dans votre messagerie !</h3>
-                    <p class="text-gray-600 mb-6 max-w-md">
-                        Votre conversation sera créée automatiquement. Patientez un instant...
-                    </p>
-                    <button onclick="window.location.reload()" 
-                            class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                        <i class="fas fa-refresh mr-2"></i>
-                        Actualiser
-                    </button>
+        <!-- État vide -->
+        <div class="flex-1 flex items-center justify-center">
+            <div class="text-center">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-comments text-gray-400 text-3xl"></i>
                 </div>
+                <h3 class="text-2xl font-semibold text-gray-900 mb-3">Bienvenue dans votre messagerie !</h3>
+                <p class="text-gray-600 mb-6 max-w-md">
+                    Votre conversation sera créée automatiquement. Patientez un instant...
+                </p>
+                <button onclick="window.location.reload()"
+                    class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    <i class="fas fa-refresh mr-2"></i>
+                    Actualiser
+                </button>
             </div>
+        </div>
         {% endif %}
     </div>
 </div>
 
 <script>
-// Variables globales
-let currentConversationId = {{ conversation_active.id|default:'null' }};
-let messagesContainer = document.getElementById('messages-container');
-let messagesList = document.getElementById('messages-list');
-let messageInput = document.getElementById('message-input');
-let sendButton = document.getElementById('send-button');
-let refreshInterval;
+    // Variables globales
+    let currentConversationId = {{ conversation_active.id|default: 'null' }};
+    let messagesContainer = document.getElementById('messages-container');
+    let messagesList = document.getElementById('messages-list');
+    let messageInput = document.getElementById('message-input');
+    let sendButton = document.getElementById('send-button');
+    let refreshInterval;
 
-// Auto-resize textarea
-function adjustTextareaHeight(textarea) {
-    textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-}
-
-// Scroll vers le bas
-function scrollToBottom(smooth = true) {
-    if (messagesContainer) {
-        messagesContainer.scrollTo({
-            top: messagesContainer.scrollHeight,
-            behavior: smooth ? 'smooth' : 'auto'
-        });
+    // Auto-resize textarea
+    function adjustTextareaHeight(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
     }
-}
 
-// Afficher l'indicateur de frappe
-function showTypingIndicator() {
-    const indicator = document.getElementById('typing-indicator');
-    if (indicator) {
-        indicator.classList.remove('hidden');
-        indicator.classList.add('flex');
-        scrollToBottom();
+    // Scroll vers le bas
+    function scrollToBottom(smooth = true) {
+        if (messagesContainer) {
+            messagesContainer.scrollTo({
+                top: messagesContainer.scrollHeight,
+                behavior: smooth ? 'smooth' : 'auto'
+            });
+        }
     }
-}
 
-// Masquer l'indicateur de frappe
-function hideTypingIndicator() {
-    const indicator = document.getElementById('typing-indicator');
-    if (indicator) {
-        indicator.classList.add('hidden');
-        indicator.classList.remove('flex');
+    // Afficher l'indicateur de frappe
+    function showTypingIndicator() {
+        const indicator = document.getElementById('typing-indicator');
+        if (indicator) {
+            indicator.classList.remove('hidden');
+            indicator.classList.add('flex');
+            scrollToBottom();
+        }
     }
-}
 
-// Ajouter un message à l'interface
-function addMessageToInterface(messageData, isFromUser = false) {
-    if (!messagesList) return;
-    
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `flex ${isFromUser ? 'justify-end' : 'justify-start'}`;
-    messageDiv.setAttribute('data-message-id', messageData.id);
-    
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    
-    // Contenu du message (texte ou fichier)
-    let messageContent = '';
-    
-    if (messageData.type_message === 'fichier' && messageData.file_url) {
-        // Message avec fichier
-        if (messageData.file_type && messageData.file_type.startsWith('image/')) {
-            messageContent = `
+    // Masquer l'indicateur de frappe
+    function hideTypingIndicator() {
+        const indicator = document.getElementById('typing-indicator');
+        if (indicator) {
+            indicator.classList.add('hidden');
+            indicator.classList.remove('flex');
+        }
+    }
+
+    // Ajouter un message à l'interface
+    function addMessageToInterface(messageData, isFromUser = false) {
+        if (!messagesList) return;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `flex ${isFromUser ? 'justify-end' : 'justify-start'}`;
+        messageDiv.setAttribute('data-message-id', messageData.id);
+
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+        // Contenu du message (texte ou fichier)
+        let messageContent = '';
+
+        if (messageData.type_message === 'fichier' && messageData.file_url) {
+            // Message avec fichier
+            if (messageData.file_type && messageData.file_type.startsWith('image/')) {
+                messageContent = `
                 <img src="${messageData.file_url}" alt="${messageData.file_name || 'Image'}" 
                      class="max-w-xs rounded-lg mb-2 cursor-pointer shadow-md hover:shadow-lg transition-shadow" 
                      onclick="window.open('${messageData.file_url}', '_blank')">
             `;
-        } else {
-            messageContent = `
+            } else {
+                messageContent = `
                 <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-3 mb-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" 
                      onclick="window.open('${messageData.file_url}', '_blank')">
                     <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -555,19 +628,19 @@ function addMessageToInterface(messageData, isFromUser = false) {
                     </div>
                 </div>
             `;
+            }
+
+            // Ajouter le texte du message s'il existe
+            if (messageData.contenu && !messageData.contenu.startsWith('Fichier envoyé:')) {
+                messageContent += `<p class="text-sm leading-relaxed">${messageData.contenu.replace(/\n/g, '<br>')}</p>`;
+            }
+        } else {
+            // Message texte normal
+            messageContent = `<p class="text-sm leading-relaxed">${messageData.contenu.replace(/\n/g, '<br>')}</p>`;
         }
-        
-        // Ajouter le texte du message s'il existe
-        if (messageData.contenu && !messageData.contenu.startsWith('Fichier envoyé:')) {
-            messageContent += `<p class="text-sm leading-relaxed">${messageData.contenu.replace(/\n/g, '<br>')}</p>`;
-        }
-    } else {
-        // Message texte normal
-        messageContent = `<p class="text-sm leading-relaxed">${messageData.contenu.replace(/\n/g, '<br>')}</p>`;
-    }
-    
-    if (isFromUser) {
-        messageDiv.innerHTML = `
+
+        if (isFromUser) {
+            messageDiv.innerHTML = `
             <div class="flex items-start gap-3 max-w-lg">
                 <div class="message-bubble-user p-4">
                     ${messageContent}
@@ -581,8 +654,8 @@ function addMessageToInterface(messageData, isFromUser = false) {
                 </div>
             </div>
         `;
-    } else {
-        messageDiv.innerHTML = `
+        } else {
+            messageDiv.innerHTML = `
             <div class="flex items-start gap-3 max-w-lg">
                 <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-user-shield text-indigo-600 text-xs"></i>
@@ -593,144 +666,144 @@ function addMessageToInterface(messageData, isFromUser = false) {
                 </div>
             </div>
         `;
-    }
-    
-    messagesList.appendChild(messageDiv);
-    scrollToBottom();
-}
-
-// Envoyer un message
-async function sendMessage(event) {
-    if (event) event.preventDefault();
-    
-    const message = messageInput.value.trim();
-    if (!message || !currentConversationId) return;
-    
-    // Désactiver l'interface d'envoi
-    sendButton.disabled = true;
-    sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    
-    try {
-        const response = await fetch('{% url "api_envoyer_message" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify({
-                conversation_id: currentConversationId,
-                contenu: message
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Ajouter le message à l'interface
-            addMessageToInterface(data.message, true);
-            
-            // Vider l'input
-            messageInput.value = '';
-            adjustTextareaHeight(messageInput);
-            
-            // Simuler une réponse de l'agent
-            setTimeout(showTypingIndicator, 1000);
-            setTimeout(hideTypingIndicator, 3000);
-            
-        } else {
-            console.error('Erreur API:', data);
-            alert('Erreur lors de l\'envoi: ' + (data.error || 'Erreur inconnue'));
         }
-        
-    } catch (error) {
-        console.error('Erreur réseau:', error);
-        alert('Erreur de connexion. Veuillez réessayer.');
-    } finally {
-        // Réactiver l'interface
-        sendButton.disabled = false;
-        sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
-    }
-}
 
-// Actualiser les conversations
-function refreshConversations() {
-    window.location.reload();
-}
-
-// Sélectionner une conversation
-async function selectConversation(conversationId) {
-    if (conversationId === currentConversationId) return;
-    
-    console.log('Changement vers conversation:', conversationId);
-    
-    // Mettre à jour l'interface visuellement
-    document.querySelectorAll('.conversation-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    
-    const selectedItem = document.querySelector(`[data-conversation-id="${conversationId}"]`);
-    if (selectedItem) {
-        selectedItem.classList.add('active');
+        messagesList.appendChild(messageDiv);
+        scrollToBottom();
     }
-    
-    // Charger les messages de la conversation
-    try {
-        const response = await fetch(`/api/messages/${conversationId}/`);
-        const data = await response.json();
-        
-        if (data.success) {
-            // Mettre à jour l'ID de conversation courante
-            currentConversationId = conversationId;
-            
-            // Vider la zone de messages
-            messagesList.innerHTML = '';
-            
-            // Ajouter tous les messages avec leurs données complètes
-            data.messages.forEach(message => {
-                addMessageToInterface({
-                    id: message.id,
-                    contenu: message.contenu,
-                    expediteur: message.expediteur,
-                    type_message: message.type_message || 'texte',
-                    file_url: message.file_url,
-                    file_name: message.file_name,
-                    file_type: message.file_type
-                }, message.is_from_user);
+
+    // Envoyer un message
+    async function sendMessage(event) {
+        if (event) event.preventDefault();
+
+        const message = messageInput.value.trim();
+        if (!message || !currentConversationId) return;
+
+        // Désactiver l'interface d'envoi
+        sendButton.disabled = true;
+        sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        try {
+            const response = await fetch('{% url "api_envoyer_message" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    conversation_id: currentConversationId,
+                    contenu: message
+                })
             });
-            
-            // Mettre à jour l'ID de conversation dans le formulaire
-            const conversationIdInput = document.getElementById('conversation-id');
-            if (conversationIdInput) {
-                conversationIdInput.value = conversationId;
-            }
-            
-            // Mettre à jour l'en-tête de conversation
-            updateConversationHeader(data.conversation);
-            
-            // Scroller vers le bas sans animation pour éviter le délai
-            setTimeout(() => scrollToBottom(false), 100);
-            
-            console.log('Conversation changée avec succès vers:', conversationId);
-        } else {
-            console.error('Erreur lors du chargement:', data.error);
-            alert('Erreur lors du chargement de la conversation: ' + data.error);
-        }
-        
-    } catch (error) {
-        console.error('Erreur de connexion:', error);
-        alert('Erreur de connexion lors du changement de conversation.');
-    }
-}
 
-// Mettre à jour l'en-tête de conversation
-function updateConversationHeader(conversationData) {
-    const header = document.querySelector('.chat-main .bg-white');
-    if (header && conversationData) {
-        const agentName = conversationData.agent_name || 'Support TogoRetrouvé';
-        const agentInitials = agentName.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
-        
-        // Créer le nouveau contenu de l'en-tête
-        const headerContent = `
+            const data = await response.json();
+
+            if (data.success) {
+                // Ajouter le message à l'interface
+                addMessageToInterface(data.message, true);
+
+                // Vider l'input
+                messageInput.value = '';
+                adjustTextareaHeight(messageInput);
+
+                // Simuler une réponse de l'agent
+                setTimeout(showTypingIndicator, 1000);
+                setTimeout(hideTypingIndicator, 3000);
+
+            } else {
+                console.error('Erreur API:', data);
+                alert('Erreur lors de l\'envoi: ' + (data.error || 'Erreur inconnue'));
+            }
+
+        } catch (error) {
+            console.error('Erreur réseau:', error);
+            alert('Erreur de connexion. Veuillez réessayer.');
+        } finally {
+            // Réactiver l'interface
+            sendButton.disabled = false;
+            sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        }
+    }
+
+    // Actualiser les conversations
+    function refreshConversations() {
+        window.location.reload();
+    }
+
+    // Sélectionner une conversation
+    async function selectConversation(conversationId) {
+        if (conversationId === currentConversationId) return;
+
+        console.log('Changement vers conversation:', conversationId);
+
+        // Mettre à jour l'interface visuellement
+        document.querySelectorAll('.conversation-item').forEach(item => {
+            item.classList.remove('active');
+        });
+
+        const selectedItem = document.querySelector(`[data-conversation-id="${conversationId}"]`);
+        if (selectedItem) {
+            selectedItem.classList.add('active');
+        }
+
+        // Charger les messages de la conversation
+        try {
+            const response = await fetch(`/api/messages/${conversationId}/`);
+            const data = await response.json();
+
+            if (data.success) {
+                // Mettre à jour l'ID de conversation courante
+                currentConversationId = conversationId;
+
+                // Vider la zone de messages
+                messagesList.innerHTML = '';
+
+                // Ajouter tous les messages avec leurs données complètes
+                data.messages.forEach(message => {
+                    addMessageToInterface({
+                        id: message.id,
+                        contenu: message.contenu,
+                        expediteur: message.expediteur,
+                        type_message: message.type_message || 'texte',
+                        file_url: message.file_url,
+                        file_name: message.file_name,
+                        file_type: message.file_type
+                    }, message.is_from_user);
+                });
+
+                // Mettre à jour l'ID de conversation dans le formulaire
+                const conversationIdInput = document.getElementById('conversation-id');
+                if (conversationIdInput) {
+                    conversationIdInput.value = conversationId;
+                }
+
+                // Mettre à jour l'en-tête de conversation
+                updateConversationHeader(data.conversation);
+
+                // Scroller vers le bas sans animation pour éviter le délai
+                setTimeout(() => scrollToBottom(false), 100);
+
+                console.log('Conversation changée avec succès vers:', conversationId);
+            } else {
+                console.error('Erreur lors du chargement:', data.error);
+                alert('Erreur lors du chargement de la conversation: ' + data.error);
+            }
+
+        } catch (error) {
+            console.error('Erreur de connexion:', error);
+            alert('Erreur de connexion lors du changement de conversation.');
+        }
+    }
+
+    // Mettre à jour l'en-tête de conversation
+    function updateConversationHeader(conversationData) {
+        const header = document.querySelector('.chat-main .bg-white');
+        if (header && conversationData) {
+            const agentName = conversationData.agent_name || 'Support TogoRetrouvé';
+            const agentInitials = agentName.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
+
+            // Créer le nouveau contenu de l'en-tête
+            const headerContent = `
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <div class="relative">
@@ -753,187 +826,187 @@ function updateConversationHeader(conversationData) {
                 </div>
             </div>
         `;
-        
-        // Mettre à jour le contenu
-        header.innerHTML = headerContent;
-        
-        console.log('En-tête mis à jour pour:', agentName);
-    }
-}
 
-// Polling pour actualisation automatique
-function startAutoRefresh() {
-    refreshInterval = setInterval(() => {
-        // Actualiser seulement si l'utilisateur est actif
-        if (document.hasFocus()) {
-            checkForNewMessages();
+            // Mettre à jour le contenu
+            header.innerHTML = headerContent;
+
+            console.log('En-tête mis à jour pour:', agentName);
         }
-    }, 10000); // Toutes les 10 secondes
-}
-
-function checkForNewMessages() {
-    if (!currentConversationId) return;
-    
-    fetch(`/api/messages/${currentConversationId}/`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                updateMessagesIfNeeded(data.messages);
-            }
-        })
-        .catch(error => {
-            console.log('Erreur de vérification des messages:', error);
-        });
-}
-
-function updateMessagesIfNeeded(newMessages) {
-    const currentMessages = document.querySelectorAll('[data-message-id]');
-    const currentMessageIds = Array.from(currentMessages).map(el => 
-        parseInt(el.getAttribute('data-message-id'))
-    );
-    
-    // Vérifier s'il y a de nouveaux messages
-    const hasNewMessages = newMessages.some(msg => !currentMessageIds.includes(msg.id));
-    
-    if (hasNewMessages) {
-        // Recharger seulement les nouveaux messages
-        newMessages.forEach(message => {
-            if (!currentMessageIds.includes(message.id)) {
-                addMessageToInterface(message, message.is_from_user);
-            }
-        });
-        
-        // Afficher une notification visuelle
-        showNewMessageNotification();
     }
-}
 
-function showNewMessageNotification() {
-    const indicator = document.getElementById('new-message-indicator');
-    if (indicator) {
-        // Afficher immédiatement
-        indicator.style.display = 'block';
-        indicator.classList.remove('hidden');
-        
-        // Cacher après 2 secondes
+    // Polling pour actualisation automatique
+    function startAutoRefresh() {
+        refreshInterval = setInterval(() => {
+            // Actualiser seulement si l'utilisateur est actif
+            if (document.hasFocus()) {
+                checkForNewMessages();
+            }
+        }, 10000); // Toutes les 10 secondes
+    }
+
+    function checkForNewMessages() {
+        if (!currentConversationId) return;
+
+        fetch(`/api/messages/${currentConversationId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateMessagesIfNeeded(data.messages);
+                }
+            })
+            .catch(error => {
+                console.log('Erreur de vérification des messages:', error);
+            });
+    }
+
+    function updateMessagesIfNeeded(newMessages) {
+        const currentMessages = document.querySelectorAll('[data-message-id]');
+        const currentMessageIds = Array.from(currentMessages).map(el =>
+            parseInt(el.getAttribute('data-message-id'))
+        );
+
+        // Vérifier s'il y a de nouveaux messages
+        const hasNewMessages = newMessages.some(msg => !currentMessageIds.includes(msg.id));
+
+        if (hasNewMessages) {
+            // Recharger seulement les nouveaux messages
+            newMessages.forEach(message => {
+                if (!currentMessageIds.includes(message.id)) {
+                    addMessageToInterface(message, message.is_from_user);
+                }
+            });
+
+            // Afficher une notification visuelle
+            showNewMessageNotification();
+        }
+    }
+
+    function showNewMessageNotification() {
+        const indicator = document.getElementById('new-message-indicator');
+        if (indicator) {
+            // Afficher immédiatement
+            indicator.style.display = 'block';
+            indicator.classList.remove('hidden');
+
+            // Cacher après 2 secondes
+            setTimeout(() => {
+                indicator.style.display = 'none';
+                indicator.classList.add('hidden');
+            }, 2000);
+        }
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function () {
+        // Auto-resize du textarea
+        if (messageInput) {
+            messageInput.addEventListener('input', function () {
+                adjustTextareaHeight(this);
+            });
+
+            // Envoi avec Enter (Shift+Enter pour nouvelle ligne)
+            messageInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+
+        // Envoi du formulaire
+        const messageForm = document.getElementById('message-form');
+        if (messageForm) {
+            messageForm.addEventListener('submit', sendMessage);
+        }
+
+        // Gestion des fichiers
+        const fileInput = document.getElementById('file-input');
+        if (fileInput) {
+            fileInput.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    uploadFile(file);
+                }
+            });
+        }
+
+        // Scroll initial vers le bas
         setTimeout(() => {
-            indicator.style.display = 'none';
-            indicator.classList.add('hidden');
-        }, 2000);
-    }
-}
+            scrollToBottom(false);
+        }, 100);
 
-// Event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-resize du textarea
-    if (messageInput) {
-        messageInput.addEventListener('input', function() {
-            adjustTextareaHeight(this);
-        });
-        
-        // Envoi avec Enter (Shift+Enter pour nouvelle ligne)
-        messageInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-    }
-    
-    // Envoi du formulaire
-    const messageForm = document.getElementById('message-form');
-    if (messageForm) {
-        messageForm.addEventListener('submit', sendMessage);
-    }
-    
-    // Gestion des fichiers
-    const fileInput = document.getElementById('file-input');
-    if (fileInput) {
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                uploadFile(file);
-            }
-        });
-    }
-    
-    // Scroll initial vers le bas
-    setTimeout(() => {
-        scrollToBottom(false);
-    }, 100);
-    
-    // Démarrer l'actualisation automatique
-    startAutoRefresh();
-});
+        // Démarrer l'actualisation automatique
+        startAutoRefresh();
+    });
 
-// Upload de fichier
-async function uploadFile(file) {
-    if (!currentConversationId) {
-        alert('Aucune conversation active');
-        return;
-    }
-    
-    // Vérifier la taille du fichier (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-        alert('Le fichier est trop volumineux. Taille maximale: 10MB');
-        return;
-    }
-    
-    // Vérifier le type de fichier
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 
-                         'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (!allowedTypes.includes(file.type)) {
-        alert('Type de fichier non autorisé. Formats acceptés: Images (JPG, PNG, GIF), PDF, DOC, DOCX');
-        return;
-    }
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('conversation_id', currentConversationId);
-    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-    
-    // Afficher un indicateur de chargement
-    showFileUploadIndicator(file.name);
-    
-    try {
-        const response = await fetch('/api/upload-file/', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Ajouter le message avec fichier à l'interface
-            addFileMessageToInterface({
-                id: data.message.id,
-                contenu: data.message.contenu,
-                file_name: data.message.file_name,
-                file_url: data.message.file_url,
-                file_type: data.message.file_type
-            }, true);
-            
-            hideFileUploadIndicator();
-        } else {
-            hideFileUploadIndicator();
-            alert('Erreur lors de l\'upload: ' + (data.error || 'Erreur inconnue'));
+    // Upload de fichier
+    async function uploadFile(file) {
+        if (!currentConversationId) {
+            alert('Aucune conversation active');
+            return;
         }
-        
-    } catch (error) {
-        hideFileUploadIndicator();
-        console.error('Erreur upload:', error);
-        alert('Erreur de connexion lors de l\'upload');
-    }
-    
-    // Réinitialiser le champ fichier
-    fileInput.value = '';
-}
 
-// Afficher l'indicateur d'upload
-function showFileUploadIndicator(fileName) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'flex justify-end upload-indicator';
-    messageDiv.innerHTML = `
+        // Vérifier la taille du fichier (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Le fichier est trop volumineux. Taille maximale: 10MB');
+            return;
+        }
+
+        // Vérifier le type de fichier
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf',
+            'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Type de fichier non autorisé. Formats acceptés: Images (JPG, PNG, GIF), PDF, DOC, DOCX');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('conversation_id', currentConversationId);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        // Afficher un indicateur de chargement
+        showFileUploadIndicator(file.name);
+
+        try {
+            const response = await fetch('/api/upload-file/', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Ajouter le message avec fichier à l'interface
+                addFileMessageToInterface({
+                    id: data.message.id,
+                    contenu: data.message.contenu,
+                    file_name: data.message.file_name,
+                    file_url: data.message.file_url,
+                    file_type: data.message.file_type
+                }, true);
+
+                hideFileUploadIndicator();
+            } else {
+                hideFileUploadIndicator();
+                alert('Erreur lors de l\'upload: ' + (data.error || 'Erreur inconnue'));
+            }
+
+        } catch (error) {
+            hideFileUploadIndicator();
+            console.error('Erreur upload:', error);
+            alert('Erreur de connexion lors de l\'upload');
+        }
+
+        // Réinitialiser le champ fichier
+        fileInput.value = '';
+    }
+
+    // Afficher l'indicateur d'upload
+    function showFileUploadIndicator(fileName) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'flex justify-end upload-indicator';
+        messageDiv.innerHTML = `
         <div class="flex items-start gap-3 max-w-lg">
             <div class="message-bubble-user p-4">
                 <div class="flex items-center gap-2">
@@ -946,54 +1019,54 @@ function showFileUploadIndicator(fileName) {
             </div>
         </div>
     `;
-    
-    messagesList.appendChild(messageDiv);
-    scrollToBottom();
-}
 
-// Masquer l'indicateur d'upload
-function hideFileUploadIndicator() {
-    const indicator = document.querySelector('.upload-indicator');
-    if (indicator) {
-        indicator.remove();
+        messagesList.appendChild(messageDiv);
+        scrollToBottom();
     }
-}
 
-// Ajouter un message avec fichier
-function addFileMessageToInterface(messageData, isFromUser = false) {
-    if (!messagesList) return;
-    
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `flex ${isFromUser ? 'justify-end' : 'justify-start'}`;
-    messageDiv.setAttribute('data-message-id', messageData.id);
-    
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    
-    // Déterminer le type de fichier et l'icône
-    let fileIcon = 'fas fa-file';
-    let fileColor = 'text-gray-500';
-    
-    if (messageData.file_type.startsWith('image/')) {
-        fileIcon = 'fas fa-image';
-        fileColor = 'text-green-500';
-    } else if (messageData.file_type === 'application/pdf') {
-        fileIcon = 'fas fa-file-pdf';
-        fileColor = 'text-red-500';
-    } else if (messageData.file_type.includes('word')) {
-        fileIcon = 'fas fa-file-word';
-        fileColor = 'text-blue-500';
+    // Masquer l'indicateur d'upload
+    function hideFileUploadIndicator() {
+        const indicator = document.querySelector('.upload-indicator');
+        if (indicator) {
+            indicator.remove();
+        }
     }
-    
-    const fileContent = messageData.file_type.startsWith('image/') 
-        ? `<img src="${messageData.file_url}" alt="${messageData.file_name}" class="max-w-xs rounded-lg mb-2 cursor-pointer" onclick="window.open('${messageData.file_url}', '_blank')">` 
-        : `<div class="flex items-center gap-2 bg-gray-100 rounded-lg p-2 mb-2 cursor-pointer" onclick="window.open('${messageData.file_url}', '_blank')">
+
+    // Ajouter un message avec fichier
+    function addFileMessageToInterface(messageData, isFromUser = false) {
+        if (!messagesList) return;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `flex ${isFromUser ? 'justify-end' : 'justify-start'}`;
+        messageDiv.setAttribute('data-message-id', messageData.id);
+
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+        // Déterminer le type de fichier et l'icône
+        let fileIcon = 'fas fa-file';
+        let fileColor = 'text-gray-500';
+
+        if (messageData.file_type.startsWith('image/')) {
+            fileIcon = 'fas fa-image';
+            fileColor = 'text-green-500';
+        } else if (messageData.file_type === 'application/pdf') {
+            fileIcon = 'fas fa-file-pdf';
+            fileColor = 'text-red-500';
+        } else if (messageData.file_type.includes('word')) {
+            fileIcon = 'fas fa-file-word';
+            fileColor = 'text-blue-500';
+        }
+
+        const fileContent = messageData.file_type.startsWith('image/')
+            ? `<img src="${messageData.file_url}" alt="${messageData.file_name}" class="max-w-xs rounded-lg mb-2 cursor-pointer" onclick="window.open('${messageData.file_url}', '_blank')">`
+            : `<div class="flex items-center gap-2 bg-gray-100 rounded-lg p-2 mb-2 cursor-pointer" onclick="window.open('${messageData.file_url}', '_blank')">
              <i class="${fileIcon} ${fileColor}"></i>
              <span class="text-sm text-gray-700 truncate">${messageData.file_name}</span>
            </div>`;
-    
-    if (isFromUser) {
-        messageDiv.innerHTML = `
+
+        if (isFromUser) {
+            messageDiv.innerHTML = `
             <div class="flex items-start gap-3 max-w-lg">
                 <div class="message-bubble-user p-4">
                     ${fileContent}
@@ -1008,8 +1081,8 @@ function addFileMessageToInterface(messageData, isFromUser = false) {
                 </div>
             </div>
         `;
-    } else {
-        messageDiv.innerHTML = `
+        } else {
+            messageDiv.innerHTML = `
             <div class="flex items-start gap-3 max-w-lg">
                 <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-user-shield text-indigo-600 text-xs"></i>
@@ -1021,17 +1094,17 @@ function addFileMessageToInterface(messageData, isFromUser = false) {
                 </div>
             </div>
         `;
-    }
-    
-    messagesList.appendChild(messageDiv);
-    scrollToBottom();
-}
+        }
 
-// Nettoyage au déchargement de la page
-window.addEventListener('beforeunload', function() {
-    if (refreshInterval) {
-        clearInterval(refreshInterval);
+        messagesList.appendChild(messageDiv);
+        scrollToBottom();
     }
-});
+
+    // Nettoyage au déchargement de la page
+    window.addEventListener('beforeunload', function () {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+        }
+    });
 </script>
 {% endblock %}
