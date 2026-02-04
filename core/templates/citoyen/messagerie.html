@@ -691,7 +691,7 @@
 
 <script>
     // Variables globales
-    let currentConversationId = {{ conversation_active.id|default: 'null' }};
+    let currentConversationId = {{ conversation_active.id|default:'null' }};
     let messagesContainer = document.getElementById('messages-container');
     let messagesList = document.getElementById('messages-list');
     let messageInput = document.getElementById('message-input');
