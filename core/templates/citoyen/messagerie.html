@@ -297,10 +297,151 @@
     .upload-indicator {
         opacity: 0.8;
     }
+
+    /* Mobile Sidebar Toggle */
+    .mobile-sidebar-toggle {
+        display: none;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 100;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .mobile-sidebar-toggle:active {
+        transform: scale(0.95);
+    }
+
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+        backdrop-filter: blur(4px);
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 1024px) {
+        .chat-sidebar {
+            width: 280px;
+        }
+    }
+
+    @media (max-width: 768px) {
+
+        /* Mobile layout */
+        .chat-container {
+            flex-direction: column;
+        }
+
+        .chat-sidebar {
+            position: fixed;
+            left: -100%;
+            top: 0;
+            bottom: 0;
+            width: 85%;
+            max-width: 320px;
+            z-index: 50;
+            transition: left 0.3s ease;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .chat-sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        .mobile-sidebar-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-main {
+            width: 100%;
+        }
+
+        .messages-container {
+            padding: 12px;
+        }
+
+        .message-bubble-user,
+        .message-bubble-agent {
+            max-width: 85%;
+        }
+
+        /* Adjust input area for mobile */
+        .chat-input {
+            font-size: 16px;
+            /* Prevent zoom on iOS */
+        }
+
+        /* Hide notifications on mobile to save space */
+        .new-message-indicator {
+            top: 10px;
+            right: 10px;
+            font-size: 0.7rem;
+            padding: 4px 8px;
+        }
+    }
+
+    @media (max-width: 480px) {
+
+        /* Small mobile devices */
+        .chat-container {
+            height: calc(100vh - 60px);
+        }
+
+        .conversation-item {
+            padding: 10px 12px;
+        }
+
+        .w-12 {
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+        }
+
+        .send-button {
+            width: 44px;
+            height: 44px;
+        }
+
+        .chat-input {
+            min-height: 44px;
+            padding: 12px 16px;
+        }
+
+        .message-bubble-user,
+        .message-bubble-agent {
+            padding: 12px;
+            font-size: 0.9rem;
+        }
+    }
 </style>
 {% endblock %}
 
+
 {% block content %}
+<!-- Overlay for mobile sidebar -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
+
+<!-- Mobile sidebar toggle button -->
+<button class="mobile-sidebar-toggle" id="mobileSidebarToggle" onclick="toggleMobileSidebar()">
+    <i class="fas fa-comments text-xl"></i>
+</button>
+
 <div class="chat-container flex">
     <!-- Sidebar des conversations -->
     <div class="chat-sidebar w-80 flex flex-col">
@@ -329,7 +470,8 @@
                         <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
                             {% if conversation.agent %}
                             <span class="text-indigo-600 font-semibold">
-                                {{ conversation.agent.first_name|first|upper }}{{ conversation.agent.last_name|first|upper }}
+                                {{ conversation.agent.first_name|first|upper }}{{
+                                conversation.agent.last_name|first|upper }}
                             </span>
                             {% else %}
                             <i class="fas fa-user-shield text-indigo-600"></i>
@@ -380,7 +522,8 @@
                         <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
                             {% if conversation_active.agent %}
                             <span class="text-indigo-600 font-semibold">
-                                {{ conversation_active.agent.first_name|first|upper }}{{ conversation_active.agent.last_name|first|upper }}
+                                {{ conversation_active.agent.first_name|first|upper }}{{
+                                conversation_active.agent.last_name|first|upper }}
                             </span>
                             {% else %}
                             <i class="fas fa-user-shield text-indigo-600"></i>
@@ -548,12 +691,33 @@
 
 <script>
     // Variables globales
-    let currentConversationId = {{ conversation_active.id|default:'null' }};
+    let currentConversationId = {{ conversation_active.id|default: 'null' }};
     let messagesContainer = document.getElementById('messages-container');
     let messagesList = document.getElementById('messages-list');
     let messageInput = document.getElementById('message-input');
     let sendButton = document.getElementById('send-button');
     let refreshInterval;
+
+    // Mobile sidebar toggle
+    function toggleMobileSidebar() {
+        const sidebar = document.querySelector('.chat-sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        if (sidebar && overlay) {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+    }
+
+    // Close sidebar when clicking on a conversation (mobile)
+    function selectConversationMobile(conversationId) {
+        selectConversation(conversationId);
+
+        // Close sidebar on mobile after selection
+        if (window.innerWidth <= 768) {
+            toggleMobileSidebar();
+        }
+    }
 
     // Auto-resize textarea
     function adjustTextareaHeight(textarea) {
