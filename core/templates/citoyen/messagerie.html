@@ -577,8 +577,7 @@
                         <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
                             {% if conversation.agent %}
                             <span class="text-indigo-600 font-semibold">
-                                {{ conversation.agent.first_name|first|upper }}{{
-                                conversation.agent.last_name|first|upper }}
+                                {{ conversation.agent.first_name|first|upper }}{{ conversation.agent.last_name|first|upper }}
                             </span>
                             {% else %}
                             <i class="fas fa-user-shield text-indigo-600"></i>
@@ -628,7 +627,6 @@
                     <div class="relative">
                         <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
                             {% if conversation_active.agent %}
-                            <span class="text-indigo-600 font-semibold">
                                 {{ conversation_active.agent.first_name|first|upper }}{{
                                 conversation_active.agent.last_name|first|upper }}
                             </span>
