@@ -18,6 +18,7 @@
 
     .chat-container {
         height: calc(100vh - 80px);
+        max-height: calc(100vh - 80px);
         background: #f4f4f5;
         flex: 1;
         display: flex;
@@ -576,7 +577,8 @@
                         <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
                             {% if conversation.agent %}
                             <span class="text-indigo-600 font-semibold">
-                                {{ conversation.agent.first_name|first|upper }}{{ conversation.agent.last_name|first|upper }}
+                                {{ conversation.agent.first_name|first|upper }}{{
+                                conversation.agent.last_name|first|upper }}
                             </span>
                             {% else %}
                             <i class="fas fa-user-shield text-indigo-600"></i>
@@ -627,7 +629,8 @@
                         <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
                             {% if conversation_active.agent %}
                             <span class="text-indigo-600 font-semibold">
-                                {{ conversation_active.agent.first_name|first|upper }}{{ conversation_active.agent.last_name|first|upper }}
+                                {{ conversation_active.agent.first_name|first|upper }}{{
+                                conversation_active.agent.last_name|first|upper }}
                             </span>
                             {% else %}
                             <i class="fas fa-user-shield text-indigo-600"></i>
@@ -794,7 +797,7 @@
 </div>
 <script>
     // Variables globales
-    let currentConversationId = {{ conversation_active.id|default:'null' }};
+    let currentConversationId = {{ conversation_active.id|default: 'null' }};
     let messagesContainer = document.getElementById('messages-container');
     let messagesList = document.getElementById('messages-list');
     let messageInput = document.getElementById('message-input');
