@@ -13,32 +13,32 @@ class Migration(migrations.Migration):
 
     operations = [
         # Créer la table de conversation pour le chat
-        migrations.RunSQL("""
-            CREATE TABLE "core_conversation_chat" (
-                "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-                "created_at" datetime NOT NULL,
-                "updated_at" datetime NOT NULL,
-                "signalement_id" bigint NULL REFERENCES "core_declaration" ("id") DEFERRABLE INITIALLY DEFERRED,
-                "agent_id" bigint NULL REFERENCES "core_utilisateur" ("id") DEFERRABLE INITIALLY DEFERRED,
-                "declarant_id" bigint NULL REFERENCES "core_utilisateur" ("id") DEFERRABLE INITIALLY DEFERRED
-            );
-        """, reverse_sql='DROP TABLE "core_conversation_chat";'),
+        # migrations.RunSQL("""
+        #     CREATE TABLE "core_conversation_chat" (
+        #         "id" serial NOT NULL PRIMARY KEY,
+        #         "created_at" timestamp with time zone NOT NULL,
+        #         "updated_at" timestamp with time zone NOT NULL,
+        #         "signalement_id" bigint NULL REFERENCES "core_declaration" ("id") DEFERRABLE INITIALLY DEFERRED,
+        #         "agent_id" bigint NULL REFERENCES "core_utilisateur" ("id") DEFERRABLE INITIALLY DEFERRED,
+        #         "declarant_id" bigint NULL REFERENCES "core_utilisateur" ("id") DEFERRABLE INITIALLY DEFERRED
+        #     );
+        # """, reverse_sql='DROP TABLE "core_conversation_chat";'),
         
         # Créer la table de messages pour le chat
-        migrations.RunSQL("""
-            CREATE TABLE "core_message_chat" (
-                "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-                "contenu" text NOT NULL,
-                "fichier" varchar(100) NULL,
-                "type_message" varchar(10) NOT NULL,
-                "is_read" bool NOT NULL,
-                "created_at" datetime NOT NULL,
-                "read_at" datetime NULL,
-                "conversation_id" bigint NOT NULL REFERENCES "core_conversation_chat" ("id") DEFERRABLE INITIALLY DEFERRED,
-                "sender_id" bigint NULL REFERENCES "core_utilisateur" ("id") DEFERRABLE INITIALLY DEFERRED,
-                "receiver_id" bigint NULL REFERENCES "core_utilisateur" ("id") DEFERRABLE INITIALLY DEFERRED
-            );
-        """, reverse_sql='DROP TABLE "core_message_chat";'),
+        # migrations.RunSQL("""
+        #     CREATE TABLE "core_message_chat" (
+        #         "id" serial NOT NULL PRIMARY KEY,
+        #         "contenu" text NOT NULL,
+        #         "fichier" varchar(100) NULL,
+        #         "type_message" varchar(10) NOT NULL,
+        #         "is_read" boolean NOT NULL,
+        #         "created_at" timestamp with time zone NOT NULL,
+        #         "read_at" timestamp with time zone NULL,
+        #         "conversation_id" bigint NOT NULL REFERENCES "core_conversation_chat" ("id") DEFERRABLE INITIALLY DEFERRED,
+        #         "sender_id" bigint NULL REFERENCES "core_utilisateur" ("id") DEFERRABLE INITIALLY DEFERRED,
+        #         "receiver_id" bigint NULL REFERENCES "core_utilisateur" ("id") DEFERRABLE INITIALLY DEFERRED
+        #     );
+        # """, reverse_sql='DROP TABLE "core_message_chat";'),
         
         # Créer les index
         migrations.RunSQL("""
