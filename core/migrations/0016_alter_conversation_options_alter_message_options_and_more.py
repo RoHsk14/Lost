@@ -118,6 +118,13 @@ class Migration(migrations.Migration):
             name='conversation',
             field=models.ForeignKey(help_text='Conversation à laquelle appartient ce message', on_delete=django.db.models.deletion.CASCADE, related_name='messages', to='core.conversation'),
         ),
+        migrations.RunSQL(
+            [
+                'DROP TABLE IF EXISTS "core_message_chat";',
+                'DROP TABLE IF EXISTS "core_conversation_chat";'
+            ],
+            reverse_sql=migrations.RunSQL.noop,
+        ),
         migrations.AlterModelTable(
             name='conversation',
             table='core_conversation_chat',
