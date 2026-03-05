@@ -105,11 +105,18 @@ WSGI_APPLICATION = 'lostfound.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Configuration SQLite (temporaire pour debug)
+# Configuration SQLite (Railway avec volume ou local)
+if 'RAILWAY_ENVIRONMENT' in os.environ:
+    # Sur Railway avec le volume monté dans /app/data
+    db_path = '/app/data/db.sqlite3'
+else:
+    # En local
+    db_path = BASE_DIR / 'db.sqlite3'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': db_path,
     }
 }
 
